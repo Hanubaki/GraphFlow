@@ -80,12 +80,13 @@ export const TopBar: React.FC<TopBarProps> = ({
   onClearGraph,
 }) => {
   const { user, isPro, planTier } = useAuth();
+
   return (
-    <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2">
+    <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2 w-full max-w-full overflow-hidden">
       {/* Brand Logo & Title */}
       <button
         onClick={onOpenHome}
-        className="flex items-center gap-2.5 shrink-0 text-left hover:opacity-90 transition-opacity"
+        className="flex items-center gap-2 shrink-0 text-left hover:opacity-90 transition-opacity"
         title="Return to Home / Landing Page"
       >
         <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.35)] shrink-0">
@@ -102,54 +103,53 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </button>
 
-      {/* Center: Live Telemetry Metrics */}
-      <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs">
-        {/* Status indicator */}
-        <div className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800">
-          <span
-            className={`w-2 h-2 rounded-full shrink-0 ${
-              isRunning ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
-            }`}
-          />
-          <span className="text-[11px] font-semibold text-slate-300">
-            {isRunning ? 'ACTIVE' : 'PAUSED'}
-          </span>
-        </div>
-
-        {/* Throughput */}
-        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">RPS:</span>
-          <span className="font-bold text-cyan-400">{metrics.currentRps}</span>
-        </div>
-
-        {/* Avg Latency */}
-        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">LAT:</span>
-          <span className="font-bold text-slate-200">{metrics.avgLatencyMs}ms</span>
-        </div>
-
-        {/* Delivered Packets */}
-        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">SENT:</span>
-          <span className="font-bold text-emerald-400">{metrics.delivered}</span>
-        </div>
-
-        {/* Error Packets */}
-        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">ERR:</span>
-          <span className={`font-bold ${metrics.errors > 0 ? 'text-rose-400' : 'text-slate-500'}`}>
-            {metrics.errors}
-          </span>
+      {/* Center: Sleek Unified Live Telemetry Pill */}
+      <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs shrink-0">
+        <div className="flex items-center gap-2.5 h-8 px-3 rounded-lg bg-dark-950 border border-slate-800 text-[11px] text-slate-300 shadow-inner">
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                isRunning ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
+              }`}
+            />
+            <span className="font-semibold text-slate-200">
+              {isRunning ? 'ACTIVE' : 'PAUSED'}
+            </span>
+          </div>
+          <span className="text-slate-700">|</span>
+          <div className="flex items-center gap-1">
+            <span className="text-slate-400">RPS:</span>
+            <span className="font-bold text-cyan-400">{metrics.currentRps}</span>
+          </div>
+          <span className="text-slate-700">|</span>
+          <div className="flex items-center gap-1">
+            <span className="text-slate-400">LAT:</span>
+            <span className="font-bold text-slate-200">{metrics.avgLatencyMs}ms</span>
+          </div>
+          <span className="text-slate-700">|</span>
+          <div className="flex items-center gap-1">
+            <span className="text-slate-400">SENT:</span>
+            <span className="font-bold text-emerald-400">{metrics.delivered}</span>
+          </div>
+          {metrics.errors > 0 && (
+            <>
+              <span className="text-slate-700">|</span>
+              <div className="flex items-center gap-1">
+                <span className="text-slate-400">ERR:</span>
+                <span className="font-bold text-rose-400">{metrics.errors}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Right: Simulation & Canvas Controls (Uniform 32px height) */}
-      <div className="flex items-center gap-1.5 shrink-0">
+      {/* Right Controls Container */}
+      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
         {/* Play/Pause + Speed Group */}
-        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8">
+        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
           <button
             onClick={onTogglePlay}
-            className={`flex items-center gap-1 h-7 px-2.5 rounded-md text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all ${
               isRunning
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
@@ -184,7 +184,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={onTriggerSpike}
           disabled={!isRunning}
-          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-semibold border transition-all ${
+          className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 ${
             isSpikeMode
               ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
               : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
@@ -198,7 +198,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Sound toggle */}
         <button
           onClick={onToggleSound}
-          className={`w-8 h-8 rounded-lg border border-slate-800 flex items-center justify-center transition-colors ${
+          className={`w-8 h-8 rounded-lg border border-slate-800 flex items-center justify-center transition-colors shrink-0 ${
             soundEnabled
               ? 'bg-dark-950 text-slate-300 hover:text-white'
               : 'bg-dark-950 text-slate-600'
@@ -211,7 +211,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="hidden sm:block h-5 w-px bg-slate-800 mx-0.5" />
 
         {/* Undo / Redo Group */}
-        <div className="hidden sm:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8">
+        <div className="hidden sm:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
           <button
             onClick={onUndo}
             disabled={!canUndo}
@@ -235,7 +235,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* Zoom Group */}
-        <div className="hidden lg:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8">
+        <div className="hidden lg:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
           <button
             onClick={onZoomOut}
             className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
@@ -246,7 +246,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={onResetZoom}
             className="h-7 px-1.5 text-[11px] font-mono text-slate-300 hover:text-white transition-colors"
-            title="Reset Zoom (100%)"
+            title="Reset Zoom (Auto-Center)"
           >
             {Math.round(zoom * 100)}%
           </button>
@@ -261,67 +261,76 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <div className="h-5 w-px bg-slate-800 mx-0.5" />
 
-        {/* Presets Button */}
-        <button
-          onClick={onOpenTemplates}
-          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
-          title="Architecture Presets"
-        >
-          <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden 2xl:inline">Presets</span>
-        </button>
+        {/* Studio Tools Segmented Group (Presets, AI Gen, Projects, Embed) */}
+        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
+          {/* Presets */}
+          <button
+            onClick={onOpenTemplates}
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors"
+            title="Architecture Presets"
+          >
+            <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden 3xl:inline">Presets</span>
+          </button>
 
-        {/* AI Generator Button */}
-        <button
-          onClick={onOpenAiGenerator}
-          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40 hover:text-white text-xs font-semibold transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-          title="AI Prompt-to-Architecture"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-          <span className="hidden 2xl:inline">AI Gen</span>
-        </button>
+          <div className="h-3.5 w-px bg-slate-800" />
 
-        {/* Projects / Cloud Button */}
-        <button
-          onClick={onOpenProjects}
-          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
-          title="Saved Projects & Cloud Links"
-        >
-          <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden xl:inline">Projects</span>
-        </button>
+          {/* AI Generator */}
+          <button
+            onClick={onOpenAiGenerator}
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-purple-950/60 text-purple-300 text-xs font-medium transition-all"
+            title="AI Prompt-to-Architecture"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+            <span className="hidden 3xl:inline">AI Gen</span>
+          </button>
 
-        {/* Embed Widget Button */}
-        <button
-          onClick={onOpenEmbed}
-          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
-          title="Embed Interactive Simulator in Notion / Blogs"
-        >
-          <Code2 className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden 2xl:inline">Embed</span>
-        </button>
+          <div className="h-3.5 w-px bg-slate-800" />
+
+          {/* Projects */}
+          <button
+            onClick={onOpenProjects}
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors"
+            title="Saved Projects & Cloud Links"
+          >
+            <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden 3xl:inline">Projects</span>
+          </button>
+
+          <div className="h-3.5 w-px bg-slate-800" />
+
+          {/* Embed */}
+          <button
+            onClick={onOpenEmbed}
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors"
+            title="Embed Interactive Simulator in Notion / Blogs"
+          >
+            <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden 3xl:inline">Embed</span>
+          </button>
+        </div>
 
         {/* Export Button */}
         <button
           onClick={onOpenExport}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950"
+          className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0"
           title="Export Architecture"
         >
           <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden xl:inline">Export</span>
+          <span className="hidden sm:inline">Export</span>
         </button>
 
         {/* Pro Upgrade Pill */}
         <button
           onClick={onOpenPricing}
-          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-extrabold text-xs shadow-md transition-all shrink-0 ${
+          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md transition-all shrink-0 ${
             isPro
               ? 'bg-purple-950 border border-purple-800/80 text-purple-300 hover:bg-purple-900/60'
-              : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950'
+              : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold'
           }`}
           title="View Pro & Team Plans"
         >
-          <Crown className={`w-3.5 h-3.5 ${isPro ? 'text-amber-400' : 'text-slate-950'}`} />
+          <Crown className={`w-3.5 h-3.5 shrink-0 ${isPro ? 'text-amber-400' : 'text-slate-950'}`} />
           <span>{isPro ? 'PRO' : 'UPGRADE'}</span>
         </button>
 
@@ -332,18 +341,18 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors shrink-0"
             title={`Account: ${user.email} (${planTier.toUpperCase()} tier)`}
           >
-            <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold">
+            <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold shrink-0">
               {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
             </div>
-            <span className="hidden xl:inline max-w-[85px] truncate text-[11px]">{user.email?.split('@')[0]}</span>
+            <span className="hidden xl:inline max-w-[75px] truncate text-[11px]">{user.email?.split('@')[0]}</span>
           </button>
         ) : (
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-1 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0"
+            className="flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0"
             title="Sign in to sync cloud architectures"
           >
-            <UserIcon className="w-3.5 h-3.5" />
+            <UserIcon className="w-3.5 h-3.5 shrink-0" />
             <span className="hidden md:inline">Sign In</span>
           </button>
         )}
@@ -351,7 +360,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Clear graph */}
         <button
           onClick={onClearGraph}
-          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors"
+          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0"
           title="Clear Architecture"
         >
           <Trash2 className="w-3.5 h-3.5" />
