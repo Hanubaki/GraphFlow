@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateMarkdownDoc } from '../utils/export';
-import { generateShareUrl, parseShareUrl } from '../services/projectStorage';
+import { generateShareUrl, parseShareUrl, generateEmbedUrl, generateIframeSnippet } from '../services/projectStorage';
 import { GraphNode, GraphEdge } from '../types/graph';
 
 describe('Export & Documentation Generator', () => {
@@ -88,5 +88,24 @@ describe('Export & Documentation Generator', () => {
 
     window.location.hash = '';
     expect(parseShareUrl()).toBeNull();
+  });
+
+  it('generates valid iframe embed URL and HTML iframe snippet', () => {
+    const embedUrl = generateEmbedUrl(nodes, edges);
+    expect(embedUrl).toContain('#embed=');
+    expect(embedUrl).not.toContain('#share=');
+
+    const iframe = generateIframeSnippet(embedUrl, 500);
+    expect(iframe).toContain('<iframe');
+    expect(iframe).toContain('src="');
+    expect(iframe).toContain('height="500"');
+    expect(iframe).toContain('allow="autoplay"');
+
+    // Test that parseShareUrl recognizes embed mode
+    window.location.hash = embedUrl.split('#')[1];
+    const parsed = parseShareUrl();
+    expect(parsed).not.toBeNull();
+    expect(parsed?.isEmbed).toBe(true);
+    expect(parsed?.nodes.length).toBe(2);
   });
 });

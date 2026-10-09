@@ -83,14 +83,32 @@ export function generateShareUrl(nodes: GraphNode[], edges: GraphEdge[]): string
 }
 
 /**
- * Decodes shared project state from URL hash
+ * Encodes project state into an embeddable widget URL
  */
-export function parseShareUrl(): { nodes: GraphNode[]; edges: GraphEdge[] } | null {
+export function generateEmbedUrl(nodes: GraphNode[], edges: GraphEdge[]): string {
+  const shareUrl = generateShareUrl(nodes, edges);
+  return shareUrl.replace('#share=', '#embed=');
+}
+
+/**
+ * Generates an iframe embed HTML snippet for Notion/blogs/docs
+ */
+export function generateIframeSnippet(embedUrl: string, height = 480): string {
+  return `<iframe src="${embedUrl}" width="100%" height="${height}" frameborder="0" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden;" allow="autoplay" loading="lazy"></iframe>`;
+}
+
+/**
+ * Decodes shared or embedded project state from URL hash
+ */
+export function parseShareUrl(): { nodes: GraphNode[]; edges: GraphEdge[]; isEmbed?: boolean } | null {
   try {
     const hash = window.location.hash;
-    if (!hash || !hash.includes('#share=')) return null;
+    const isEmbed = hash.includes('#embed=');
+    const isShare = hash.includes('#share=');
+    if (!hash || (!isEmbed && !isShare)) return null;
 
-    const base64Part = hash.split('#share=')[1]?.split('&')[0];
+    const key = isEmbed ? '#embed=' : '#share=';
+    const base64Part = hash.split(key)[1]?.split('&')[0];
     if (!base64Part) return null;
 
     const jsonStr = decodeURIComponent(atob(base64Part));
@@ -131,7 +149,7 @@ export function parseShareUrl(): { nodes: GraphNode[]; edges: GraphEdge[] } | nu
         label: typeof e.l === 'string' ? e.l.slice(0, 30) : undefined,
       }));
 
-    return { nodes, edges };
+    return { nodes, edges, isEmbed };
   } catch {
     return null;
   }

@@ -17,6 +17,7 @@ import {
   Sparkles,
   FolderKanban,
   Crown,
+  Code2,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -39,6 +40,7 @@ interface TopBarProps {
   onResetZoom: () => void;
   onOpenTemplates: () => void;
   onOpenExport: () => void;
+  onOpenEmbed: () => void;
   onOpenAiGenerator: () => void;
   onOpenProjects: () => void;
   onOpenPricing: () => void;
@@ -66,6 +68,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onResetZoom,
   onOpenTemplates,
   onOpenExport,
+  onOpenEmbed,
   onOpenAiGenerator,
   onOpenProjects,
   onOpenPricing,
@@ -281,6 +284,16 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
           <span className="hidden md:inline">Projects</span>
+        </button>
+
+        {/* Embed Widget Button */}
+        <button
+          onClick={onOpenEmbed}
+          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
+          title="Embed Interactive Simulator in Notion / Blogs"
+        >
+          <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="hidden lg:inline">Embed</span>
         </button>
 
         {/* Export Button */}

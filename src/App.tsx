@@ -10,6 +10,8 @@ import { ExportModal } from './components/Modals/ExportModal';
 import { AiGeneratorModal } from './components/Modals/AiGeneratorModal';
 import { ProjectsModal } from './components/Modals/ProjectsModal';
 import { PricingModal } from './components/Modals/PricingModal';
+import { EmbedModal } from './components/Modals/EmbedModal';
+import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { CatalogItem } from './constants/nodeCatalog';
 import { GraphNode, GraphEdge } from './types/graph';
@@ -62,16 +64,18 @@ export const App: React.FC = () => {
 
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isEmbedOpen, setIsEmbedOpen] = useState(false);
   const [isAiGenOpen, setIsAiGenOpen] = useState(false);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'landing' | 'studio'>(
-    typeof window !== 'undefined' && (window.location.hash.includes('#share=') || window.location.hash.includes('#studio'))
-      ? 'studio'
-      : 'landing'
-  );
+  const [viewMode, setViewMode] = useState<'landing' | 'studio' | 'embed'>(() => {
+    if (typeof window === 'undefined') return 'landing';
+    if (window.location.hash.includes('#embed=')) return 'embed';
+    if (window.location.hash.includes('#share=') || window.location.hash.includes('#studio')) return 'studio';
+    return 'landing';
+  });
 
-  // Auto-load shared architecture from URL hash on boot
+  // Auto-load shared or embedded architecture from URL hash on boot
   useEffect(() => {
     const shared = parseShareUrl();
     if (shared && shared.nodes.length > 0) {
@@ -79,7 +83,11 @@ export const App: React.FC = () => {
       setEdges(shared.edges);
       setPan({ x: 0, y: 0 });
       setZoom(1);
-      setViewMode('studio');
+      if (shared.isEmbed) {
+        setViewMode('embed');
+      } else {
+        setViewMode('studio');
+      }
     }
   }, [setNodes, setEdges, setPan, setZoom]);
 
@@ -152,6 +160,15 @@ export const App: React.FC = () => {
     setZoom(1);
   }, [setNodes, setEdges, setPan, setZoom]);
 
+  if (viewMode === 'embed') {
+    return (
+      <EmbedView
+        initialNodes={nodes}
+        initialEdges={edges}
+      />
+    );
+  }
+
   if (viewMode === 'landing') {
     return (
       <>
@@ -193,6 +210,7 @@ export const App: React.FC = () => {
         }}
         onOpenTemplates={() => setIsTemplatesOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenEmbed={() => setIsEmbedOpen(true)}
         onOpenAiGenerator={() => setIsAiGenOpen(true)}
         onOpenProjects={() => setIsProjectsOpen(true)}
         onOpenPricing={() => setIsPricingOpen(true)}
@@ -254,6 +272,14 @@ export const App: React.FC = () => {
         edges={edges}
         onClose={() => setIsExportOpen(false)}
         onImportGraph={handleImportGraph}
+      />
+
+      {/* Notion & Web Iframe Embed Modal */}
+      <EmbedModal
+        isOpen={isEmbedOpen}
+        nodes={nodes}
+        edges={edges}
+        onClose={() => setIsEmbedOpen(false)}
       />
 
       {/* AI Prompt-to-Architecture Modal */}
