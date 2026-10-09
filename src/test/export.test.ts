@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateMarkdownDoc } from '../utils/export';
+import { generateShareUrl, parseShareUrl } from '../services/projectStorage';
 import { GraphNode, GraphEdge } from '../types/graph';
 
 describe('Export & Documentation Generator', () => {
@@ -64,5 +65,28 @@ describe('Export & Documentation Generator', () => {
     expect(md).toContain('```mermaid\ngraph LR');
     expect(md).toContain('n1["Frontend Client (React App)"]');
     expect(md).toContain('n1 -->|"/api/v1"| n2');
+  });
+
+  it('correctly serializes and parses shareable URL hashes', () => {
+    const shareUrl = generateShareUrl(nodes, edges);
+    expect(shareUrl).toContain('#share=');
+
+    // Simulate window.location.hash
+    window.location.hash = shareUrl.split('#')[1];
+    const parsed = parseShareUrl();
+    expect(parsed).not.toBeNull();
+    expect(parsed?.nodes.length).toBe(2);
+    expect(parsed?.edges.length).toBe(1);
+    expect(parsed?.nodes[0].title).toBe('Frontend Client');
+    expect(parsed?.edges[0].fromNodeId).toBe('n1');
+    expect(parsed?.edges[0].toNodeId).toBe('n2');
+  });
+
+  it('returns null gracefully on corrupted URL hashes without crashing', () => {
+    window.location.hash = 'share=invalid-non-base64-random-string!!!';
+    expect(parseShareUrl()).toBeNull();
+
+    window.location.hash = '';
+    expect(parseShareUrl()).toBeNull();
   });
 });

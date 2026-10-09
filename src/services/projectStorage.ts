@@ -90,38 +90,46 @@ export function parseShareUrl(): { nodes: GraphNode[]; edges: GraphEdge[] } | nu
     const hash = window.location.hash;
     if (!hash || !hash.includes('#share=')) return null;
 
-    const base64 = hash.replace('#share=', '');
-    const jsonStr = decodeURIComponent(atob(base64));
+    const base64Part = hash.split('#share=')[1]?.split('&')[0];
+    if (!base64Part) return null;
+
+    const jsonStr = decodeURIComponent(atob(base64Part));
     const payload = JSON.parse(jsonStr);
 
     if (!payload || !Array.isArray(payload.n) || !Array.isArray(payload.e)) return null;
 
-    const nodes: GraphNode[] = payload.n.map((n: any) => ({
-      id: n.id,
-      type: n.t,
-      title: n.title,
-      subtitle: n.sub,
-      x: n.x,
-      y: n.y,
-      width: 190,
-      height: 90,
-      status: n.s || 'healthy',
-      latencyMs: n.lat || 20,
-      errorRate: n.err || 0,
-      throughputRps: n.rps || 500,
-      color: n.c || '#818cf8',
-      iconName: n.i || 'Server',
-    }));
+    const nodes: GraphNode[] = payload.n
+      .filter((n: any) => n && typeof n.id === 'string')
+      .map((n: any) => ({
+        id: String(n.id).slice(0, 64),
+        type: n.t || 'service',
+        title: typeof n.title === 'string' ? n.title.slice(0, 50) : 'Service',
+        subtitle: typeof n.sub === 'string' ? n.sub.slice(0, 50) : '',
+        x: Number.isFinite(n.x) ? Math.max(0, Math.min(5000, n.x)) : 100,
+        y: Number.isFinite(n.y) ? Math.max(0, Math.min(5000, n.y)) : 100,
+        width: 190,
+        height: 90,
+        status: (['healthy', 'degraded', 'down'] as const).includes(n.s) ? n.s : 'healthy',
+        latencyMs: Number.isFinite(n.lat) ? Math.max(1, Math.min(5000, n.lat)) : 20,
+        errorRate: Number.isFinite(n.err) ? Math.max(0, Math.min(100, n.err)) : 0,
+        throughputRps: Number.isFinite(n.rps) ? Math.max(0, Math.min(50000, n.rps)) : 500,
+        color: typeof n.c === 'string' && n.c.startsWith('#') ? n.c : '#818cf8',
+        iconName: typeof n.i === 'string' ? n.i : 'Server',
+      }));
 
-    const edges: GraphEdge[] = payload.e.map((e: any) => ({
-      id: e.id,
-      fromNodeId: e.f,
-      toNodeId: e.to,
-      protocol: e.p || 'HTTP/REST',
-      latencyMs: e.lat || 10,
-      errorRate: 0,
-      label: e.l,
-    }));
+    const validNodeIds = new Set(nodes.map(n => n.id));
+
+    const edges: GraphEdge[] = payload.e
+      .filter((e: any) => e && validNodeIds.has(e.f) && validNodeIds.has(e.to))
+      .map((e: any) => ({
+        id: typeof e.id === 'string' ? e.id.slice(0, 64) : `edge-${Math.random().toString(36).slice(2, 8)}`,
+        fromNodeId: e.f,
+        toNodeId: e.to,
+        protocol: e.p || 'HTTP/REST',
+        latencyMs: Number.isFinite(e.lat) ? Math.max(1, Math.min(5000, e.lat)) : 10,
+        errorRate: 0,
+        label: typeof e.l === 'string' ? e.l.slice(0, 30) : undefined,
+      }));
 
     return { nodes, edges };
   } catch {
