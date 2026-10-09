@@ -1,14 +1,58 @@
-import type { IncomingMessage, ServerResponse } from 'http';
+import type { IncomingMessage } from 'http';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
-// Read raw body helper for Vercel Serverless
-async function getRawBody(req: IncomingMessage): Promise<string> {
+export const MAX_PAYLOAD_BYTES = 1024 * 1024; // 1 MB
+export const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+export const RATE_LIMIT_MAX_REQUESTS = 60; // Max 60 requests per minute per IP
+
+interface RateLimitRecord {
+  count: number;
+  resetTime: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitRecord>();
+
+export function isRateLimited(
+  identifier: string,
+  limit: number = RATE_LIMIT_MAX_REQUESTS,
+  windowMs: number = RATE_LIMIT_WINDOW_MS
+): boolean {
+  const now = Date.now();
+  const record = rateLimitStore.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(identifier, { count: 1, resetTime: now + windowMs });
+    return false;
+  }
+
+  if (record.count >= limit) {
+    return true;
+  }
+
+  record.count += 1;
+  return false;
+}
+
+export function clearRateLimitStore(): void {
+  rateLimitStore.clear();
+}
+
+// Read raw body helper for Vercel Serverless with max size limit
+export async function getRawBody(req: IncomingMessage, maxBytes = MAX_PAYLOAD_BYTES): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = '';
+    let receivedBytes = 0;
+
     req.on('data', chunk => {
+      receivedBytes += chunk.length;
+      if (receivedBytes > maxBytes) {
+        reject(new Error('PAYLOAD_TOO_LARGE'));
+        return;
+      }
       body += chunk;
     });
+
     req.on('end', () => resolve(body));
     req.on('error', err => reject(err));
   });
@@ -17,6 +61,18 @@ async function getRawBody(req: IncomingMessage): Promise<string> {
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Rate limiting by client IP
+  const clientIp = String(
+    req.headers['x-forwarded-for'] ||
+    req.headers['x-real-ip'] ||
+    req.socket?.remoteAddress ||
+    '127.0.0.1'
+  ).split(',')[0].trim();
+
+  if (isRateLimited(clientIp)) {
+    return res.status(429).json({ error: 'Too many requests. Please slow down.' });
   }
 
   const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
@@ -29,7 +85,20 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const rawBody = typeof req.body === 'string' ? req.body : await getRawBody(req);
+    let rawBody: string;
+    try {
+      rawBody = typeof req.body === 'string' ? req.body : await getRawBody(req);
+    } catch (readErr: any) {
+      if (readErr?.message === 'PAYLOAD_TOO_LARGE') {
+        return res.status(413).json({ error: 'Payload exceeds maximum limit of 1MB.' });
+      }
+      throw readErr;
+    }
+
+    if (rawBody.length > MAX_PAYLOAD_BYTES) {
+      return res.status(413).json({ error: 'Payload exceeds maximum limit of 1MB.' });
+    }
+
     const signature = req.headers['x-signature'];
 
     if (!signature || typeof signature !== 'string') {
