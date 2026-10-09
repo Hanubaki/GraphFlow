@@ -168,7 +168,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-dark-950 text-slate-100 select-none">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
       {/* Top Navigation & Simulation Controller */}
       <TopBar
         isRunning={isRunning}

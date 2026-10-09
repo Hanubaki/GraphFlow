@@ -6,15 +6,17 @@
   color-scheme: dark;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   background-color: #090d16;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  user-select: none;
+  color: #f1f5f9;
 }
 
 code, pre {
