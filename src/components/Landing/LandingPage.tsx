@@ -359,13 +359,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               </div>
             </div>
 
-            <button
-              onClick={onOpenPricing}
-              className="w-full mt-8 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-950 transition-all flex items-center justify-center gap-1.5"
+            <a
+              href="https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lemonsqueezy-button w-full mt-8 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-950 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
             >
               <span>Upgrade to Pro</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </a>
           </div>
 
           {/* Team Tier */}
