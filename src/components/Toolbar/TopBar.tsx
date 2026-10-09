@@ -18,7 +18,9 @@ import {
   FolderKanban,
   Crown,
   Code2,
+  User as UserIcon,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface TopBarProps {
   isRunning: boolean;
@@ -44,6 +46,7 @@ interface TopBarProps {
   onOpenAiGenerator: () => void;
   onOpenProjects: () => void;
   onOpenPricing: () => void;
+  onOpenAuth?: () => void;
   onOpenHome?: () => void;
   onClearGraph: () => void;
 }
@@ -72,9 +75,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenAiGenerator,
   onOpenProjects,
   onOpenPricing,
+  onOpenAuth,
   onOpenHome,
   onClearGraph,
 }) => {
+  const { user, isPro, planTier } = useAuth();
   return (
     <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2">
       {/* Brand Logo & Title */}
@@ -309,12 +314,39 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Pro Upgrade Pill */}
         <button
           onClick={onOpenPricing}
-          className="flex items-center gap-1 h-8 px-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow-md transition-all shrink-0"
+          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-extrabold text-xs shadow-md transition-all shrink-0 ${
+            isPro
+              ? 'bg-purple-950 border border-purple-800/80 text-purple-300 hover:bg-purple-900/60'
+              : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950'
+          }`}
           title="View Pro & Team Plans"
         >
-          <Crown className="w-3.5 h-3.5 text-slate-950" />
-          <span>PRO</span>
+          <Crown className={`w-3.5 h-3.5 ${isPro ? 'text-amber-400' : 'text-slate-950'}`} />
+          <span>{isPro ? 'PRO' : 'UPGRADE'}</span>
         </button>
+
+        {/* User Account / Sign In */}
+        {user ? (
+          <button
+            onClick={onOpenAuth}
+            className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors shrink-0"
+            title={`Account: ${user.email} (${planTier.toUpperCase()} tier)`}
+          >
+            <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold">
+              {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
+            </div>
+            <span className="hidden xl:inline max-w-[85px] truncate text-[11px]">{user.email?.split('@')[0]}</span>
+          </button>
+        ) : (
+          <button
+            onClick={onOpenAuth}
+            className="flex items-center gap-1 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0"
+            title="Sign in to sync cloud architectures"
+          >
+            <UserIcon className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Sign In</span>
+          </button>
+        )}
 
         {/* Clear graph */}
         <button

@@ -1,15 +1,31 @@
 import React, { useState } from 'react';
-import { Check, Sparkles, X, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Check, Sparkles, X, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAuth?: () => void;
 }
 
-export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) => {
+export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onOpenAuth }) => {
   const [isAnnual, setIsAnnual] = useState(true);
+  const { user, isPro, planTier } = useAuth();
 
   if (!isOpen) return null;
+
+  const defaultCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1';
+  const checkoutUrl = user
+    ? `${defaultCheckoutUrl}&checkout[custom][user_id]=${user.id}&checkout[email]=${encodeURIComponent(user.email || '')}`
+    : defaultCheckoutUrl;
+
+  const handleProClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user && onOpenAuth) {
+      e.preventDefault();
+      onClose();
+      onOpenAuth();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none">
@@ -33,6 +49,14 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) =
           <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
             Unlimited cloud projects, AI generation, 4K vector exports, and real-time team collaboration.
           </p>
+
+          {/* Current User Badge */}
+          {user && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-950 border border-slate-800 text-[11px] text-slate-300 mt-2">
+              <UserCheck className="w-3 h-3 text-cyan-400" />
+              <span>Signed in as <strong>{user.email}</strong> ({planTier.toUpperCase()} tier)</span>
+            </div>
+          )}
 
           {/* Monthly / Annual Toggle */}
           <div className="inline-flex items-center gap-3 p-1 rounded-xl bg-dark-950 border border-slate-800 mt-4 text-xs font-semibold">
@@ -89,9 +113,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) =
 
             <button
               onClick={onClose}
-              className="w-full mt-6 py-2 px-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 text-xs font-semibold hover:border-slate-700 transition-colors"
+              className={`w-full mt-6 py-2 px-3 rounded-xl border border-slate-800 text-xs font-semibold transition-colors ${
+                !isPro ? 'bg-slate-800 text-slate-200' : 'bg-dark-900 text-slate-400 hover:text-slate-200'
+              }`}
             >
-              Current Plan
+              {!isPro ? 'Current Plan' : 'Free Tier'}
             </button>
           </div>
 
@@ -131,15 +157,23 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose }) =
               </div>
             </div>
 
-            <a
-              href="https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="lemonsqueezy-button w-full mt-6 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-950 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
-            >
-              <span>Upgrade to Pro</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            {isPro ? (
+              <div className="w-full mt-6 py-2 px-3 rounded-xl bg-purple-900/50 border border-purple-500/50 text-purple-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Active Subscription</span>
+              </div>
+            ) : (
+              <a
+                href={checkoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleProClick}
+                className="lemonsqueezy-button w-full mt-6 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-950 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
+              >
+                <span>{user ? 'Upgrade to Pro' : 'Sign In & Upgrade to Pro'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            )}
           </div>
 
           {/* Team Tier */}

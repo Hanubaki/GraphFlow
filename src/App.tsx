@@ -10,6 +10,7 @@ import { ExportModal } from './components/Modals/ExportModal';
 import { AiGeneratorModal } from './components/Modals/AiGeneratorModal';
 import { ProjectsModal } from './components/Modals/ProjectsModal';
 import { PricingModal } from './components/Modals/PricingModal';
+import { AuthModal } from './components/Modals/AuthModal';
 import { EmbedModal } from './components/Modals/EmbedModal';
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
@@ -17,6 +18,7 @@ import { CatalogItem } from './constants/nodeCatalog';
 import { GraphNode, GraphEdge } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
 import { SavedProject, parseShareUrl } from './services/projectStorage';
+import { CloudProject } from './types/auth';
 
 export const App: React.FC = () => {
   const {
@@ -68,6 +70,7 @@ export const App: React.FC = () => {
   const [isAiGenOpen, setIsAiGenOpen] = useState(false);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'landing' | 'studio' | 'embed'>(() => {
     if (typeof window === 'undefined') return 'landing';
     if (window.location.hash.includes('#embed=')) return 'embed';
@@ -98,7 +101,7 @@ export const App: React.FC = () => {
     setZoom(1);
   }, [setNodes, setEdges, setPan, setZoom]);
 
-  const handleLoadSavedProject = useCallback((proj: SavedProject) => {
+  const handleLoadSavedProject = useCallback((proj: SavedProject | CloudProject) => {
     setNodes(proj.nodes);
     setEdges(proj.edges);
     setPan({ x: 0, y: 0 });
@@ -175,10 +178,16 @@ export const App: React.FC = () => {
         <LandingPage
           onEnterApp={() => setViewMode('studio')}
           onOpenPricing={() => setIsPricingOpen(true)}
+          onOpenAuth={() => setIsAuthOpen(true)}
         />
         <PricingModal
           isOpen={isPricingOpen}
           onClose={() => setIsPricingOpen(false)}
+          onOpenAuth={() => setIsAuthOpen(true)}
+        />
+        <AuthModal
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
         />
       </>
     );
@@ -214,6 +223,7 @@ export const App: React.FC = () => {
         onOpenAiGenerator={() => setIsAiGenOpen(true)}
         onOpenProjects={() => setIsProjectsOpen(true)}
         onOpenPricing={() => setIsPricingOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
         onOpenHome={() => setViewMode('landing')}
         onClearGraph={clearGraph}
       />
@@ -296,12 +306,20 @@ export const App: React.FC = () => {
         edges={edges}
         onClose={() => setIsProjectsOpen(false)}
         onLoadProject={handleLoadSavedProject}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       {/* SaaS Pricing & Upgrade Modal */}
       <PricingModal
         isOpen={isPricingOpen}
         onClose={() => setIsPricingOpen(false)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+      />
+
+      {/* User Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
       />
     </div>
   );

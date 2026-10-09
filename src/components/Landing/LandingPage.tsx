@@ -11,14 +11,18 @@ import {
   Github,
   Play,
   RotateCcw,
+  User as UserIcon,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface LandingPageProps {
   onEnterApp: () => void;
   onOpenPricing: () => void;
+  onOpenAuth?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth }) => {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen w-full bg-[#090d16] text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden relative">
       {/* Glow Orbs Background */}
@@ -58,13 +62,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         <div className="flex items-center gap-3">
           <button
             onClick={onOpenPricing}
-            className="hidden sm:inline-flex text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 transition-colors"
+            className="hidden sm:inline-flex text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 transition-colors cursor-pointer"
           >
             Pricing
           </button>
+          {user ? (
+            <button
+              onClick={onOpenAuth}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-800 bg-dark-950/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold">
+                {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
+              </div>
+              <span className="hidden sm:inline text-xs">{user.email?.split('@')[0]}</span>
+            </button>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 transition-colors cursor-pointer"
+            >
+              <UserIcon className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
           <button
             onClick={onEnterApp}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-950/50 transition-all hover:gap-2"
+            className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-950/50 transition-all hover:gap-2 cursor-pointer"
           >
             <span>Open Studio</span>
             <ArrowRight className="w-3.5 h-3.5" />
