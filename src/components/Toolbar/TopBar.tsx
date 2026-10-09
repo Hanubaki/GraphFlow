@@ -103,7 +103,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       </button>
 
       {/* Center: Live Telemetry Metrics */}
-      <div className="hidden xl:flex items-center gap-2 font-mono text-xs">
+      <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs">
         {/* Status indicator */}
         <div className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800">
           <span
@@ -268,7 +268,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="Architecture Presets"
         >
           <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden xl:inline">Presets</span>
+          <span className="hidden 2xl:inline">Presets</span>
         </button>
 
         {/* AI Generator Button */}
@@ -278,7 +278,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="AI Prompt-to-Architecture"
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-          <span className="hidden sm:inline">AI Gen</span>
+          <span className="hidden 2xl:inline">AI Gen</span>
         </button>
 
         {/* Projects / Cloud Button */}
@@ -288,7 +288,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="Saved Projects & Cloud Links"
         >
           <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden md:inline">Projects</span>
+          <span className="hidden xl:inline">Projects</span>
         </button>
 
         {/* Embed Widget Button */}
@@ -298,7 +298,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="Embed Interactive Simulator in Notion / Blogs"
         >
           <Code2 className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden lg:inline">Embed</span>
+          <span className="hidden 2xl:inline">Embed</span>
         </button>
 
         {/* Export Button */}
@@ -308,7 +308,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="Export Architecture"
         >
           <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Export</span>
+          <span className="hidden xl:inline">Export</span>
         </button>
 
         {/* Pro Upgrade Pill */}

@@ -94,19 +94,49 @@ export const App: React.FC = () => {
     }
   }, [setNodes, setEdges, setPan, setZoom]);
 
+  const handleAutoCenter = useCallback((targetNodes = nodes) => {
+    if (typeof window === 'undefined' || targetNodes.length === 0) return;
+    const availableWidth = Math.max(400, window.innerWidth - 256 - 320);
+    const availableHeight = Math.max(300, window.innerHeight - 56);
+    
+    const minX = Math.min(...targetNodes.map(n => n.x));
+    const maxX = Math.max(...targetNodes.map(n => n.x + n.width));
+    const minY = Math.min(...targetNodes.map(n => n.y));
+    const maxY = Math.max(...targetNodes.map(n => n.y + n.height));
+
+    const graphWidth = Math.max(400, maxX - minX);
+    const graphHeight = Math.max(300, maxY - minY);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const scaleX = (availableWidth - 80) / graphWidth;
+    const scaleY = (availableHeight - 80) / graphHeight;
+    const targetScale = Math.min(1.0, Math.max(0.45, Math.min(scaleX, scaleY)));
+
+    const targetPanX = Math.round((availableWidth / 2) - (centerX * targetScale));
+    const targetPanY = Math.round((availableHeight / 2) - (centerY * targetScale));
+
+    setZoom(targetScale);
+    setPan({ x: targetPanX, y: targetPanY });
+  }, [nodes, setZoom, setPan]);
+
+  // Auto-center on initial mount
+  useEffect(() => {
+    handleAutoCenter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleApplyAiArchitecture = useCallback((arch: GeneratedArchitecture) => {
     setNodes(arch.nodes);
     setEdges(arch.edges);
-    setPan({ x: 0, y: 0 });
-    setZoom(1);
-  }, [setNodes, setEdges, setPan, setZoom]);
+    handleAutoCenter(arch.nodes);
+  }, [setNodes, setEdges, handleAutoCenter]);
 
   const handleLoadSavedProject = useCallback((proj: SavedProject | CloudProject) => {
     setNodes(proj.nodes);
     setEdges(proj.edges);
-    setPan({ x: 0, y: 0 });
-    setZoom(1);
-  }, [setNodes, setEdges, setPan, setZoom]);
+    handleAutoCenter(proj.nodes);
+  }, [setNodes, setEdges, handleAutoCenter]);
 
   // Add node from catalog to center of screen
   const handleAddNodeFromPalette = useCallback((item: CatalogItem) => {
@@ -213,10 +243,7 @@ export const App: React.FC = () => {
         onRedo={redo}
         onZoomIn={() => setZoom(z => Math.min(2.5, z * 1.2))}
         onZoomOut={() => setZoom(z => Math.max(0.3, z / 1.2))}
-        onResetZoom={() => {
-          setZoom(1);
-          setPan({ x: 0, y: 0 });
-        }}
+        onResetZoom={() => handleAutoCenter()}
         onOpenTemplates={() => setIsTemplatesOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
         onOpenEmbed={() => setIsEmbedOpen(true)}

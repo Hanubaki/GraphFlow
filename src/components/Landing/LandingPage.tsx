@@ -159,32 +159,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             </div>
 
             {/* Mock Node & Edge Diagram */}
-            <div className="h-64 sm:h-72 w-full relative flex items-center justify-around px-4">
+            <div className="min-h-[17rem] w-full relative grid grid-cols-2 lg:grid-cols-4 gap-3 items-center justify-items-center px-2 py-8">
               {/* Client Node */}
-              <div className="w-44 p-3 rounded-xl border border-slate-800 bg-dark-950/90 shadow-lg text-left">
+              <div className="w-full max-w-[180px] p-3 rounded-xl border border-slate-800 bg-dark-950/90 shadow-lg text-left">
                 <div className="text-[10px] text-cyan-400 font-mono">CLIENT</div>
-                <div className="text-xs font-bold text-white">Next.js Web Store</div>
+                <div className="text-xs font-bold text-white truncate">Next.js Store</div>
                 <div className="text-[10px] text-slate-500 mt-1">LAT: 15ms • 450 rps</div>
               </div>
 
               {/* Gateway Node */}
-              <div className="w-44 p-3 rounded-xl border border-cyan-500/50 bg-cyan-950/20 shadow-[0_0_20px_rgba(6,182,212,0.2)] text-left">
+              <div className="w-full max-w-[180px] p-3 rounded-xl border border-cyan-500/50 bg-cyan-950/20 shadow-[0_0_20px_rgba(6,182,212,0.2)] text-left">
                 <div className="text-[10px] text-indigo-400 font-mono">INGRESS</div>
-                <div className="text-xs font-bold text-white">Kong API Gateway</div>
+                <div className="text-xs font-bold text-white truncate">Kong API Gateway</div>
                 <div className="text-[10px] text-slate-400 mt-1">LAT: 6ms • 1500 rps</div>
               </div>
 
               {/* Service Node */}
-              <div className="w-44 p-3 rounded-xl border border-purple-500/40 bg-purple-950/20 text-left">
+              <div className="w-full max-w-[180px] p-3 rounded-xl border border-purple-500/40 bg-purple-950/20 text-left">
                 <div className="text-[10px] text-purple-400 font-mono">MICROSERVICE</div>
-                <div className="text-xs font-bold text-white">Order Processor</div>
+                <div className="text-xs font-bold text-white truncate">Order Processor</div>
                 <div className="text-[10px] text-slate-400 mt-1">LAT: 35ms • Kafka Sync</div>
               </div>
 
               {/* DB Node */}
-              <div className="w-44 p-3 rounded-xl border border-blue-500/40 bg-blue-950/20 text-left">
+              <div className="w-full max-w-[180px] p-3 rounded-xl border border-blue-500/40 bg-blue-950/20 text-left">
                 <div className="text-[10px] text-blue-400 font-mono">DATABASE</div>
-                <div className="text-xs font-bold text-white">PostgreSQL Multi-AZ</div>
+                <div className="text-xs font-bold text-white truncate">PostgreSQL Multi-AZ</div>
                 <div className="text-[10px] text-slate-400 mt-1">LAT: 28ms • SQL Query</div>
               </div>
             </div>
