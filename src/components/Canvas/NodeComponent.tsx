@@ -13,7 +13,7 @@ interface NodeComponentProps {
   onDelete: (id: string) => void;
 }
 
-export const NodeComponent: React.FC<NodeComponentProps> = ({
+const NodeComponentBase: React.FC<NodeComponentProps> = ({
   node,
   isSelected,
   zoom,
@@ -169,3 +169,5 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
     </div>
   );
 };
+
+export const NodeComponent = React.memo(NodeComponentBase);
