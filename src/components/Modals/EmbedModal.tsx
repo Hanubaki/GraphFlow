@@ -169,7 +169,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
             </div>
             <p className="text-[11px] leading-relaxed text-slate-400">
               Embedded simulations display a live 60 FPS interactive view with a sleek{' '}
-              <strong className="text-slate-200">"⚡ Powered by GraphFlow"</strong> badge.
+              <strong className="text-slate-200">"Powered by GraphFlow"</strong> badge.
               Anyone who clicks the badge is automatically brought to your site with the exact same architecture ready to simulate!
             </p>
           </div>

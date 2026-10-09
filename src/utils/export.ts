@@ -27,7 +27,7 @@ export function generateMarkdownDoc(nodes: GraphNode[], edges: GraphEdge[], name
   const date = new Date().toLocaleDateString();
   
   let md = `# ${name} Architecture\n\n`;
-  md += `*Generated automatically by [GraphFlow](https://github.com) on ${date}*\n\n`;
+  md += `*Generated automatically by [GraphFlow](https://github.com/Hanubaki/GraphFlow) on ${date}*\n\n`;
   
   md += `## 1. System Overview\n\n`;
   md += `The system consists of **${nodes.length} components** interconnected through **${edges.length} communication pipelines**.\n\n`;
