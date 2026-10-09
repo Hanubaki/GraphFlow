@@ -42,6 +42,7 @@ interface TopBarProps {
   onOpenAiGenerator: () => void;
   onOpenProjects: () => void;
   onOpenPricing: () => void;
+  onOpenHome?: () => void;
   onClearGraph: () => void;
 }
 
@@ -68,12 +69,17 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenAiGenerator,
   onOpenProjects,
   onOpenPricing,
+  onOpenHome,
   onClearGraph,
 }) => {
   return (
     <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2">
       {/* Brand Logo & Title */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      <button
+        onClick={onOpenHome}
+        className="flex items-center gap-2.5 shrink-0 text-left hover:opacity-90 transition-opacity"
+        title="Return to Home / Landing Page"
+      >
         <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.35)] shrink-0">
           <Cpu className="w-4 h-4 text-white" />
         </div>
@@ -86,7 +92,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
           <div className="text-[10px] text-slate-400 leading-tight mt-0.5">Architecture & Flow Engine</div>
         </div>
-      </div>
+      </button>
 
       {/* Center: Live Telemetry Metrics */}
       <div className="hidden xl:flex items-center gap-2 font-mono text-xs">

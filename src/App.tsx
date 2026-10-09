@@ -10,6 +10,7 @@ import { ExportModal } from './components/Modals/ExportModal';
 import { AiGeneratorModal } from './components/Modals/AiGeneratorModal';
 import { ProjectsModal } from './components/Modals/ProjectsModal';
 import { PricingModal } from './components/Modals/PricingModal';
+import { LandingPage } from './components/Landing/LandingPage';
 import { CatalogItem } from './constants/nodeCatalog';
 import { GraphNode, GraphEdge } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
@@ -64,6 +65,11 @@ export const App: React.FC = () => {
   const [isAiGenOpen, setIsAiGenOpen] = useState(false);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'landing' | 'studio'>(
+    typeof window !== 'undefined' && (window.location.hash.includes('#share=') || window.location.hash.includes('#studio'))
+      ? 'studio'
+      : 'landing'
+  );
 
   // Auto-load shared architecture from URL hash on boot
   useEffect(() => {
@@ -73,6 +79,7 @@ export const App: React.FC = () => {
       setEdges(shared.edges);
       setPan({ x: 0, y: 0 });
       setZoom(1);
+      setViewMode('studio');
     }
   }, [setNodes, setEdges, setPan, setZoom]);
 
@@ -145,6 +152,21 @@ export const App: React.FC = () => {
     setZoom(1);
   }, [setNodes, setEdges, setPan, setZoom]);
 
+  if (viewMode === 'landing') {
+    return (
+      <>
+        <LandingPage
+          onEnterApp={() => setViewMode('studio')}
+          onOpenPricing={() => setIsPricingOpen(true)}
+        />
+        <PricingModal
+          isOpen={isPricingOpen}
+          onClose={() => setIsPricingOpen(false)}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col w-screen h-screen overflow-hidden bg-dark-950 text-slate-100 select-none">
       {/* Top Navigation & Simulation Controller */}
@@ -174,6 +196,7 @@ export const App: React.FC = () => {
         onOpenAiGenerator={() => setIsAiGenOpen(true)}
         onOpenProjects={() => setIsProjectsOpen(true)}
         onOpenPricing={() => setIsPricingOpen(true)}
+        onOpenHome={() => setViewMode('landing')}
         onClearGraph={clearGraph}
       />
 
