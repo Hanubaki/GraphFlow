@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useGraphStore } from './hooks/useGraphStore';
 import { useSimulation } from './hooks/useSimulation';
 import { TopBar } from './components/Toolbar/TopBar';
@@ -7,8 +7,13 @@ import { GraphCanvas } from './components/Canvas/GraphCanvas';
 import { InspectorPanel } from './components/Inspector/InspectorPanel';
 import { TemplatesModal } from './components/Modals/TemplatesModal';
 import { ExportModal } from './components/Modals/ExportModal';
+import { AiGeneratorModal } from './components/Modals/AiGeneratorModal';
+import { ProjectsModal } from './components/Modals/ProjectsModal';
+import { PricingModal } from './components/Modals/PricingModal';
 import { CatalogItem } from './constants/nodeCatalog';
 import { GraphNode, GraphEdge } from './types/graph';
+import { GeneratedArchitecture } from './services/aiGenerator';
+import { SavedProject, parseShareUrl } from './services/projectStorage';
 
 export const App: React.FC = () => {
   const {
@@ -56,6 +61,34 @@ export const App: React.FC = () => {
 
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isAiGenOpen, setIsAiGenOpen] = useState(false);
+  const [isProjectsOpen, setIsProjectsOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
+
+  // Auto-load shared architecture from URL hash on boot
+  useEffect(() => {
+    const shared = parseShareUrl();
+    if (shared && shared.nodes.length > 0) {
+      setNodes(shared.nodes);
+      setEdges(shared.edges);
+      setPan({ x: 0, y: 0 });
+      setZoom(1);
+    }
+  }, [setNodes, setEdges, setPan, setZoom]);
+
+  const handleApplyAiArchitecture = useCallback((arch: GeneratedArchitecture) => {
+    setNodes(arch.nodes);
+    setEdges(arch.edges);
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
+  }, [setNodes, setEdges, setPan, setZoom]);
+
+  const handleLoadSavedProject = useCallback((proj: SavedProject) => {
+    setNodes(proj.nodes);
+    setEdges(proj.edges);
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
+  }, [setNodes, setEdges, setPan, setZoom]);
 
   // Add node from catalog to center of screen
   const handleAddNodeFromPalette = useCallback((item: CatalogItem) => {
@@ -138,6 +171,9 @@ export const App: React.FC = () => {
         }}
         onOpenTemplates={() => setIsTemplatesOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenAiGenerator={() => setIsAiGenOpen(true)}
+        onOpenProjects={() => setIsProjectsOpen(true)}
+        onOpenPricing={() => setIsPricingOpen(true)}
         onClearGraph={clearGraph}
       />
 
@@ -195,6 +231,28 @@ export const App: React.FC = () => {
         edges={edges}
         onClose={() => setIsExportOpen(false)}
         onImportGraph={handleImportGraph}
+      />
+
+      {/* AI Prompt-to-Architecture Modal */}
+      <AiGeneratorModal
+        isOpen={isAiGenOpen}
+        onClose={() => setIsAiGenOpen(false)}
+        onApplyArchitecture={handleApplyAiArchitecture}
+      />
+
+      {/* Cloud & Local Projects Manager */}
+      <ProjectsModal
+        isOpen={isProjectsOpen}
+        nodes={nodes}
+        edges={edges}
+        onClose={() => setIsProjectsOpen(false)}
+        onLoadProject={handleLoadSavedProject}
+      />
+
+      {/* SaaS Pricing & Upgrade Modal */}
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => setIsPricingOpen(false)}
       />
     </div>
   );

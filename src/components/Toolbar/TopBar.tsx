@@ -14,6 +14,9 @@ import {
   Share2,
   Trash2,
   Cpu,
+  Sparkles,
+  FolderKanban,
+  Crown,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -36,6 +39,9 @@ interface TopBarProps {
   onResetZoom: () => void;
   onOpenTemplates: () => void;
   onOpenExport: () => void;
+  onOpenAiGenerator: () => void;
+  onOpenProjects: () => void;
+  onOpenPricing: () => void;
   onClearGraph: () => void;
 }
 
@@ -59,6 +65,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   onResetZoom,
   onOpenTemplates,
   onOpenExport,
+  onOpenAiGenerator,
+  onOpenProjects,
+  onOpenPricing,
   onClearGraph,
 }) => {
   return (
@@ -240,9 +249,30 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={onOpenTemplates}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
+          title="Architecture Presets"
         >
           <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden md:inline">Presets</span>
+          <span className="hidden xl:inline">Presets</span>
+        </button>
+
+        {/* AI Generator Button */}
+        <button
+          onClick={onOpenAiGenerator}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40 hover:text-white text-xs font-semibold transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+          title="AI Prompt-to-Architecture"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+          <span className="hidden sm:inline">AI Gen</span>
+        </button>
+
+        {/* Projects / Cloud Button */}
+        <button
+          onClick={onOpenProjects}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
+          title="Saved Projects & Cloud Links"
+        >
+          <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="hidden md:inline">Projects</span>
         </button>
 
         {/* Export Button */}
@@ -252,6 +282,16 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Share2 className="w-3.5 h-3.5" />
           <span>Export</span>
+        </button>
+
+        {/* Pro Upgrade Pill */}
+        <button
+          onClick={onOpenPricing}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow-md transition-all"
+          title="View Pro & Team Plans"
+        >
+          <Crown className="w-3.5 h-3.5 text-slate-950" />
+          <span>PRO</span>
         </button>
 
         {/* Clear graph */}
