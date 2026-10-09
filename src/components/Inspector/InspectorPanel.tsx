@@ -112,7 +112,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <button
                       key={status}
                       onClick={() => onUpdateNode(selectedNode.id, { status })}
-                      className={`px-2 py-1.5 rounded-lg border text-xs font-medium capitalize transition-all ${
+                      className={`h-8 rounded-lg border text-xs font-semibold capitalize flex items-center justify-center transition-all ${
                         isActive
                           ? config.active
                           : 'bg-dark-950 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -222,7 +222,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
             <div className="pt-2 border-t border-slate-800">
               <button
                 onClick={() => onDeleteNode(selectedNode.id)}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-rose-500/30 bg-rose-950/20 text-rose-400 hover:bg-rose-900/30 text-xs font-semibold transition-colors"
+                className="w-full h-9 flex items-center justify-center gap-2 rounded-lg border border-rose-500/30 bg-rose-950/20 text-rose-400 hover:bg-rose-900/30 text-xs font-semibold transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Component
@@ -296,7 +296,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
             <div className="pt-2 border-t border-slate-800">
               <button
                 onClick={() => onDeleteEdge(selectedEdge.id)}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-rose-500/30 bg-rose-950/20 text-rose-400 hover:bg-rose-900/30 text-xs font-semibold transition-colors"
+                className="w-full h-9 flex items-center justify-center gap-2 rounded-lg border border-rose-500/30 bg-rose-950/20 text-rose-400 hover:bg-rose-900/30 text-xs font-semibold transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Remove Connection

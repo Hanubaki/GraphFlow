@@ -71,118 +71,120 @@ export const TopBar: React.FC<TopBarProps> = ({
   onClearGraph,
 }) => {
   return (
-    <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-4 z-30 select-none">
+    <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2">
       {/* Brand Logo & Title */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-            <Cpu className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-2.5 shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.35)] shrink-0">
+          <Cpu className="w-4 h-4 text-white" />
+        </div>
+        <div className="hidden sm:block">
+          <div className="flex items-center gap-1.5 leading-none">
+            <span className="font-bold text-sm text-slate-100 tracking-tight">GraphFlow</span>
+            <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
+              SIM
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm text-slate-100 tracking-tight">GraphFlow</span>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
-                SIMULATOR
-              </span>
-            </div>
-            <div className="text-[10px] text-slate-400 -mt-0.5">Architecture & Traffic Engine</div>
-          </div>
+          <div className="text-[10px] text-slate-400 leading-tight mt-0.5">Architecture & Flow Engine</div>
         </div>
       </div>
 
       {/* Center: Live Telemetry Metrics */}
-      <div className="hidden lg:flex items-center gap-2.5 font-mono text-xs">
+      <div className="hidden xl:flex items-center gap-2 font-mono text-xs">
         {/* Status indicator */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-dark-950 border border-slate-800">
+        <div className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800">
           <span
-            className={`w-2 h-2 rounded-full ${
+            className={`w-2 h-2 rounded-full shrink-0 ${
               isRunning ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
             }`}
           />
           <span className="text-[11px] font-semibold text-slate-300">
-            {isRunning ? 'SIMULATION ACTIVE' : 'PAUSED'}
+            {isRunning ? 'ACTIVE' : 'PAUSED'}
           </span>
         </div>
 
         {/* Throughput */}
-        <div className="px-2.5 py-1 rounded-full bg-dark-950 border border-slate-800 flex items-center gap-1.5">
+        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
           <span className="text-[10px] text-slate-400">RPS:</span>
           <span className="font-bold text-cyan-400">{metrics.currentRps}</span>
         </div>
 
         {/* Avg Latency */}
-        <div className="px-2.5 py-1 rounded-full bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">LATENCY:</span>
+        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
+          <span className="text-[10px] text-slate-400">LAT:</span>
           <span className="font-bold text-slate-200">{metrics.avgLatencyMs}ms</span>
         </div>
 
         {/* Delivered Packets */}
-        <div className="px-2.5 py-1 rounded-full bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">DELIVERED:</span>
+        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
+          <span className="text-[10px] text-slate-400">SENT:</span>
           <span className="font-bold text-emerald-400">{metrics.delivered}</span>
         </div>
 
         {/* Error Packets */}
-        <div className="px-2.5 py-1 rounded-full bg-dark-950 border border-slate-800 flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">ERRORS:</span>
+        <div className="h-8 px-2.5 rounded-lg bg-dark-950 border border-slate-800 flex items-center gap-1.5">
+          <span className="text-[10px] text-slate-400">ERR:</span>
           <span className={`font-bold ${metrics.errors > 0 ? 'text-rose-400' : 'text-slate-500'}`}>
             {metrics.errors}
           </span>
         </div>
       </div>
 
-      {/* Right: Simulation & Canvas Controls */}
-      <div className="flex items-center gap-2">
-        {/* Play / Pause */}
-        <button
-          onClick={onTogglePlay}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            isRunning
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-          }`}
-          title={isRunning ? 'Pause Traffic' : 'Start Traffic'}
-        >
-          {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-          <span>{isRunning ? 'Pause' : 'Start'}</span>
-        </button>
+      {/* Right: Simulation & Canvas Controls (Uniform 32px height) */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {/* Play/Pause + Speed Group */}
+        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8">
+          <button
+            onClick={onTogglePlay}
+            className={`flex items-center gap-1 h-7 px-2.5 rounded-md text-xs font-semibold transition-all ${
+              isRunning
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+            }`}
+            title={isRunning ? 'Pause Traffic' : 'Start Traffic'}
+          >
+            {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{isRunning ? 'Pause' : 'Start'}</span>
+          </button>
 
-        {/* Speed multiplier switch */}
-        <div className="flex rounded-lg border border-slate-800 bg-dark-950 p-0.5 text-[11px] font-mono">
-          {[0.5, 1, 2].map(s => (
-            <button
-              key={s}
-              onClick={() => onSetSpeed(s)}
-              className={`px-2 py-0.5 rounded transition-colors ${
-                speedMultiplier === s
-                  ? 'bg-cyan-500/20 text-cyan-400 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {s}x
-            </button>
-          ))}
+          <div className="h-4 w-px bg-slate-800 mx-1" />
+
+          {/* Speed toggles */}
+          <div className="flex gap-0.5">
+            {[0.5, 1, 2].map(s => (
+              <button
+                key={s}
+                onClick={() => onSetSpeed(s)}
+                className={`h-7 px-1.5 rounded text-[11px] font-mono transition-colors ${
+                  speedMultiplier === s
+                    ? 'bg-cyan-500/20 text-cyan-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Traffic Spike Button */}
         <button
           onClick={onTriggerSpike}
           disabled={!isRunning}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-semibold border transition-all ${
             isSpikeMode
-              ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse'
+              ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
               : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
-          } ${!isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
-          title="Inject Traffic Surge / DDoS Simulation"
+          } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
+          title="Inject Traffic Surge / DDoS"
         >
           <Zap className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Spike</span>
+          <span className="hidden md:inline">Spike</span>
         </button>
 
         {/* Sound toggle */}
         <button
           onClick={onToggleSound}
-          className={`p-1.5 rounded-lg border border-slate-800 transition-colors ${
+          className={`w-8 h-8 rounded-lg border border-slate-800 flex items-center justify-center transition-colors ${
             soundEnabled
               ? 'bg-dark-950 text-slate-300 hover:text-white'
               : 'bg-dark-950 text-slate-600'
@@ -192,15 +194,15 @@ export const TopBar: React.FC<TopBarProps> = ({
           {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
         </button>
 
-        <div className="h-5 w-px bg-slate-800 mx-1" />
+        <div className="hidden sm:block h-5 w-px bg-slate-800 mx-0.5" />
 
-        {/* Undo / Redo */}
-        <div className="flex items-center gap-1">
+        {/* Undo / Redo Group */}
+        <div className="hidden sm:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8">
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className={`p-1.5 rounded-lg border border-slate-800 transition-colors ${
-              canUndo ? 'bg-dark-950 text-slate-300 hover:text-white' : 'opacity-40 cursor-not-allowed text-slate-600'
+            className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+              canUndo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'opacity-30 cursor-not-allowed text-slate-600'
             }`}
             title="Undo (Ctrl+Z)"
           >
@@ -209,8 +211,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className={`p-1.5 rounded-lg border border-slate-800 transition-colors ${
-              canRedo ? 'bg-dark-950 text-slate-300 hover:text-white' : 'opacity-40 cursor-not-allowed text-slate-600'
+            className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+              canRedo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'opacity-30 cursor-not-allowed text-slate-600'
             }`}
             title="Redo (Ctrl+Y)"
           >
@@ -218,37 +220,37 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        {/* Zoom controls */}
-        <div className="hidden sm:flex items-center gap-1">
+        {/* Zoom Group */}
+        <div className="hidden lg:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8">
           <button
             onClick={onZoomOut}
-            className="p-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 hover:text-white transition-colors"
+            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
             title="Zoom Out"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onResetZoom}
-            className="px-2 py-1 rounded-lg border border-slate-800 bg-dark-950 text-[11px] font-mono text-slate-300 hover:text-white transition-colors"
+            className="h-7 px-1.5 text-[11px] font-mono text-slate-300 hover:text-white transition-colors"
             title="Reset Zoom (100%)"
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             onClick={onZoomIn}
-            className="p-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 hover:text-white transition-colors"
+            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
             title="Zoom In"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="h-5 w-px bg-slate-800 mx-1" />
+        <div className="h-5 w-px bg-slate-800 mx-0.5" />
 
-        {/* Templates Button */}
+        {/* Presets Button */}
         <button
           onClick={onOpenTemplates}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
+          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
           title="Architecture Presets"
         >
           <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
@@ -258,7 +260,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* AI Generator Button */}
         <button
           onClick={onOpenAiGenerator}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40 hover:text-white text-xs font-semibold transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40 hover:text-white text-xs font-semibold transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]"
           title="AI Prompt-to-Architecture"
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
@@ -268,7 +270,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Projects / Cloud Button */}
         <button
           onClick={onOpenProjects}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
+          className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:border-slate-700 text-xs font-semibold transition-colors"
           title="Saved Projects & Cloud Links"
         >
           <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
@@ -278,16 +280,17 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Export Button */}
         <button
           onClick={onOpenExport}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950"
+          title="Export Architecture"
         >
           <Share2 className="w-3.5 h-3.5" />
-          <span>Export</span>
+          <span className="hidden sm:inline">Export</span>
         </button>
 
         {/* Pro Upgrade Pill */}
         <button
           onClick={onOpenPricing}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow-md transition-all"
+          className="flex items-center gap-1 h-8 px-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow-md transition-all shrink-0"
           title="View Pro & Team Plans"
         >
           <Crown className="w-3.5 h-3.5 text-slate-950" />
@@ -297,7 +300,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Clear graph */}
         <button
           onClick={onClearGraph}
-          className="p-1.5 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 transition-colors"
+          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors"
           title="Clear Architecture"
         >
           <Trash2 className="w-3.5 h-3.5" />

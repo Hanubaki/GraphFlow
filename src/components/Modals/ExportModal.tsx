@@ -133,7 +133,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   </div>
                   <button
                     onClick={() => exportArchitectureJson(nodes, edges)}
-                    className="w-full py-2 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                    className="w-full h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download JSON
@@ -153,7 +153,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   </div>
                   <button
                     onClick={() => exportMarkdownFile(nodes, edges)}
-                    className="w-full py-2 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-purple-950"
+                    className="w-full h-9 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-purple-950"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download .md Spec
@@ -173,7 +173,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  <span className="cursor-pointer py-1.5 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-block transition-colors">
+                  <span className="cursor-pointer h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-flex items-center justify-center transition-colors">
                     Choose File to Load
                   </span>
                 </label>
@@ -192,7 +192,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </span>
                 <button
                   onClick={handleCopyMarkdown}
-                  className="flex items-center gap-1.5 py-1 px-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
+                  className="h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied ? 'Copied!' : 'Copy Markdown'}

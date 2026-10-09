@@ -116,24 +116,24 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
 
       {/* Protocol Label & Delete Pin at Midpoint */}
       <foreignObject
-        x={midpoint.x - 48}
-        y={midpoint.y - 12}
-        width="96"
-        height="24"
+        x={midpoint.x - 55}
+        y={midpoint.y - 14}
+        width="110"
+        height="28"
         className="overflow-visible pointer-events-auto"
       >
         <div
-          className={`flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-mono tracking-tight shadow-md backdrop-blur-sm transition-transform group-hover:scale-110 ${badgeStyle} ${
+          className={`flex items-center justify-center gap-1.5 h-6 px-2 rounded-full border text-[10px] font-mono tracking-tight shadow-md backdrop-blur-sm transition-transform group-hover:scale-105 ${badgeStyle} ${
             isSelected ? 'ring-1 ring-cyan-400' : ''
           }`}
         >
-          <span>{edge.label || edge.protocol}</span>
+          <span className="truncate max-w-[80px]">{edge.label || edge.protocol}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onDelete(edge.id);
             }}
-            className="w-3.5 h-3.5 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-0.5"
+            className="w-4 h-4 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-all shrink-0"
             title="Remove Connection"
           >
             ×

@@ -161,8 +161,8 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
           e.stopPropagation();
           onDelete(node.id);
         }}
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20"
-        title="Delete Node"
+        className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-md z-20"
+        title="Delete Component"
       >
         ×
       </button>

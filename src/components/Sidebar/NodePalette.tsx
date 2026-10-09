@@ -119,7 +119,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
                           e.stopPropagation();
                           onAddNode(item);
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-white rounded hover:bg-slate-700 transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 w-6 h-6 text-slate-400 hover:text-white rounded-md bg-slate-800/80 hover:bg-cyan-600 flex items-center justify-center transition-all shrink-0"
                         title="Add to Canvas"
                       >
                         <Plus className="w-3.5 h-3.5" />
