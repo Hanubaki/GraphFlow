@@ -5,7 +5,7 @@ interface GridBackgroundProps {
   zoom: number;
 }
 
-export const GridBackground: React.FC<GridBackgroundProps> = ({ pan, zoom }) => {
+export const GridBackground = React.memo<GridBackgroundProps>(({ pan, zoom }) => {
   const gridSize = 28 * zoom;
   const offsetX = pan.x % gridSize;
   const offsetY = pan.y % gridSize;
@@ -20,4 +20,6 @@ export const GridBackground: React.FC<GridBackgroundProps> = ({ pan, zoom }) => 
       }}
     />
   );
-};
+});
+
+GridBackground.displayName = 'GridBackground';

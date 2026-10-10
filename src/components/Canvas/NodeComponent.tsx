@@ -24,6 +24,9 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
   onDelete,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+
   const dragStartPos = useRef<{ mouseX: number; mouseY: number; nodeX: number; nodeY: number }>({
     mouseX: 0,
     mouseY: 0,
@@ -46,8 +49,9 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
     setIsDragging(true);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const dx = (moveEvent.clientX - dragStartPos.current.mouseX) / zoom;
-      const dy = (moveEvent.clientY - dragStartPos.current.mouseY) / zoom;
+      const currentZoom = zoomRef.current;
+      const dx = (moveEvent.clientX - dragStartPos.current.mouseX) / currentZoom;
+      const dy = (moveEvent.clientY - dragStartPos.current.mouseY) / currentZoom;
       onMove(node.id, Math.round(dragStartPos.current.nodeX + dx), Math.round(dragStartPos.current.nodeY + dy));
     };
 
@@ -59,7 +63,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [node.id, node.x, node.y, onMove, onSelect, zoom]);
+  }, [node.id, node.x, node.y, onMove, onSelect]);
 
   const handleOutputPortMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -170,4 +174,23 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
   );
 };
 
-export const NodeComponent = React.memo(NodeComponentBase);
+// Strict custom memo comparison: nodes only re-render if visual attributes or selection change
+function areNodePropsEqual(prev: NodeComponentProps, next: NodeComponentProps): boolean {
+  return (
+    prev.isSelected === next.isSelected &&
+    prev.node.x === next.node.x &&
+    prev.node.y === next.node.y &&
+    prev.node.width === next.node.width &&
+    prev.node.height === next.node.height &&
+    prev.node.status === next.node.status &&
+    prev.node.latencyMs === next.node.latencyMs &&
+    prev.node.errorRate === next.node.errorRate &&
+    prev.node.throughputRps === next.node.throughputRps &&
+    prev.node.title === next.node.title &&
+    prev.node.subtitle === next.node.subtitle &&
+    prev.node.color === next.node.color &&
+    prev.node.iconName === next.node.iconName
+  );
+}
+
+export const NodeComponent = React.memo(NodeComponentBase, areNodePropsEqual);

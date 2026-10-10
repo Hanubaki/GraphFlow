@@ -124,6 +124,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     setPan({ x: newPanX, y: newPanY });
   };
 
+  const connectingStateRef = useRef(connectingState);
+  connectingStateRef.current = connectingState;
+
   // Start connecting from node output port
   const handleStartConnect = useCallback((nodeId: string, startPos: { x: number; y: number }) => {
     setConnectingState({
@@ -133,13 +136,14 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     });
   }, []);
 
-  // Complete connection on node input port
+  // Complete connection on node input port (stable reference: does not change on mouse move)
   const handleEndConnect = useCallback((targetNodeId: string) => {
-    if (!connectingState) return;
-    if (connectingState.sourceNodeId !== targetNodeId) {
+    const current = connectingStateRef.current;
+    if (!current) return;
+    if (current.sourceNodeId !== targetNodeId) {
       const newEdge: GraphEdge = {
         id: `e-${Date.now()}`,
-        fromNodeId: connectingState.sourceNodeId,
+        fromNodeId: current.sourceNodeId,
         toNodeId: targetNodeId,
         protocol: 'HTTP/REST',
         latencyMs: 15,
@@ -148,7 +152,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       onAddEdge(newEdge);
     }
     setConnectingState(null);
-  }, [connectingState, onAddEdge]);
+  }, [onAddEdge]);
 
   // Handle Drag & Drop of new nodes from catalog
   const handleDragOver = (e: React.DragEvent) => {
