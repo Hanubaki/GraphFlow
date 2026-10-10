@@ -17,6 +17,19 @@ colors:
   status-degraded: "#fbbf24"
   status-error: "#fb7185"
   data-violet: "#8b5cf6"
+  data-purple: "#a855f7"
+  data-indigo: "#818cf8"
+  data-indigo-deep: "#6366f1"
+  data-sky: "#38bdf8"
+  data-ocean: "#0ea5e9"
+  data-blue: "#3b82f6"
+  data-teal: "#14b8a6"
+  data-emerald: "#10b981"
+  data-amber: "#f59e0b"
+  data-orange: "#f97316"
+  data-rose: "#f43f5e"
+  data-red: "#ef4444"
+  data-pink: "#ec4899"
   inverse-light: "#f1f5f9"
   inverse-ink: "#020617"
 typography:
@@ -153,7 +166,8 @@ A near-black, cool slate world with one signal color and three status colors.
 - **Status Error** (#fb7185): Failed packets, errors, destructive actions.
 
 ### Data (semantic only)
-- **Data Violet** (#8b5cf6): gRPC protocol edges, node category palette, multiplayer peer cursors. It never appears in chrome.
+- **Data Violet** (#8b5cf6): gRPC protocol edges and multiplayer peer cursors.
+- **Node Category Palette** (`data-*` tokens: sky, ocean, blue, indigo, purple, teal, emerald, amber, orange, rose, red, pink): One hue per node category (client, gateway, service, queue, database, cache, external, and so on), defined in `src/constants/nodeCatalog.ts` and reused by templates and the AI generator. These colors identify *what a node is* and appear only on canvas nodes, edges, the palette icons, and exports. They never appear in chrome, buttons, or marketing surfaces.
 
 ### Named Rules
 **The One Signal Rule.** Signal Cyan is the only accent. No cyan-to-blue gradients, no second brand color. If two things on screen are cyan, they must both be actionable or selected.
