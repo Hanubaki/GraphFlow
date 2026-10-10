@@ -8,7 +8,9 @@ interface NodePaletteProps {
 }
 
 export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches === true
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCatalog = NODE_CATALOG.filter(
@@ -60,7 +62,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search components..."
-                className="w-full bg-dark-950 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/60 transition-colors"
+                className="w-full bg-dark-950 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500/60 transition-colors"
               />
             </div>
           </div>

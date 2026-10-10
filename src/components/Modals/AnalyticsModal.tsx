@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEscapeToClose } from '../../hooks/useEscapeToClose';
 import { GraphNode, GraphEdge } from '../../types/graph';
 import { useSimulationControls } from '../../context/SimulationContext';
 import {
@@ -37,6 +38,8 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
     // Graceful fallback for standalone mount
   }
 
+  useEscapeToClose(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const metrics = controls?.metrics || {
@@ -61,7 +64,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
     : '0.0';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in select-none">
+    <div role="dialog" aria-modal="true" aria-labelledby="analytics-modal-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in select-none">
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-dark-950">
@@ -70,7 +73,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
               <Activity className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <h2 id="analytics-modal-title" className="text-base font-bold text-white flex items-center gap-2">
                 Live Simulation & WebPerf Telemetry
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   60 FPS ACTIVE

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEscapeToClose } from '../../hooks/useEscapeToClose';
 import { Sparkles, X, Loader2, ArrowRight, Wand2, Key } from 'lucide-react';
 import { generateArchitectureWithGemini, synthesizeArchitectureOffline, GeneratedArchitecture } from '../../services/aiGenerator';
 
@@ -26,6 +27,8 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [statusStep, setStatusStep] = useState('');
+
+  useEscapeToClose(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -147,7 +150,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                   value={apiKey}
                   onChange={e => setApiKey(e.target.value)}
                   placeholder="AIzaSy... (leave blank to use built-in smart engine)"
-                  className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-400"
                 />
                 <p className="text-[11px] text-slate-500">
                   By default, GraphFlow includes a built-in neural rules synthesizer that runs 100% offline.

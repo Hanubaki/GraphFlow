@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEscapeToClose } from '../../hooks/useEscapeToClose';
 import { GraphNode, GraphEdge } from '../../types/graph';
 import { generateEmbedUrl, generateIframeSnippet } from '../../services/projectStorage';
 import {
@@ -28,6 +29,8 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedHeight, setSelectedHeight] = useState<number>(480);
 
+  useEscapeToClose(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const embedUrl = generateEmbedUrl(nodes, edges);
@@ -46,7 +49,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none">
+    <div role="dialog" aria-modal="true" aria-labelledby="embed-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none">
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-transparent">
@@ -56,7 +59,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-100">Embed Live Simulation</h2>
+                <h2 id="embed-modal-title" className="text-base font-bold text-slate-100">Embed Live Simulation</h2>
                 <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-300 border border-cyan-700/50">
                   VIRAL WIDGET
                 </span>

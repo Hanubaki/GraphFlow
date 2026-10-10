@@ -54,6 +54,23 @@ code, pre {
   background-size: 24px 24px;
 }
 
+/* Touch ergonomics: expand compact controls to a 44x44px hit area on coarse pointers (WCAG 2.5.8) */
+@media (pointer: coarse) {
+  :is(button, a, [role='button'], [role='tab']):is([class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='w-6'], [class~='w-7']):not([class~='absolute']):not([class~='fixed']) {
+    position: relative;
+  }
+
+  :is(button, a, [role='button'], [role='tab']):is([class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='w-6'], [class~='w-7'])::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 /* Accessibility: WCAG 2.1 AA Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *,

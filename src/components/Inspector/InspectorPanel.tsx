@@ -56,7 +56,11 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onDeleteEdge,
 }) => {
   return (
-    <div className="w-80 h-full bg-dark-900/95 border-l border-slate-800 backdrop-blur-xl flex flex-col z-20 overflow-y-auto">
+    <div
+      className={`${
+        selectedNode || selectedEdge ? 'flex' : 'hidden md:flex'
+      } absolute inset-x-0 bottom-0 max-h-[55vh] w-full rounded-t-2xl border-t md:relative md:inset-auto md:max-h-none md:w-80 md:h-full md:rounded-none md:border-t-0 md:border-l bg-dark-900/95 border-slate-800 backdrop-blur-xl flex-col z-30 md:z-20 overflow-y-auto shadow-2xl md:shadow-none`}
+    >
       {/* Panel Header */}
       <div className="p-3.5 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -252,7 +256,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 onChange={e => onUpdateNode(selectedNode.id, { notes: e.target.value })}
                 placeholder="Add service architecture documentation, deployment specs, or SLA goals..."
                 rows={3}
-                className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-400 transition-colors resize-none"
+                className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-400 transition-colors resize-none"
               />
             </div>
 
@@ -307,7 +311,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 value={selectedEdge.label || ''}
                 onChange={e => onUpdateEdge(selectedEdge.id, { label: e.target.value })}
                 placeholder="e.g. /api/v1/orders or topic:events"
-                className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-400 transition-colors"
+                className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-400 transition-colors"
               />
             </div>
 

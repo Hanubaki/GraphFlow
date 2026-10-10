@@ -253,7 +253,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                     placeholder="Architecture Title (e.g. Distributed Payment Engine)"
                     value={newTitle}
                     onChange={e => setNewTitle(e.target.value)}
-                    className="sm:col-span-2 bg-dark-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                    className="sm:col-span-2 bg-dark-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400"
                   />
                   <button
                     type="submit"
