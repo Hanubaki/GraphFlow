@@ -18,6 +18,7 @@ interface ComponentSpec {
   latencyMs: number;
   errorRate: number;
   throughputRps: number;
+  circuitBreaker?: 'closed' | 'open' | 'half-open';
   connectedTo: string[]; // target node ids
   protocol: ProtocolType;
   edgeLabel?: string;
@@ -35,6 +36,12 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
   let title = 'Custom Architecture';
   if (p.includes('food') || p.includes('yemek') || p.includes('restaurant')) {
     title = 'On-Demand Food Delivery Platform';
+  } else if (p.includes('fintech') || p.includes('payment') || p.includes('odeme') || p.includes('bank') || p.includes('stripe')) {
+    title = 'Resilient Fintech Payment Gateway';
+  } else if (p.includes('iot') || p.includes('sensor') || p.includes('telemetry') || p.includes('mqtt')) {
+    title = 'Industrial IoT Real-Time Ingestion Cluster';
+  } else if (p.includes('cqrs') || p.includes('outbox') || p.includes('event sourcing')) {
+    title = 'Transactional Outbox & Event-Sourced Architecture';
   } else if (p.includes('video') || p.includes('stream') || p.includes('netflix') || p.includes('youtube')) {
     title = 'High-Scale Video Streaming Platform';
   } else if (p.includes('chat') || p.includes('messaging') || p.includes('whatsapp') || p.includes('slack')) {
@@ -173,6 +180,69 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
       throughputRps: 80,
       connectedTo: [],
       protocol: 'HTTP/REST',
+    });
+  } else if (p.includes('fintech') || p.includes('payment') || p.includes('odeme') || p.includes('bank') || p.includes('stripe')) {
+    specs.push({
+      id: 'service-core',
+      type: 'service',
+      title: 'Payment Engine',
+      subtitle: 'Idempotent Checkout Svc',
+      layer: 2,
+      color: '#10b981',
+      iconName: 'Server',
+      latencyMs: 25,
+      errorRate: 0.1,
+      throughputRps: 1200,
+      circuitBreaker: 'closed',
+      connectedTo: ['cache-redis', 'queue-dlq', 'ext-stripe'],
+      protocol: 'gRPC',
+      edgeLabel: 'authorize',
+    });
+    specs.push({
+      id: 'queue-dlq',
+      type: 'queue',
+      title: 'Dead-Letter Queue (DLQ)',
+      subtitle: 'Kafka Poison Message Bus',
+      layer: 3,
+      color: '#f43f5e',
+      iconName: 'Shuffle',
+      latencyMs: 8,
+      errorRate: 0,
+      throughputRps: 3000,
+      connectedTo: [],
+      protocol: 'Kafka',
+      edgeLabel: 'divert',
+    });
+    specs.push({
+      id: 'ext-stripe',
+      type: 'external',
+      title: 'Stripe Banking API',
+      subtitle: 'Card Network Switch',
+      layer: 4,
+      color: '#6366f1',
+      iconName: 'ExternalLink',
+      latencyMs: 120,
+      errorRate: 0.8,
+      throughputRps: 500,
+      circuitBreaker: 'closed',
+      connectedTo: [],
+      protocol: 'HTTP/REST',
+    });
+  } else if (p.includes('iot') || p.includes('sensor') || p.includes('telemetry') || p.includes('mqtt')) {
+    specs.push({
+      id: 'service-core',
+      type: 'service',
+      title: 'Stream Engine',
+      subtitle: 'Apache Flink CEP',
+      layer: 2,
+      color: '#0ea5e9',
+      iconName: 'Zap',
+      latencyMs: 14,
+      errorRate: 0.05,
+      throughputRps: 5000,
+      connectedTo: ['cache-redis', 'db-primary'],
+      protocol: 'TCP',
+      edgeLabel: 'telemetry',
     });
   } else {
     // Standard Microservice
@@ -320,6 +390,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
         width: NODE_WIDTH,
         height: NODE_HEIGHT,
         status: 'healthy',
+        circuitBreaker: item.circuitBreaker || 'closed',
         latencyMs: item.latencyMs,
         errorRate: item.errorRate,
         throughputRps: item.throughputRps,
@@ -375,6 +446,7 @@ Strict Schema:
     "latencyMs": number,
     "errorRate": number,
     "throughputRps": number,
+    "circuitBreaker": "closed" | "open" | "half-open",
     "color": string (hex e.g. #38bdf8),
     "iconName": string
   }>,
@@ -428,6 +500,7 @@ Only output pure raw JSON without any markdown formatting.
         width: 190,
         height: 90,
         status: 'healthy',
+        circuitBreaker: n.circuitBreaker || 'closed',
         latencyMs: n.latencyMs || 25,
         errorRate: n.errorRate || 0,
         throughputRps: n.throughputRps || 500,

@@ -30,6 +30,7 @@ export interface GraphNode {
   width: number;
   height: number;
   status: NodeStatus;
+  circuitBreaker?: 'closed' | 'open' | 'half-open';
   latencyMs: number;
   errorRate: number; // 0 to 100 percentage
   throughputRps: number;
@@ -55,7 +56,7 @@ export interface DataPacket {
   toNodeId: string;
   progress: number; // 0.0 to 1.0 along the bezier curve
   speed: number;    // increment per frame
-  status: 'success' | 'warning' | 'error';
+  status: 'success' | 'warning' | 'error' | 'dlq';
   label: string;
   createdAt: number;
 }

@@ -168,8 +168,18 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
             </div>
           </div>
 
-          {/* Status Dot */}
-          <div className="flex items-center gap-1 shrink-0" title={`Status: ${statusConfig.label}`}>
+          {/* Status & Circuit Breaker Badge */}
+          <div className="flex items-center gap-1.5 shrink-0" title={`Status: ${statusConfig.label}`}>
+            {node.circuitBreaker === 'open' && (
+              <span className="px-1 py-0.5 rounded text-[8px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+                CB OPEN
+              </span>
+            )}
+            {node.circuitBreaker === 'half-open' && (
+              <span className="px-1 py-0.5 rounded text-[8px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                CB PROBE
+              </span>
+            )}
             <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${statusConfig.glow}`} />
           </div>
         </div>
@@ -229,6 +239,7 @@ function areNodePropsEqual(prev: NodeComponentProps, next: NodeComponentProps): 
     prev.node.width === next.node.width &&
     prev.node.height === next.node.height &&
     prev.node.status === next.node.status &&
+    prev.node.circuitBreaker === next.node.circuitBreaker &&
     prev.node.latencyMs === next.node.latencyMs &&
     prev.node.errorRate === next.node.errorRate &&
     prev.node.throughputRps === next.node.throughputRps &&

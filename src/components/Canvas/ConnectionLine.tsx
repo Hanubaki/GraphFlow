@@ -127,8 +127,9 @@ const PacketDot = React.memo<PacketDotProps>(({ pkt, source, target }) => {
   const pt = getBezierPoint(source, target, pkt.progress);
   const tangent = getBezierTangent(source, target, pkt.progress);
   const isError = pkt.status === 'error';
+  const isDlq = pkt.status === 'dlq';
   const isWarning = pkt.status === 'warning';
-  const color = isError ? '#f43f5e' : isWarning ? '#fbbf24' : '#00f0ff';
+  const color = isError ? '#f43f5e' : isDlq ? '#d946ef' : isWarning ? '#fbbf24' : '#00f0ff';
 
   return (
     <g
@@ -142,7 +143,7 @@ const PacketDot = React.memo<PacketDotProps>(({ pkt, source, target }) => {
         x2="0"
         y2="0"
         stroke={color}
-        strokeWidth={isError ? 2.5 : 2}
+        strokeWidth={isError || isDlq ? 2.5 : 2}
         strokeLinecap="round"
         opacity="0.6"
       />
@@ -150,16 +151,16 @@ const PacketDot = React.memo<PacketDotProps>(({ pkt, source, target }) => {
       <circle
         cx="0"
         cy="0"
-        r={isError ? 6.5 : 4.5}
+        r={isError || isDlq ? 6.5 : 4.5}
         fill={color}
         opacity="0.35"
-        className={isError ? 'animate-ping' : ''}
+        className={isError || isDlq ? 'animate-ping' : ''}
       />
       {/* Packet Core */}
       <circle
         cx="0"
         cy="0"
-        r={isError ? 4.2 : 3.2}
+        r={isError || isDlq ? 4.2 : 3.2}
         fill={color}
         stroke="#ffffff"
         strokeWidth="1.2"

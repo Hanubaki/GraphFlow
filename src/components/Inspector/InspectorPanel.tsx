@@ -10,6 +10,7 @@ import {
   Clock,
   AlertTriangle,
   Zap,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface InspectorPanelProps {
@@ -113,6 +114,43 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                       key={status}
                       onClick={() => onUpdateNode(selectedNode.id, { status })}
                       className={`h-8 rounded-lg border text-xs font-semibold capitalize flex items-center justify-center transition-all ${
+                        isActive
+                          ? config.active
+                          : 'bg-dark-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Circuit Breaker Resilience */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  Circuit Breaker
+                </span>
+                <span className="font-mono text-[10px] text-slate-400 uppercase">
+                  {selectedNode.circuitBreaker || 'closed'}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['closed', 'half-open', 'open'] as const).map(cb => {
+                  const isActive = (selectedNode.circuitBreaker || 'closed') === cb;
+                  const config = {
+                    closed: { label: 'Closed (Pass)', active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' },
+                    'half-open': { label: 'Half-Open', active: 'bg-amber-500/20 text-amber-400 border-amber-500/50' },
+                    open: { label: 'Open (Trip)', active: 'bg-rose-500/20 text-rose-400 border-rose-500/50' },
+                  }[cb];
+
+                  return (
+                    <button
+                      key={cb}
+                      onClick={() => onUpdateNode(selectedNode.id, { circuitBreaker: cb })}
+                      className={`h-7 rounded-lg border text-[10px] font-semibold flex items-center justify-center transition-all ${
                         isActive
                           ? config.active
                           : 'bg-dark-950 border-slate-800 text-slate-400 hover:border-slate-700'

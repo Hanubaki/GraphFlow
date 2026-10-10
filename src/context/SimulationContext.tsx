@@ -132,6 +132,11 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         const totalLatency = fromNode.latencyMs + toNode.latencyMs + randomEdge.latencyMs;
         const baseSpeed = Math.min(0.025, Math.max(0.006, 120 / Math.max(30, totalLatency)));
 
+        const isCircuitOpen = toNode.circuitBreaker === 'open';
+        const packetStatus: 'success' | 'warning' | 'error' | 'dlq' = isCircuitOpen
+          ? 'dlq'
+          : (isError ? 'error' : (toNode.status === 'degraded' ? 'warning' : 'success'));
+
         newPackets.push({
           id: `pkt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           edgeId: randomEdge.id,
@@ -139,8 +144,8 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
           toNodeId: randomEdge.toNodeId,
           progress: 0,
           speed: baseSpeed,
-          status: isError ? 'error' : (toNode.status === 'degraded' ? 'warning' : 'success'),
-          label: randomEdge.protocol,
+          status: packetStatus,
+          label: isCircuitOpen ? 'DLQ/Trip' : randomEdge.protocol,
           createdAt: Date.now(),
         });
 
@@ -182,7 +187,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         for (const pkt of prev) {
           const nextProgress = pkt.progress + pkt.speed * (dt / 16.66) * speedMultiplier;
           if (nextProgress >= 1) {
-            if (pkt.status === 'error') {
+            if (pkt.status === 'error' || pkt.status === 'dlq') {
               errorCount++;
               if (Math.random() < 0.2) soundFx.playError();
             } else {
