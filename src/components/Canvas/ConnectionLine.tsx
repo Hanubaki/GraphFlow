@@ -28,7 +28,6 @@ interface ConnectionWireProps {
   protocol: ProtocolType;
   label?: string;
   edgeId: string;
-  onSelect: (edgeId: string) => void;
   onDelete: (edgeId: string) => void;
 }
 
@@ -40,7 +39,6 @@ const ConnectionWire = React.memo<ConnectionWireProps>(({
   protocol,
   label,
   edgeId,
-  onSelect,
   onDelete,
 }) => {
   const badgeStyle = protocolColors[protocol] || 'text-slate-300 border-slate-700 bg-slate-900/80';
@@ -215,7 +213,6 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
         protocol={edge.protocol}
         label={edge.label}
         edgeId={edge.id}
-        onSelect={onSelect}
         onDelete={onDelete}
       />
 

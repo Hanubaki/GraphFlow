@@ -7,6 +7,12 @@ import { ConnectionLine } from './ConnectionLine';
 import { createBezierPath } from '../../utils/geometry';
 import { useSimulationPackets } from '../../context/SimulationContext';
 
+interface ConnectingState {
+  sourceNodeId: string;
+  startPos: { x: number; y: number };
+  currentPos: { x: number; y: number };
+}
+
 interface GraphCanvasProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -48,6 +54,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const packets = propPackets ?? contextPackets;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [connectingState, setConnectingState] = useState<ConnectingState | null>(null);
   const panStartRef = useRef<{ x: number; y: number; mouseX: number; mouseY: number }>({
     x: 0,
     y: 0,

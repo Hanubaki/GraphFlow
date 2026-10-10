@@ -80,7 +80,7 @@ export interface ArchitectureTemplate {
   id: string;
   name: string;
   description: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
   tags: string[];
   nodes: GraphNode[];
   edges: GraphEdge[];

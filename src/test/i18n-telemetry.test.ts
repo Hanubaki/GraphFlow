@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { telemetry, TelemetryPayload } from '../utils/telemetry';
 import { translations } from '../i18n/translations';
 import { getNestedTranslation } from '../i18n/I18nContext';

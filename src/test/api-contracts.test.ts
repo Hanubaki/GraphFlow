@@ -7,7 +7,6 @@ import {
   clearRateLimitStore,
   checkAndStoreIdempotency,
   clearIdempotencyStore,
-  RATE_LIMIT_MAX_REQUESTS,
 } from '../../api/webhook';
 
 describe('API Design & Security Contracts Suite', () => {
