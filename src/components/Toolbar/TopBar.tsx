@@ -402,7 +402,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={handleOpenExport}
           className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
           title={t('topbar.exportTitle')}
-          aria-label="Export architecture as JSON, PNG, or SVG"
+          aria-label="Export architecture as JSON, Markdown, Docker Compose, or Terraform"
         >
           <Share2 className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{t('topbar.export')}</span>

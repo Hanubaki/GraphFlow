@@ -83,7 +83,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
             Supercharge Your System Architecture Workflow
           </h2>
           <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-            Unlimited cloud projects, AI generation, 4K vector exports, and real-time team collaboration.
+            Unlimited cloud projects, AI generation, Terraform export, and real-time team collaboration.
           </p>
 
           {/* Current User Badge */}
@@ -140,7 +140,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Standard PNG Export</span>
+                  <span>JSON, Mermaid &amp; Docker Compose Export</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-500">
                   <X className="w-3.5 h-3.5 shrink-0" />
@@ -186,7 +186,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>High-Res 4K SVG & PDF Export</span>
+                  <span>Terraform (IaC) Export</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
