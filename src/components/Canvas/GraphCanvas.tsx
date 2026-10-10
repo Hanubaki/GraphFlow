@@ -5,13 +5,14 @@ import { GridBackground } from './GridBackground';
 import { NodeComponent } from './NodeComponent';
 import { ConnectionLine } from './ConnectionLine';
 import { createBezierPath } from '../../utils/geometry';
+import { useSimulationPackets } from '../../context/SimulationContext';
 
 interface GraphCanvasProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
-  packets: DataPacket[];
+  packets?: DataPacket[];
   pan: { x: number; y: number };
   zoom: number;
   setPan: (pan: { x: number; y: number }) => void;
@@ -30,7 +31,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   edges,
   selectedNodeId,
   selectedEdgeId,
-  packets,
+  packets: propPackets,
   pan,
   zoom,
   setPan,
@@ -43,6 +44,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   onAddEdge,
   onAddNodeAt,
 }) => {
+  const contextPackets = useSimulationPackets();
+  const packets = propPackets ?? contextPackets;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number; mouseX: number; mouseY: number }>({

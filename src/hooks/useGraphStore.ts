@@ -1,14 +1,19 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { GraphNode, GraphEdge, ArchitectureTemplate } from '../types/graph';
 import { TEMPLATES } from '../constants/templates';
-import { soundFx } from '../utils/sound';
 
 interface HistorySnapshot {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
 
-export function useGraphStore() {
+export type GraphActionSound = 'click' | 'connect';
+
+export interface GraphStoreOptions {
+  onSound?: (sound: GraphActionSound) => void;
+}
+
+export function useGraphStore(options?: GraphStoreOptions) {
   // Default to E-Commerce template on initial load for immediate wow factor
   const initialTemplate = TEMPLATES[0];
 
@@ -48,8 +53,8 @@ export function useGraphStore() {
     });
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
-    soundFx.playClick();
-  }, [edges, recordSnapshot]);
+    options?.onSound?.('click');
+  }, [edges, recordSnapshot, options]);
 
   const updateNode = useCallback((id: string, updates: Partial<GraphNode>) => {
     setNodes(prev => prev.map(n => (n.id === id ? { ...n, ...updates } : n)));
@@ -67,8 +72,8 @@ export function useGraphStore() {
     // Remove all connected edges
     setEdges(prevEdges => prevEdges.filter(e => e.fromNodeId !== id && e.toNodeId !== id));
     if (selectedNodeId === id) setSelectedNodeId(null);
-    soundFx.playClick();
-  }, [edges, recordSnapshot, selectedNodeId]);
+    options?.onSound?.('click');
+  }, [edges, recordSnapshot, selectedNodeId, options]);
 
   const addEdge = useCallback((edge: GraphEdge) => {
     // Prevent duplicate edges between same nodes
@@ -78,10 +83,10 @@ export function useGraphStore() {
       );
       if (exists) return prevEdges;
       recordSnapshot(nodes, prevEdges);
-      soundFx.playConnect();
+      options?.onSound?.('connect');
       return [...prevEdges, edge];
     });
-  }, [nodes, recordSnapshot]);
+  }, [nodes, recordSnapshot, options]);
 
   const updateEdge = useCallback((id: string, updates: Partial<GraphEdge>) => {
     setEdges(prev => prev.map(e => (e.id === id ? { ...e, ...updates } : e)));
@@ -93,8 +98,8 @@ export function useGraphStore() {
       return prevEdges.filter(e => e.id !== id);
     });
     if (selectedEdgeId === id) setSelectedEdgeId(null);
-    soundFx.playClick();
-  }, [nodes, recordSnapshot, selectedEdgeId]);
+    options?.onSound?.('click');
+  }, [nodes, recordSnapshot, selectedEdgeId, options]);
 
   const selectNode = useCallback((id: string | null) => {
     setSelectedNodeId(id);
@@ -118,8 +123,8 @@ export function useGraphStore() {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setHistoryChangeCount(c => c + 1);
-    soundFx.playClick();
-  }, [nodes, edges]);
+    options?.onSound?.('click');
+  }, [nodes, edges, options]);
 
   const redo = useCallback(() => {
     if (redoStackRef.current.length === 0) return;
@@ -133,8 +138,8 @@ export function useGraphStore() {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setHistoryChangeCount(c => c + 1);
-    soundFx.playClick();
-  }, [nodes, edges]);
+    options?.onSound?.('click');
+  }, [nodes, edges, options]);
 
   const loadTemplate = useCallback((template: ArchitectureTemplate) => {
     recordSnapshot(nodes, edges);
@@ -144,8 +149,8 @@ export function useGraphStore() {
     setSelectedEdgeId(null);
     setPan({ x: 0, y: 0 });
     setZoom(1);
-    soundFx.playConnect();
-  }, [nodes, edges, recordSnapshot]);
+    options?.onSound?.('connect');
+  }, [nodes, edges, recordSnapshot, options]);
 
   const clearGraph = useCallback(() => {
     recordSnapshot(nodes, edges);
@@ -153,8 +158,8 @@ export function useGraphStore() {
     setEdges([]);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
-    soundFx.playClick();
-  }, [nodes, edges, recordSnapshot]);
+    options?.onSound?.('click');
+  }, [nodes, edges, recordSnapshot, options]);
 
   // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Delete, Esc)
   useEffect(() => {

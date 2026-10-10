@@ -21,20 +21,21 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSimulationControls } from '../../context/SimulationContext';
 
 interface TopBarProps {
-  isRunning: boolean;
-  speedMultiplier: number;
-  isSpikeMode: boolean;
-  soundEnabled: boolean;
-  metrics: SimulationMetrics;
+  isRunning?: boolean;
+  speedMultiplier?: number;
+  isSpikeMode?: boolean;
+  soundEnabled?: boolean;
+  metrics?: SimulationMetrics;
   canUndo: boolean;
   canRedo: boolean;
   zoom: number;
-  onTogglePlay: () => void;
-  onSetSpeed: (speed: number) => void;
-  onTriggerSpike: () => void;
-  onToggleSound: () => void;
+  onTogglePlay?: () => void;
+  onSetSpeed?: (speed: number) => void;
+  onTriggerSpike?: () => void;
+  onToggleSound?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onZoomIn: () => void;
@@ -52,18 +53,18 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
-  isRunning,
-  speedMultiplier,
-  isSpikeMode,
-  soundEnabled,
-  metrics,
+  isRunning: propIsRunning,
+  speedMultiplier: propSpeedMultiplier,
+  isSpikeMode: propIsSpikeMode,
+  soundEnabled: propSoundEnabled,
+  metrics: propMetrics,
   canUndo,
   canRedo,
   zoom,
-  onTogglePlay,
-  onSetSpeed,
-  onTriggerSpike,
-  onToggleSound,
+  onTogglePlay: propOnTogglePlay,
+  onSetSpeed: propOnSetSpeed,
+  onTriggerSpike: propOnTriggerSpike,
+  onToggleSound: propOnToggleSound,
   onUndo,
   onRedo,
   onZoomIn,
@@ -80,6 +81,31 @@ export const TopBar: React.FC<TopBarProps> = ({
   onClearGraph,
 }) => {
   const { user, isPro, planTier } = useAuth();
+
+  let contextControls = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    contextControls = useSimulationControls();
+  } catch {
+    // TopBar mounted outside SimulationProvider (e.g. standalone test)
+  }
+
+  const isRunning = propIsRunning ?? contextControls?.isRunning ?? true;
+  const speedMultiplier = propSpeedMultiplier ?? contextControls?.speedMultiplier ?? 1;
+  const isSpikeMode = propIsSpikeMode ?? contextControls?.isSpikeMode ?? false;
+  const soundEnabled = propSoundEnabled ?? contextControls?.soundEnabled ?? true;
+  const metrics = propMetrics ?? contextControls?.metrics ?? {
+    totalSent: 0,
+    delivered: 0,
+    errors: 0,
+    currentRps: 0,
+    avgLatencyMs: 24,
+  };
+
+  const onTogglePlay = propOnTogglePlay ?? contextControls?.togglePlay ?? (() => {});
+  const onSetSpeed = propOnSetSpeed ?? contextControls?.setSpeedMultiplier ?? (() => {});
+  const onTriggerSpike = propOnTriggerSpike ?? contextControls?.triggerSpike ?? (() => {});
+  const onToggleSound = propOnToggleSound ?? contextControls?.toggleSound ?? (() => {});
 
   return (
     <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2 w-full max-w-full overflow-hidden">

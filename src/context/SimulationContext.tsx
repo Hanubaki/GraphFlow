@@ -1,21 +1,58 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { GraphNode, GraphEdge, DataPacket, SimulationMetrics } from '../types/graph';
 import { soundFx } from '../utils/sound';
 
-export {
-  SimulationProvider,
-  useSimulationControls,
-  useSimulationPackets,
-} from '../context/SimulationContext';
-export type { SimulationControls } from '../context/SimulationContext';
+export interface SimulationControls {
+  isRunning: boolean;
+  speedMultiplier: number;
+  isSpikeMode: boolean;
+  soundEnabled: boolean;
+  metrics: SimulationMetrics;
+  togglePlay: () => void;
+  setSpeedMultiplier: (speed: number) => void;
+  triggerSpike: () => void;
+  toggleSound: () => void;
+  resetSimulation: () => void;
+}
 
-export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
+// Low-frequency control context (updates on user interaction or 1 Hz metrics)
+const SimulationControlContext = createContext<SimulationControls | null>(null);
+
+// High-frequency animation context (updates at 60 FPS for canvas rendering)
+const SimulationPacketContext = createContext<DataPacket[]>([]);
+
+export const useSimulationControls = (): SimulationControls => {
+  const ctx = useContext(SimulationControlContext);
+  if (!ctx) {
+    throw new Error('useSimulationControls must be used within a SimulationProvider');
+  }
+  return ctx;
+};
+
+export const useSimulationPackets = (): DataPacket[] => {
+  return useContext(SimulationPacketContext);
+};
+
+interface SimulationProviderProps {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  children: React.ReactNode;
+}
+
+export const SimulationProvider: React.FC<SimulationProviderProps> = ({
+  nodes,
+  edges,
+  children,
+}) => {
   const [isRunning, setIsRunning] = useState<boolean>(true);
-  const [speedMultiplier, setSpeedMultiplier] = useState<number>(1);
+  const [speedMultiplier, setSpeedMultiplierState] = useState<number>(1);
   const [isSpikeMode, setIsSpikeMode] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  
+  // High-frequency packet animation state (isolated to SimulationPacketContext)
   const [packets, setPackets] = useState<DataPacket[]>([]);
 
+  // Low-frequency metrics (updated at 1 Hz)
   const [metrics, setMetrics] = useState<SimulationMetrics>({
     totalSent: 0,
     delivered: 0,
@@ -24,12 +61,10 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     avgLatencyMs: 24,
   });
 
-  // Track animation frame & intervals
   const animFrameRef = useRef<number | null>(null);
   const rpsCounterRef = useRef<number>(0);
   const lastRpsCalcTime = useRef<number>(Date.now());
 
-  // Toggle sound
   const toggleSound = useCallback(() => {
     setSoundEnabled(prev => {
       soundFx.enabled = !prev;
@@ -37,7 +72,6 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     });
   }, []);
 
-  // Trigger temporary traffic spike
   const triggerSpike = useCallback(() => {
     setIsSpikeMode(true);
     soundFx.playSpike();
@@ -49,6 +83,10 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
   const togglePlay = useCallback(() => {
     setIsRunning(prev => !prev);
     soundFx.playClick();
+  }, []);
+
+  const setSpeedMultiplier = useCallback((speed: number) => {
+    setSpeedMultiplierState(speed);
   }, []);
 
   const resetSimulation = useCallback(() => {
@@ -70,7 +108,6 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     const intervalTime = isSpikeMode ? 120 / speedMultiplier : 400 / speedMultiplier;
 
     const spawnInterval = setInterval(() => {
-      // Pick random active edges to send traffic
       const count = isSpikeMode ? Math.min(edges.length, 4) : 1;
       const newPackets: DataPacket[] = [];
 
@@ -83,12 +120,10 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
           continue;
         }
 
-        // Check if error will occur based on node and edge error rate
         const combinedErrorRate = Math.max(fromNode.errorRate, toNode.errorRate, randomEdge.errorRate);
         const isError = Math.random() * 100 < combinedErrorRate;
 
-        // Base speed inverse to latency
-        const totalLatency = (fromNode.latencyMs + toNode.latencyMs + randomEdge.latencyMs);
+        const totalLatency = fromNode.latencyMs + toNode.latencyMs + randomEdge.latencyMs;
         const baseSpeed = Math.min(0.025, Math.max(0.006, 120 / Math.max(30, totalLatency)));
 
         newPackets.push({
@@ -108,7 +143,6 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
 
       if (newPackets.length > 0) {
         setPackets(prev => {
-          // Cap total active packets to prevent DOM clutter
           const filtered = prev.length > 40 ? prev.slice(prev.length - 30) : prev;
           return [...filtered, ...newPackets];
         });
@@ -132,7 +166,7 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     let lastTimestamp = performance.now();
 
     const loop = (timestamp: number) => {
-      const dt = Math.min(32, timestamp - lastTimestamp); // cap dt
+      const dt = Math.min(32, timestamp - lastTimestamp);
       lastTimestamp = timestamp;
 
       setPackets(prev => {
@@ -145,7 +179,6 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
         for (const pkt of prev) {
           const nextProgress = pkt.progress + pkt.speed * (dt / 16.66) * speedMultiplier;
           if (nextProgress >= 1) {
-            // Packet finished journey
             if (pkt.status === 'error') {
               errorCount++;
               if (Math.random() < 0.2) soundFx.playError();
@@ -180,7 +213,6 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
         rpsCounterRef.current = 0;
         lastRpsCalcTime.current = now;
 
-        // Calculate dynamic average latency from active nodes
         const activeNodes = nodes.filter(n => n.status !== 'down');
         const avgLat = activeNodes.length > 0
           ? Math.round(activeNodes.reduce((acc, n) => acc + n.latencyMs, 0) / activeNodes.length)
@@ -203,17 +235,35 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     };
   }, [isRunning, speedMultiplier, nodes]);
 
-  return {
+  const controlsValue = useMemo<SimulationControls>(() => ({
     isRunning,
     speedMultiplier,
     isSpikeMode,
     soundEnabled,
-    packets,
     metrics,
     togglePlay,
     setSpeedMultiplier,
     triggerSpike,
     toggleSound,
     resetSimulation,
-  };
-}
+  }), [
+    isRunning,
+    speedMultiplier,
+    isSpikeMode,
+    soundEnabled,
+    metrics,
+    togglePlay,
+    setSpeedMultiplier,
+    triggerSpike,
+    toggleSound,
+    resetSimulation,
+  ]);
+
+  return (
+    <SimulationControlContext.Provider value={controlsValue}>
+      <SimulationPacketContext.Provider value={packets}>
+        {children}
+      </SimulationPacketContext.Provider>
+    </SimulationControlContext.Provider>
+  );
+};

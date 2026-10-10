@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGraphStore } from './hooks/useGraphStore';
-import { useSimulation } from './hooks/useSimulation';
+import { SimulationProvider } from './context/SimulationContext';
+import { soundFx } from './utils/sound';
 import { TopBar } from './components/Toolbar/TopBar';
 import { NodePalette } from './components/Sidebar/NodePalette';
 import { GraphCanvas } from './components/Canvas/GraphCanvas';
@@ -49,20 +50,15 @@ export const App: React.FC = () => {
     clearGraph,
     setNodes,
     setEdges,
-  } = useGraphStore();
-
-  const {
-    isRunning,
-    speedMultiplier,
-    isSpikeMode,
-    soundEnabled,
-    packets,
-    metrics,
-    togglePlay,
-    setSpeedMultiplier,
-    triggerSpike,
-    toggleSound,
-  } = useSimulation(nodes, edges);
+  } = useGraphStore({
+    onSound: (sound) => {
+      if (sound === 'connect') {
+        soundFx.playConnect();
+      } else {
+        soundFx.playClick();
+      }
+    },
+  });
 
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -224,63 +220,54 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
-      {/* Top Navigation & Simulation Controller */}
-      <TopBar
-        isRunning={isRunning}
-        speedMultiplier={speedMultiplier}
-        isSpikeMode={isSpikeMode}
-        soundEnabled={soundEnabled}
-        metrics={metrics}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        zoom={zoom}
-        onTogglePlay={togglePlay}
-        onSetSpeed={setSpeedMultiplier}
-        onTriggerSpike={triggerSpike}
-        onToggleSound={toggleSound}
-        onUndo={undo}
-        onRedo={redo}
-        onZoomIn={() => setZoom(z => Math.min(2.5, z * 1.2))}
-        onZoomOut={() => setZoom(z => Math.max(0.3, z / 1.2))}
-        onResetZoom={() => handleAutoCenter()}
-        onOpenTemplates={() => setIsTemplatesOpen(true)}
-        onOpenExport={() => setIsExportOpen(true)}
-        onOpenEmbed={() => setIsEmbedOpen(true)}
-        onOpenAiGenerator={() => setIsAiGenOpen(true)}
-        onOpenProjects={() => setIsProjectsOpen(true)}
-        onOpenPricing={() => setIsPricingOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenHome={() => setViewMode('landing')}
-        onClearGraph={clearGraph}
-      />
+    <SimulationProvider nodes={nodes} edges={edges}>
+      <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
+        {/* Top Navigation & Simulation Controller */}
+        <TopBar
+          canUndo={canUndo}
+          canRedo={canRedo}
+          zoom={zoom}
+          onUndo={undo}
+          onRedo={redo}
+          onZoomIn={() => setZoom(z => Math.min(2.5, z * 1.2))}
+          onZoomOut={() => setZoom(z => Math.max(0.3, z / 1.2))}
+          onResetZoom={() => handleAutoCenter()}
+          onOpenTemplates={() => setIsTemplatesOpen(true)}
+          onOpenExport={() => setIsExportOpen(true)}
+          onOpenEmbed={() => setIsEmbedOpen(true)}
+          onOpenAiGenerator={() => setIsAiGenOpen(true)}
+          onOpenProjects={() => setIsProjectsOpen(true)}
+          onOpenPricing={() => setIsPricingOpen(true)}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenHome={() => setViewMode('landing')}
+          onClearGraph={clearGraph}
+        />
 
-      {/* Main Studio Workspace */}
-      <main className="flex flex-1 relative overflow-hidden">
-        {/* Left: Component Catalog Palette */}
-        <NodePalette onAddNode={handleAddNodeFromPalette} />
+        {/* Main Studio Workspace */}
+        <main className="flex flex-1 relative overflow-hidden">
+          {/* Left: Component Catalog Palette */}
+          <NodePalette onAddNode={handleAddNodeFromPalette} />
 
-        {/* Center: Interactive Graph Canvas */}
-        <div className="flex-1 relative h-full">
-          <GraphCanvas
-            nodes={nodes}
-            edges={edges}
-            selectedNodeId={selectedNodeId}
-            selectedEdgeId={selectedEdgeId}
-            packets={packets}
-            pan={pan}
-            zoom={zoom}
-            setPan={setPan}
-            setZoom={setZoom}
-            onSelectNode={selectNode}
-            onSelectEdge={selectEdge}
-            onMoveNode={moveNode}
-            onDeleteNode={removeNode}
-            onDeleteEdge={removeEdge}
-            onAddEdge={addEdge}
-            onAddNodeAt={handleAddNodeAt}
-          />
-        </div>
+          {/* Center: Interactive Graph Canvas */}
+          <div className="flex-1 relative h-full">
+            <GraphCanvas
+              nodes={nodes}
+              edges={edges}
+              selectedNodeId={selectedNodeId}
+              selectedEdgeId={selectedEdgeId}
+              pan={pan}
+              zoom={zoom}
+              setPan={setPan}
+              setZoom={setZoom}
+              onSelectNode={selectNode}
+              onSelectEdge={selectEdge}
+              onMoveNode={moveNode}
+              onDeleteNode={removeNode}
+              onDeleteEdge={removeEdge}
+              onAddEdge={addEdge}
+              onAddNodeAt={handleAddNodeAt}
+            />
+          </div>
 
         {/* Right: Property Inspector & Metrics */}
         <InspectorPanel
