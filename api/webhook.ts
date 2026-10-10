@@ -1,41 +1,93 @@
 import type { IncomingMessage } from 'http';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { createProblemDetails } from './problemDetails';
 
 export const MAX_PAYLOAD_BYTES = 1024 * 1024; // 1 MB
 export const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 export const RATE_LIMIT_MAX_REQUESTS = 60; // Max 60 requests per minute per IP
+export const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24-hour deduplication window
 
 interface RateLimitRecord {
   count: number;
   resetTime: number;
 }
 
+interface IdempotencyRecord {
+  receivedAt: number;
+  status: 'processed';
+}
+
 const rateLimitStore = new Map<string, RateLimitRecord>();
+const idempotencyStore = new Map<string, IdempotencyRecord>();
+
+export interface RateLimitStatus {
+  isThrottled: boolean;
+  limit: number;
+  remaining: number;
+  resetSeconds: number;
+}
+
+export function checkRateLimit(
+  identifier: string,
+  limit: number = RATE_LIMIT_MAX_REQUESTS,
+  windowMs: number = RATE_LIMIT_WINDOW_MS
+): RateLimitStatus {
+  const now = Date.now();
+  const record = rateLimitStore.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(identifier, { count: 1, resetTime: now + windowMs });
+    return {
+      isThrottled: false,
+      limit,
+      remaining: limit - 1,
+      resetSeconds: Math.ceil(windowMs / 1000),
+    };
+  }
+
+  if (record.count >= limit) {
+    return {
+      isThrottled: true,
+      limit,
+      remaining: 0,
+      resetSeconds: Math.max(1, Math.ceil((record.resetTime - now) / 1000)),
+    };
+  }
+
+  record.count += 1;
+  return {
+    isThrottled: false,
+    limit,
+    remaining: Math.max(0, limit - record.count),
+    resetSeconds: Math.max(1, Math.ceil((record.resetTime - now) / 1000)),
+  };
+}
 
 export function isRateLimited(
   identifier: string,
   limit: number = RATE_LIMIT_MAX_REQUESTS,
   windowMs: number = RATE_LIMIT_WINDOW_MS
 ): boolean {
-  const now = Date.now();
-  const record = rateLimitStore.get(identifier);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(identifier, { count: 1, resetTime: now + windowMs });
-    return false;
-  }
-
-  if (record.count >= limit) {
-    return true;
-  }
-
-  record.count += 1;
-  return false;
+  return checkRateLimit(identifier, limit, windowMs).isThrottled;
 }
 
 export function clearRateLimitStore(): void {
   rateLimitStore.clear();
+}
+
+export function checkAndStoreIdempotency(key: string): boolean {
+  const now = Date.now();
+  const existing = idempotencyStore.get(key);
+  if (existing && now - existing.receivedAt < IDEMPOTENCY_TTL_MS) {
+    return true; // Already processed
+  }
+  idempotencyStore.set(key, { receivedAt: now, status: 'processed' });
+  return false;
+}
+
+export function clearIdempotencyStore(): void {
+  idempotencyStore.clear();
 }
 
 // Read raw body helper for Vercel Serverless with max size limit
@@ -60,7 +112,9 @@ export async function getRawBody(req: IncomingMessage, maxBytes = MAX_PAYLOAD_BY
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json(
+      createProblemDetails(405, 'Method Not Allowed', `HTTP method ${req.method} is not supported. Use POST.`, 'method-not-allowed')
+    );
   }
 
   // Rate limiting by client IP
@@ -71,8 +125,16 @@ export default async function handler(req: any, res: any) {
     '127.0.0.1'
   ).split(',')[0].trim();
 
-  if (isRateLimited(clientIp)) {
-    return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+  const rateStatus = checkRateLimit(clientIp);
+  res.setHeader?.('X-RateLimit-Limit', String(rateStatus.limit));
+  res.setHeader?.('X-RateLimit-Remaining', String(rateStatus.remaining));
+  res.setHeader?.('X-RateLimit-Reset', String(rateStatus.resetSeconds));
+
+  if (rateStatus.isThrottled) {
+    res.setHeader?.('Retry-After', String(rateStatus.resetSeconds));
+    return res.status(429).json(
+      createProblemDetails(429, 'Rate Limit Exceeded', 'Too many requests. Please slow down and retry later.', 'rate-limit-exceeded')
+    );
   }
 
   const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
@@ -81,7 +143,9 @@ export default async function handler(req: any, res: any) {
 
   if (!webhookSecret || !supabaseUrl || !supabaseServiceKey) {
     console.error('Missing environment variables for Lemon Squeezy webhook.');
-    return res.status(500).json({ error: 'Server configuration error.' });
+    return res.status(500).json(
+      createProblemDetails(500, 'Server Misconfiguration', 'Missing critical server environment credentials.', 'server-misconfiguration')
+    );
   }
 
   try {
@@ -90,19 +154,25 @@ export default async function handler(req: any, res: any) {
       rawBody = typeof req.body === 'string' ? req.body : await getRawBody(req);
     } catch (readErr: any) {
       if (readErr?.message === 'PAYLOAD_TOO_LARGE') {
-        return res.status(413).json({ error: 'Payload exceeds maximum limit of 1MB.' });
+        return res.status(413).json(
+          createProblemDetails(413, 'Payload Too Large', 'Payload exceeds maximum limit of 1MB.', 'payload-too-large')
+        );
       }
       throw readErr;
     }
 
     if (rawBody.length > MAX_PAYLOAD_BYTES) {
-      return res.status(413).json({ error: 'Payload exceeds maximum limit of 1MB.' });
+      return res.status(413).json(
+        createProblemDetails(413, 'Payload Too Large', 'Payload exceeds maximum limit of 1MB.', 'payload-too-large')
+      );
     }
 
     const signature = req.headers['x-signature'];
 
     if (!signature || typeof signature !== 'string') {
-      return res.status(400).json({ error: 'Missing X-Signature header.' });
+      return res.status(400).json(
+        createProblemDetails(400, 'Bad Request', 'Missing required X-Signature header.', 'missing-signature')
+      );
     }
 
     // Verify HMAC-SHA256 signature
@@ -111,13 +181,28 @@ export default async function handler(req: any, res: any) {
     const signatureBuffer = Buffer.from(signature, 'utf8');
 
     if (digest.length !== signatureBuffer.length || !crypto.timingSafeEqual(digest, signatureBuffer)) {
-      return res.status(401).json({ error: 'Invalid webhook signature.' });
+      return res.status(401).json(
+        createProblemDetails(401, 'Unauthorized', 'Invalid webhook signature.', 'invalid-signature')
+      );
     }
 
     const payload = JSON.parse(rawBody);
     const eventName = payload.meta?.event_name;
     const customData = payload.meta?.custom_data || {};
     const userId = customData.user_id;
+
+    // Strict Idempotency Check
+    const eventId = String(
+      req.headers['idempotency-key'] ||
+      req.headers['x-event-id'] ||
+      payload.meta?.event_id ||
+      payload.data?.id ||
+      ''
+    );
+
+    if (eventId && checkAndStoreIdempotency(eventId)) {
+      return res.status(200).json({ received: true, idempotent: true });
+    }
 
     const attributes = payload.data?.attributes || {};
     const customerId = String(attributes.customer_id || '');
@@ -143,7 +228,7 @@ export default async function handler(req: any, res: any) {
 
     if (!targetUserId) {
       console.warn('Webhook received but unable to locate corresponding user_id:', payload.meta);
-      return res.status(200).json({ warning: 'User not found in payload' });
+      return res.status(200).json({ warning: 'User not found in payload', received: true });
     }
 
     // Process subscription events
@@ -183,6 +268,8 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ received: true });
   } catch (error: any) {
     console.error('Webhook processing exception:', error);
-    return res.status(500).json({ error: error?.message || 'Internal server error' });
+    return res.status(500).json(
+      createProblemDetails(500, 'Internal Server Error', error?.message || 'Internal server error', 'internal-error')
+    );
   }
 }
