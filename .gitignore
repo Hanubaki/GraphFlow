@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Impeccable Engine Binaries & Local State
+**/skills/impeccable/scripts/bin/
+.impeccable/
