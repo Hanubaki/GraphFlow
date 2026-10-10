@@ -127,7 +127,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
             <div>
               <div className="text-sm font-bold text-slate-200">Community</div>
               <div className="text-2xl font-extrabold text-slate-100 mt-2">$0</div>
-              <div className="text-[11px] text-slate-500">Free forever for personal tinkering</div>
+              <div className="text-[11px] text-slate-400">Free forever for personal tinkering</div>
 
               <div className="mt-5 space-y-2.5 text-xs text-slate-300">
                 <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                   <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>JSON, Mermaid &amp; Docker Compose Export</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-500">
+                <div className="flex items-center gap-2 text-slate-400">
                   <X className="w-3.5 h-3.5 shrink-0" />
                   <span>AI Prompt Generation</span>
                 </div>
@@ -234,7 +234,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                 </span>
                 <span className="text-xs text-slate-400">/ month</span>
               </div>
-              <div className="text-[11px] text-slate-500">For startups & enterprise squads</div>
+              <div className="text-[11px] text-slate-400">For startups & enterprise squads</div>
 
               <div className="mt-5 space-y-2.5 text-xs text-slate-300">
                 <div className="flex items-center gap-2">

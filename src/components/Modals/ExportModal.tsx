@@ -223,7 +223,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <div className="p-4 rounded-xl border border-dashed border-slate-800 bg-dark-950/40 text-center space-y-2 mt-4">
                 <Upload className="w-6 h-6 text-slate-400 mx-auto" />
                 <div className="text-xs font-semibold text-slate-200">Import GraphFlow JSON File</div>
-                <div className="text-[11px] text-slate-500">Restore or load another architecture layout</div>
+                <div className="text-[11px] text-slate-400">Restore or load another architecture layout</div>
                 <label className="inline-block mt-2">
                   <input
                     type="file"

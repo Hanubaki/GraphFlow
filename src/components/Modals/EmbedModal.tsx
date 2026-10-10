@@ -104,7 +104,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-slate-300 font-medium">
               <span>HTML &lt;iframe&gt; Code</span>
-              <span className="text-[11px] text-slate-500 font-mono">Ready to paste into websites</span>
+              <span className="text-[11px] text-slate-400 font-mono">Ready to paste into websites</span>
             </div>
             <div className="relative group">
               <textarea
@@ -136,7 +136,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-slate-300 font-medium">
               <span>Direct Embed URL</span>
-              <span className="text-[11px] text-slate-500 font-mono">Use for Notion / Embed blocks</span>
+              <span className="text-[11px] text-slate-400 font-mono">Use for Notion / Embed blocks</span>
             </div>
             <div className="flex items-center gap-2">
               <input

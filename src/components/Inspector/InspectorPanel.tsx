@@ -355,7 +355,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 <Activity className="w-6 h-6" />
               </div>
               <div className="text-xs font-semibold text-slate-200">System Topology Active</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Click any component or pipeline to inspect</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Click any component or pipeline to inspect</div>
             </div>
 
             {/* Topology Statistics */}

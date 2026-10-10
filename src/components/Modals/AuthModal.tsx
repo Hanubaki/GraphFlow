@@ -153,7 +153,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-slate-200 truncate">{user.email}</div>
-                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">ID: {user.id.slice(0, 18)}...</div>
+                  <div className="text-[11px] text-slate-400 font-mono mt-0.5">ID: {user.id.slice(0, 18)}...</div>
                 </div>
               </div>
 
@@ -271,7 +271,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-800" />
               </div>
-              <span className="relative bg-dark-900 px-3 text-[11px] uppercase font-mono text-slate-500">
+              <span className="relative bg-dark-900 px-3 text-[11px] uppercase font-mono text-slate-400">
                 Or with email
               </span>
             </div>
@@ -281,7 +281,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 mb-1">Email address</label>
                 <div className="relative">
-                  <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="email"
                     required
@@ -297,7 +297,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-400 mb-1">Password</label>
                   <div className="relative">
-                    <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="password"
                       required

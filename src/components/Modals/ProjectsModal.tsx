@@ -273,12 +273,12 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                 </span>
 
                 {activeTab === 'cloud' && isLoadingCloud ? (
-                  <div className="flex items-center justify-center py-8 text-xs text-slate-500 gap-2">
+                  <div className="flex items-center justify-center py-8 text-xs text-slate-400 gap-2">
                     <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
                     <span>Querying Supabase database...</span>
                   </div>
                 ) : (activeTab === 'cloud' ? cloudProjects.length === 0 : localProjects.length === 0) ? (
-                  <div className="text-center py-6 text-slate-500 text-xs">
+                  <div className="text-center py-6 text-slate-400 text-xs">
                     No {activeTab} architectures saved yet. Use the form above to save your first system design!
                   </div>
                 ) : (
@@ -338,7 +338,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                                 handleDeleteLocal(proj.id);
                               }
                             }}
-                            className="p-1.5 rounded-lg border border-transparent hover:border-rose-900/50 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border border-transparent hover:border-rose-900/50 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
                             title="Delete Project"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

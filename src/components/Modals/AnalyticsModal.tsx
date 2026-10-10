@@ -142,7 +142,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                     {metrics.currentRps}
                     <span className="text-xs font-normal text-slate-400 ml-1">RPS</span>
                   </div>
-                  <span className="text-[11px] text-slate-500">Live requests/sec</span>
+                  <span className="text-[11px] text-slate-400">Live requests/sec</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-dark-950 border border-slate-800">
@@ -151,7 +151,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                     {metrics.avgLatencyMs}
                     <span className="text-xs font-normal text-slate-400 ml-1">ms</span>
                   </div>
-                  <span className="text-[11px] text-slate-500">Topology weighted</span>
+                  <span className="text-[11px] text-slate-400">Topology weighted</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-dark-950 border border-slate-800">
@@ -159,7 +159,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                   <div className="text-2xl font-mono font-bold text-slate-200 mt-1">
                     {metrics.delivered}
                   </div>
-                  <span className="text-[11px] text-slate-500">Total successful pkts</span>
+                  <span className="text-[11px] text-slate-400">Total successful pkts</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-dark-950 border border-slate-800">
@@ -167,7 +167,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                   <div className={`text-2xl font-mono font-bold mt-1 ${metrics.errors > 0 ? 'text-rose-400' : 'text-slate-200'}`}>
                     {errorRatePercent}%
                   </div>
-                  <span className="text-[11px] text-slate-500">{metrics.errors} errors recorded</span>
+                  <span className="text-[11px] text-slate-400">{metrics.errors} errors recorded</span>
                 </div>
               </div>
 

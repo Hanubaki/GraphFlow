@@ -78,7 +78,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
         {categories.map(category => (
           <div key={category} className="space-y-1.5">
             {!isCollapsed && (
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1">
                 {category}
               </div>
             )}

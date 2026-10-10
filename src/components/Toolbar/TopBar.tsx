@@ -466,7 +466,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Clear graph */}
         <button
           onClick={onClearGraph}
-          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
+          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-400 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
           title={t('topbar.clear')}
           aria-label="Clear all nodes and edges from architecture"
         >
