@@ -64,6 +64,11 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   const animFrameRef = useRef<number | null>(null);
   const rpsCounterRef = useRef<number>(0);
   const lastRpsCalcTime = useRef<number>(Date.now());
+  const pendingMetricsRef = useRef<{ sent: number; delivered: number; errors: number }>({
+    sent: 0,
+    delivered: 0,
+    errors: 0,
+  });
 
   const toggleSound = useCallback(() => {
     setSoundEnabled(prev => {
@@ -91,6 +96,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
 
   const resetSimulation = useCallback(() => {
     setPackets([]);
+    pendingMetricsRef.current = { sent: 0, delivered: 0, errors: 0 };
     setMetrics({
       totalSent: 0,
       delivered: 0,
@@ -146,10 +152,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
           const filtered = prev.length > 40 ? prev.slice(prev.length - 30) : prev;
           return [...filtered, ...newPackets];
         });
-        setMetrics(m => ({
-          ...m,
-          totalSent: m.totalSent + newPackets.length,
-        }));
+        pendingMetricsRef.current.sent += newPackets.length;
       }
     }, intervalTime);
 
@@ -195,17 +198,14 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         }
 
         if (deliveredCount > 0 || errorCount > 0) {
-          setMetrics(m => ({
-            ...m,
-            delivered: m.delivered + deliveredCount,
-            errors: m.errors + errorCount,
-          }));
+          pendingMetricsRef.current.delivered += deliveredCount;
+          pendingMetricsRef.current.errors += errorCount;
         }
 
         return updated;
       });
 
-      // Calculate RPS every 1 second
+      // Calculate RPS and commit accumulated metrics in 1 Hz batches (prevents 60 FPS UI thrashing)
       const now = Date.now();
       if (now - lastRpsCalcTime.current >= 1000) {
         const elapsedSec = (now - lastRpsCalcTime.current) / 1000;
@@ -218,8 +218,13 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
           ? Math.round(activeNodes.reduce((acc, n) => acc + n.latencyMs, 0) / activeNodes.length)
           : 0;
 
+        const pending = pendingMetricsRef.current;
+        pendingMetricsRef.current = { sent: 0, delivered: 0, errors: 0 };
+
         setMetrics(m => ({
-          ...m,
+          totalSent: m.totalSent + pending.sent,
+          delivered: m.delivered + pending.delivered,
+          errors: m.errors + pending.errors,
           currentRps,
           avgLatencyMs: avgLat,
         }));

@@ -13,6 +13,7 @@ import { ProjectsModal } from './components/Modals/ProjectsModal';
 import { PricingModal } from './components/Modals/PricingModal';
 import { AuthModal } from './components/Modals/AuthModal';
 import { EmbedModal } from './components/Modals/EmbedModal';
+import { AnalyticsModal } from './components/Modals/AnalyticsModal';
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { CatalogItem } from './constants/nodeCatalog';
@@ -24,7 +25,7 @@ import { calculateAutoCenter } from './utils/viewportMath';
 import { createNodeFromCatalog } from './utils/nodeFactory';
 import { telemetry } from './utils/telemetry';
 
-export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | null;
+export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | null;
 
 export const App: React.FC = () => {
   const {
@@ -207,6 +208,7 @@ export const App: React.FC = () => {
           onOpenAiGenerator={() => setActiveModal('aiGen')}
           onOpenProjects={() => setActiveModal('projects')}
           onOpenPricing={() => setActiveModal('pricing')}
+          onOpenAnalytics={() => setActiveModal('analytics')}
           onOpenAuth={() => setActiveModal('auth')}
           onOpenHome={() => setViewMode('landing')}
           onClearGraph={clearGraph}
@@ -302,6 +304,14 @@ export const App: React.FC = () => {
       {/* User Authentication Modal */}
       <AuthModal
         isOpen={activeModal === 'auth'}
+        onClose={() => setActiveModal(null)}
+      />
+
+      {/* Live Simulation & WebPerf Analytics Modal */}
+      <AnalyticsModal
+        isOpen={activeModal === 'analytics'}
+        nodes={nodes}
+        edges={edges}
         onClose={() => setActiveModal(null)}
       />
     </div>

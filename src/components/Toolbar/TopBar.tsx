@@ -20,11 +20,13 @@ import {
   Code2,
   Languages,
   User as UserIcon,
+  Activity,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSimulationControls } from '../../context/SimulationContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { telemetry } from '../../utils/telemetry';
+import { TelemetryPill } from './TelemetryPill';
 
 interface TopBarProps {
   isRunning?: boolean;
@@ -50,6 +52,7 @@ interface TopBarProps {
   onOpenAiGenerator: () => void;
   onOpenProjects: () => void;
   onOpenPricing: () => void;
+  onOpenAnalytics?: () => void;
   onOpenAuth?: () => void;
   onOpenHome?: () => void;
   onClearGraph: () => void;
@@ -79,6 +82,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenAiGenerator,
   onOpenProjects,
   onOpenPricing,
+  onOpenAnalytics,
   onOpenAuth,
   onOpenHome,
   onClearGraph,
@@ -153,45 +157,12 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </button>
 
-      {/* Center: Sleek Unified Live Telemetry Pill */}
-      <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs shrink-0">
-        <div className="flex items-center gap-2.5 h-8 px-3 rounded-lg bg-dark-950 border border-slate-800 text-[11px] text-slate-300 shadow-inner">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`w-2 h-2 rounded-full shrink-0 ${
-                isRunning ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
-              }`}
-            />
-            <span className="font-semibold text-slate-200">
-              {isRunning ? 'ACTIVE' : 'PAUSED'}
-            </span>
-          </div>
-          <span className="text-slate-700">|</span>
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">RPS:</span>
-            <span className="font-bold text-cyan-400">{metrics.currentRps}</span>
-          </div>
-          <span className="text-slate-700">|</span>
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">LAT:</span>
-            <span className="font-bold text-slate-200">{metrics.avgLatencyMs}ms</span>
-          </div>
-          <span className="text-slate-700">|</span>
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">SENT:</span>
-            <span className="font-bold text-emerald-400">{metrics.delivered}</span>
-          </div>
-          {metrics.errors > 0 && (
-            <>
-              <span className="text-slate-700">|</span>
-              <div className="flex items-center gap-1">
-                <span className="text-slate-400">ERR:</span>
-                <span className="font-bold text-rose-400">{metrics.errors}</span>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      {/* Center: Sleek Unified Live Telemetry Pill (Memoized) */}
+      <TelemetryPill
+        metrics={metrics}
+        isRunning={isRunning}
+        onOpenAnalytics={onOpenAnalytics}
+      />
 
       {/* Right Controls Container */}
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
@@ -370,6 +341,19 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <Code2 className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 3xl:inline">Embed</span>
+          </button>
+
+          <div className="h-3.5 w-px bg-slate-800" />
+
+          {/* Analytics & WebPerf */}
+          <button
+            onClick={onOpenAnalytics}
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+            title="Live WebPerf & Telemetry Scorecard"
+            aria-label="Open live performance analytics modal"
+          >
+            <Activity className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden 3xl:inline">Analytics</span>
           </button>
         </div>
 
