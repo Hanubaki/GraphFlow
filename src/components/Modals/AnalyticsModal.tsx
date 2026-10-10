@@ -12,7 +12,6 @@ import {
   Play,
   Pause,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 
 interface AnalyticsModalProps {
