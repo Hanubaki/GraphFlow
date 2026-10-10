@@ -1,232 +1,237 @@
 <div align="center">
 
-# ⚡ GraphFlow
+# GraphFlow
 
-### Interactive Distributed Architecture & Real-Time Data Flow Simulator
+**Interactive distributed systems modeler and real-time data flow simulator.**
 
-[![React](https://img.shields.io/badge/React-18.3-61dafb.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing-729B1B.svg?style=for-the-badge&logo=vitest)](https://vitest.dev/)
-[![Dependencies](https://img.shields.io/badge/Canvas_Deps-Zero-success.svg?style=for-the-badge)](#-pure-native-mathematics)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6.svg?style=flat-square)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.3-61dafb.svg?style=flat-square)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?style=flat-square)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?style=flat-square)](https://tailwindcss.com/)
+[![Tests](https://img.shields.io/badge/Vitest-Passing-success.svg?style=flat-square)](https://github.com/Hanubaki/GraphFlow)
 
 <p align="center">
-  <b>Stop drawing dead, static boxes. Simulate live traffic, latency bottlenecks, and network chaos in real-time at 60 FPS — directly inside your browser.</b>
+  <a href="#overview">Overview</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#core-capabilities">Capabilities</a> •
+  <a href="#architecture-archetypes">Archetypes</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#testing--verification">Testing</a> •
+  <a href="#directory-structure">Structure</a> •
+  <a href="#license">License</a>
 </p>
-
-[Architecture Overview](#-architecture--data-flow) · [Key Features](#-key-features) · [Quick Start](#-quick-start) · [Project Structure](#-project-structure) · [Report Bug](https://github.com/Hanubaki/GraphFlow/issues) · [Request Feature](https://github.com/Hanubaki/GraphFlow/issues)
 
 </div>
 
 ---
 
-## 💡 Why GraphFlow?
+## Overview
 
-Traditional system architecture tools (draw.io, Lucidchart, Miro) produce **static diagrams**. While useful for high-level overviews, they suffer from a fundamental limitation: **they cannot model dynamic behavior**.
+Static diagramming tools (such as draw.io, Lucidchart, and Miro) represent system topologies as inert boxes and lines. They do not simulate dynamic runtime characteristics:
 
-* What happens to downstream databases when traffic surges from 500 to 10,000 RPS?
-* How does latency degrade across a microservice cascade when a Redis cache fails?
-* Where do network bottlenecks accumulate when an asynchronous Kafka pipeline experiences backpressure?
+- Downstream saturation and latency compounding when ingress traffic scales
+- Backpressure propagation through asynchronous event buffers (such as Apache Kafka and RabbitMQ)
+- Cascading timeouts, circuit-breaker tripping, and cache-miss stampedes under degraded node states
 
-**GraphFlow bridges the gap between static design and real-time simulation.** It combines an intuitive drag-and-drop infinite canvas with a decoupled, high-frequency simulation engine. You can model gateways, services, queues, and databases, dial up traffic volumes, inject chaos faults, and watch data packets stream across native cubic bezier curves with live telemetry.
-
----
-
-## 🌟 Key Features
-
-### 🧮 Pure Native Mathematics
-* **Zero Heavy Canvas Dependencies:** Built entirely with native SVG paths and DOM transformations without bundling bulky canvas runtimes (Konva, Pixi, Fabric, or Three.js).
-* **De Casteljau Bezier Calculus:** Smooth, dynamic cubic bezier splines ($B(t)$ polynomial evaluation) computed in real time for connection paths, control points, and tangent vectors.
-
-### ⏱️ Decoupled 60 FPS Simulation Loop
-* **Non-Blocking Physics:** Runs on a dedicated `requestAnimationFrame` tick loop, computing packet locations, interpolation factors ($t \in [0, 1]$), and packet arrival events independently from React re-renders.
-* **Live Telemetry & Meters:** Real-time calculation of overall system throughput (RPS), average round-trip latency, jitter variance, and packet loss ratios.
-
-### 💥 Chaos Engineering & Fault Injection
-* **Node-Level Error & Latency Tuning:** Configure specific error rates (0%–100%) and processing delays on any individual node.
-* **Visual Error Cascading:** Failed requests morph into distinct visual error packets (HTTP 500) and route toward retry pipelines or dead-letter queues.
-* **Traffic Spikes:** Instant burst injection to test downstream resilience and backpressure thresholds.
-
-### 🤖 AI-Powered Architecture Generator
-* **Prompt to Architecture:** Natural language architecture generation powered by the Google Gemini API (with an automated offline heuristic synthesis fallback).
-* **Instant Scaffolding:** Describe your requirements (e.g., *"Event-driven IoT telemetry pipeline with Kafka and TimescaleDB"*) and GraphFlow automatically synthesizes nodes, connections, and latency configurations.
-
-### 🎵 Tactile Procedural Sound Synthesis
-* **Web Audio API Engine:** Generates lightweight, procedural sound effects (sine/square wave oscillators with custom ADSR envelopes) for connection snaps, packet bursts, and critical errors — zero external audio files required.
-
-### 📄 One-Click Export & Mermaid Generator
-* **Engineering-Ready Documentation:** Instant export to clean Markdown specifications with embedded GitHub-compatible Mermaid flowcharts.
-* **JSON Schema Persistence:** Save, load, and share graph architectures locally or to the cloud via Supabase integration.
+GraphFlow models distributed architectures as dynamic, stateful topologies with an integrated client-side simulation engine. Topologies are composed on an infinite canvas, connected through cubic bezier paths, and evaluated with simulated traffic streams. Packets traverse edges according to computed velocities and latency curves, with real-time aggregation of throughput (requests per second), network jitter, error rates, and dropped payloads.
 
 ---
 
-## 🛠️ Architecture & Data Flow
+## Core Capabilities
+
+### Native Vector Calculus & De Casteljau Evaluation
+All edge curves and packet positions are evaluated using pure Bernstein polynomial forms of cubic bezier curves:
+
+$$B(t) = (1-t)^3 P_0 + 3(1-t)^2 t P_1 + 3(1-t) t^2 P_2 + t^3 P_3, \quad t \in [0, 1]$$
+
+Coordinates, tangents, and normal vectors are computed directly against native SVG paths and DOM elements. The implementation avoids heavy third-party canvas runtimes (such as PixiJS, Fabric.js, or Konva), keeping initial asset payload minimal and maintaining 60 FPS frame rates.
+
+### Decoupled Simulation Loop
+Simulation mechanics run on a non-blocking `requestAnimationFrame` tick loop separated from React's component reconciliation cycle:
+- **Packet Lifecycle Management:** Ingress queues, velocity calculations, and arrival callbacks are scheduled and resolved per tick.
+- **Real-Time Telemetry:** Continuous rolling calculations for aggregate RPS, average end-to-end latency, and jitter variance.
+
+### Fault Injection & Chaos Testing
+- **Per-Node Degradation:** Configure latency overhead and failure probability ($[0.0, 1.0]$) across individual compute or storage nodes.
+- **Error Packet Routing:** Requests failing status checks transition to 5xx error states and highlight retry loops or dead-letter sinks.
+- **Traffic Modulation:** Inject instantaneous burst spikes to analyze queue saturation and node backpressure.
+
+### Topology Synthesis
+Natural language specification synthesis powered by the Gemini API, backed by a deterministic client-side heuristic engine when running offline or without credentials.
+
+### Procedural Audio Feedback
+Synthesizes acoustic feedback for connection bindings, traffic bursts, and node dropouts via the Web Audio API (sine/square oscillator nodes with configurable ADSR envelopes) without external audio assets.
+
+### Specification & Mermaid Export
+Generate self-contained Markdown architecture documents with embedded, standards-compliant Mermaid sequence and flowchart definitions for version-controlled documentation.
+
+---
+
+## Architecture
 
 ```mermaid
 flowchart TD
-    subgraph UI ["User Interface Layer (React 18 & Tailwind)"]
-        TopBar["Top Navigation & Telemetry Dashboard"]
-        Palette["Component Palette (Draggable Catalog)"]
-        Canvas["Interactive SVG/DOM Infinite Canvas"]
-        Inspector["Contextual Property Inspector"]
-        Modals["AI Generator, Auth & Export Modals"]
+    subgraph Presentation ["Presentation Layer (React 18 & Tailwind CSS)"]
+        TopBar["TopBar & Telemetry Meters"]
+        NodePalette["Component Palette Catalog"]
+        Canvas["Interactive SVG/DOM Canvas"]
+        Inspector["Property Inspector Panel"]
+        Modals["Synthesis, Auth & Export Modals"]
     end
 
-    subgraph State ["State & Transaction Layer"]
-        GraphStore["Graph Store (Nodes, Edges, Viewport, Selection)"]
-        HistoryStack["Command Pattern History (Undo / Redo)"]
-        AuthContext["Supabase Auth & Cloud Projects"]
+    subgraph StateManagement ["State & Transactional History"]
+        GraphStore["Graph Store (Topology, Viewport, Selection)"]
+        History["Undo / Redo Command History Stack"]
+        AuthContext["Supabase Session & Remote Storage"]
     end
 
-    subgraph Simulation ["Simulation & Physics Subsystem"]
-        SimLoop["Tick Loop (requestAnimationFrame @ 60 FPS)"]
+    subgraph SimulationSubsystem ["Simulation Subsystem"]
+        SimLoop["Tick Dispatcher (requestAnimationFrame)"]
         PacketManager["Packet Lifecycle & Telemetry Aggregator"]
-        ChaosEngine["Fault Injector (Error Drops & Latency Variance)"]
+        ChaosEngine["Fault Injector & Latency Modulator"]
     end
 
-    subgraph CoreEngine ["Geometry & Synthesis Engines"]
-        BezierCalc["Cubic Bezier Engine (De Casteljau & Tangents)"]
-        SoundSynth["Web Audio API Synthesizer (Oscillators)"]
-        AiService["Gemini API Architecture Synthesizer"]
+    subgraph GeometryAndAudio ["Geometry & Synthesis Engines"]
+        BezierEngine["Cubic Bezier & Tangent Calculus"]
+        AudioSynth["Web Audio Procedural Synthesizer"]
+        AiEngine["Gemini Architecture Synthesis"]
     end
 
-    Palette -->|Drag & Drop| Canvas
+    NodePalette -->|Drag & Drop| Canvas
     Canvas <--> GraphStore
-    GraphStore <--> HistoryStack
+    GraphStore <--> History
     Inspector <--> GraphStore
     TopBar <--> SimLoop
     SimLoop --> PacketManager
     PacketManager --> ChaosEngine
-    PacketManager --> BezierCalc
-    BezierCalc -->|Calculates Coordinates| Canvas
-    PacketManager -.->|Triggers Audio Pulses| SoundSynth
-    Modals <--> AiService
+    PacketManager --> BezierEngine
+    BezierEngine -->|Interpolated Coordinates| Canvas
+    PacketManager -.->|Audio Triggers| AudioSynth
+    Modals <--> AiEngine
     Modals <--> AuthContext
 ```
 
 ---
 
-## 🏛️ Pre-Configured Architectural Archetypes
+## Architecture Archetypes
 
-GraphFlow ships with production-grade architectural templates ready for immediate exploration:
+GraphFlow includes verified archetypes modeling common distributed patterns:
 
-| Archetype | Topology & Components | Simulated Behaviors |
+| Archetype | Topology & Nodes | Simulated Characteristics |
 | :--- | :--- | :--- |
-| **🛒 E-Commerce Distributed Cluster** | Client $\rightarrow$ API Gateway $\rightarrow$ Order/Auth Services $\rightarrow$ Redis $\rightarrow$ Kafka $\rightarrow$ Payment Worker $\rightarrow$ Stripe | Cache hits/misses, async event queuing, third-party payment latency. |
-| **🤖 AI RAG Pipeline** | Web App $\rightarrow$ FastAPI Gateway $\rightarrow$ Vector Database (Pinecone) $\rightarrow$ Gemini LLM $\rightarrow$ S3 Storage | Embedding lookup latency, LLM token streaming delay, object store persistence. |
-| **⚡ Real-Time WebSocket Pub/Sub** | Mobile & Web Clients $\rightarrow$ HAProxy Balancer $\rightarrow$ Node.js Socket Instances $\rightarrow$ Redis Pub/Sub Cluster | High-frequency bidirectional packets, horizontal fan-out, broker sync. |
-| **🛡️ Microservices with Circuit Breaker** | Gateway $\rightarrow$ Service Mesh $\rightarrow$ Microservices with Fallback routes | Dynamic error simulation, failover routing, retry backoff behavior. |
+| **E-Commerce Distributed System** | Client $\rightarrow$ API Gateway $\rightarrow$ Order/Auth Services $\rightarrow$ Redis $\rightarrow$ Kafka $\rightarrow$ Payment Worker $\rightarrow$ Stripe | Cache hit/miss latency divergence, async queue buffering, payment gateway latency. |
+| **AI Retrieval-Augmented Pipeline** | Client $\rightarrow$ FastAPI Gateway $\rightarrow$ Vector Database $\rightarrow$ Gemini LLM $\rightarrow$ Object Storage | Vector similarity lookup delay, token generation latency, object storage persistence. |
+| **Real-Time WebSocket Cluster** | Web & Mobile Clients $\rightarrow$ HAProxy Balancer $\rightarrow$ Socket Nodes $\rightarrow$ Redis Pub/Sub | High-frequency bidirectional streams, fan-out propagation, broker synchronization. |
+| **Resilient Microservices Mesh** | Edge Gateway $\rightarrow$ Service Mesh $\rightarrow$ Microservices with Circuit Breaker routes | Dynamic error simulation, fallback route execution, backoff retry cadence. |
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
 ### Prerequisites
-* **Node.js**: v18.0.0 or higher
-* **Package Manager**: `npm`, `pnpm`, or `yarn`
+- Node.js 18.0.0 or higher
+- npm, pnpm, or yarn
 
 ### Installation
 
 ```bash
-# 1. Clone the repository
+# Clone repository
 git clone https://github.com/Hanubaki/GraphFlow.git
 
-# 2. Navigate to project directory
+# Enter workspace
 cd GraphFlow
 
-# 3. Install dependencies
+# Install dependencies
 npm install
 
-# 4. (Optional) Configure environment variables
+# Configure environment variables (optional)
 cp .env.example .env.local
 
-# 5. Start the development server
+# Run development server
 npm run dev
 ```
 
-Open your browser and navigate to `http://localhost:5173`.
+The application will be available at `http://localhost:5173`.
 
 ---
 
-## 🧪 Automated Testing & Verification
+## Testing & Verification
 
-GraphFlow includes a test suite built with **Vitest** and **React Testing Library**, verifying mathematical precision, responsive viewport behavior, and security boundaries:
+The test suite runs on **Vitest** with **React Testing Library** and covers mathematical evaluation, viewport logic, and security constraints:
 
 ```bash
-# Run the complete test suite
+# Execute test suite
 npm test
 
 # Run tests in watch mode
 npm run test:watch
 ```
 
-### Verified Test Domains:
-* **Geometry Engine:** De Casteljau bezier interpolation, tangent vector calculations, and boundary bounding box collisions.
-* **Viewport Constraints:** Canvas panning boundaries, responsive zoom limits ($30\%$ to $250\%$), and viewport auto-centering algorithms.
-* **Security Hardening:** Enterprise Content Security Policy (CSP), export data sanitization (XSS prevention), and webhook payload verification.
-* **Export Engine:** Mermaid syntax validity and formatted Markdown architecture document generation.
+### Coverage Domains:
+- **Geometry Calculus:** Verification of De Casteljau bezier interpolation, normal/tangent evaluations, and anchor point alignment.
+- **Viewport Constraints:** Bounded zooming ($0.3\times$ to $2.5\times$), infinite pan transformations, and auto-centering calculations.
+- **Security & Sanitization:** Content Security Policy (CSP) enforcement, export serialization sanitization, and webhook signature verification.
+- **Export Specifications:** Validation of emitted Mermaid syntax and Markdown specification generation.
 
 ---
 
-## 📂 Project Structure
+## Directory Structure
 
 ```
 GraphFlow/
-├── .agent/                  # Antigravity agent configuration & engineering skills
-├── api/                     # Serverless API routes (webhooks & background processing)
+├── api/                     # Serverless endpoints and webhook handlers
 ├── src/
 │   ├── components/
-│   │   ├── Canvas/          # GraphCanvas, NodeComponent, ConnectionLine, GridBackground
-│   │   ├── Common/          # NodeIcon, StatusBadge, Tooltips
-│   │   ├── Embed/           # Lightweight iframe embed view
-│   │   ├── Inspector/       # Contextual node & edge property inspector
-│   │   ├── Landing/         # Marketing hero and feature preview
-│   │   ├── Modals/          # AI Generator, Export, Pricing, Templates, Auth
-│   │   ├── Sidebar/         # Draggable node palette catalog
-│   │   └── Toolbar/         # TopBar, telemetry meters, and canvas controls
-│   ├── constants/           # Node definitions, catalog metadata, default templates
-│   ├── context/             # Supabase AuthContext & state providers
+│   │   ├── Canvas/          # Canvas surface, node components, bezier connection lines
+│   │   ├── Common/          # Shared atomic indicators, badges, and icons
+│   │   ├── Embed/           # Standalone embed view for iframes and external docs
+│   │   ├── Inspector/       # Contextual node and edge property configuration
+│   │   ├── Landing/         # Landing presentation and archetype previews
+│   │   ├── Modals/          # AI generator, export, billing, and auth dialogues
+│   │   ├── Sidebar/         # Draggable catalog palette
+│   │   └── Toolbar/         # Telemetry indicators, playback, and viewport actions
+│   ├── constants/           # Component catalogs, archetypes, and default topologies
+│   ├── context/             # Authentication and persistent storage providers
 │   ├── hooks/               # useGraphStore (state), useSimulation (physics loop)
-│   ├── services/            # Gemini AI service, Supabase cloud client, storage
-│   ├── test/                # Vitest unit & integration test suites
-│   ├── types/               # Strict TypeScript domain models (graph, nodes, packets)
-│   ├── utils/               # Bezier geometry, Web Audio synthesizer, Mermaid exporter
-│   ├── App.tsx              # Root application router & layout
-│   └── main.tsx             # Application bootstrap & DOM mount
-├── index.html               # Main HTML entry with responsive viewport & meta tags
-├── package.json             # Scripts & dependencies
-├── tailwind.config.js       # Modern dark-mode palette & glassmorphism utilities
-├── tsconfig.json            # Strict TypeScript configuration
-└── vite.config.ts           # Vite bundler configuration & test runner setup
+│   ├── services/            # Gemini API integration, Supabase client, persistence
+│   ├── test/                # Unit and integration test suites
+│   ├── types/               # Strict TypeScript domain interfaces
+│   ├── utils/               # Bezier calculus, Web Audio synthesis, Mermaid export
+│   ├── App.tsx              # Application layout and routing
+│   └── main.tsx             # DOM mount point
+├── index.html               # Document shell and metadata
+├── package.json             # Build scripts and dependency manifest
+├── tailwind.config.js       # Design tokens and styling configuration
+├── tsconfig.json            # Strict TypeScript compiler options
+└── vite.config.ts           # Bundler and test runner configuration
 ```
 
 ---
 
-## ⌨️ Keyboard Shortcuts & Ergonomics
+## Keyboard Shortcuts
 
-| Shortcut (Win / Linux) | Shortcut (macOS) | Action |
+| Shortcut (Windows / Linux) | Shortcut (macOS) | Action |
 | :--- | :--- | :--- |
-| <kbd>Ctrl</kbd> + <kbd>Z</kbd> | <kbd>Cmd</kbd> + <kbd>Z</kbd> | **Undo** last canvas or property action |
-| <kbd>Ctrl</kbd> + <kbd>Y</kbd> | <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | **Redo** previously undone action |
-| <kbd>Delete</kbd> / <kbd>Backspace</kbd> | <kbd>Backspace</kbd> | **Delete** selected node or connection line |
-| <kbd>Esc</kbd> | <kbd>Esc</kbd> | **Deselect** all active elements / Close modal |
-| <kbd>Space</kbd> + <kbd>Click Drag</kbd> | <kbd>Space</kbd> + <kbd>Click Drag</kbd> | **Pan** across the infinite canvas |
-| <kbd>Mouse Wheel</kbd> | <kbd>Trackpad Pinch</kbd> | **Zoom in / out** (bounded: $0.3\times$ to $2.5\times$) |
+| <kbd>Ctrl</kbd> + <kbd>Z</kbd> | <kbd>Cmd</kbd> + <kbd>Z</kbd> | Undo last action |
+| <kbd>Ctrl</kbd> + <kbd>Y</kbd> | <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo action |
+| <kbd>Delete</kbd> / <kbd>Backspace</kbd> | <kbd>Backspace</kbd> | Remove selected node or connection |
+| <kbd>Esc</kbd> | <kbd>Esc</kbd> | Clear selection / Dismiss active modal |
+| <kbd>Space</kbd> + <kbd>Drag</kbd> | <kbd>Space</kbd> + <kbd>Drag</kbd> | Pan canvas viewport |
+| <kbd>Mouse Wheel</kbd> | <kbd>Trackpad Pinch</kbd> | Zoom canvas viewport ($0.3\times$ to $2.5\times$) |
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Berke Akdemir**
-* GitHub: [@Hanubaki](https://github.com/Hanubaki)
-* Repository: [Hanubaki/GraphFlow](https://github.com/Hanubaki/GraphFlow)
+- GitHub: [@Hanubaki](https://github.com/Hanubaki)
+- Repository: [Hanubaki/GraphFlow](https://github.com/Hanubaki/GraphFlow)
 
-Contributions, feature suggestions, and bug reports are welcome! Feel free to open an [issue](https://github.com/Hanubaki/GraphFlow/issues) or submit a pull request.
+Issues and pull requests are tracked through the [GitHub issue tracker](https://github.com/Hanubaki/GraphFlow/issues).
 
 ---
 
-## 📄 License
+## License
 
-This project is open-source and licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
