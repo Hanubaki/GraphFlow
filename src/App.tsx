@@ -7,14 +7,15 @@ import { TopBar } from './components/Toolbar/TopBar';
 import { NodePalette } from './components/Sidebar/NodePalette';
 import { GraphCanvas } from './components/Canvas/GraphCanvas';
 import { InspectorPanel } from './components/Inspector/InspectorPanel';
-import { TemplatesModal } from './components/Modals/TemplatesModal';
-import { ExportModal } from './components/Modals/ExportModal';
-import { AiGeneratorModal } from './components/Modals/AiGeneratorModal';
-import { ProjectsModal } from './components/Modals/ProjectsModal';
-import { PricingModal } from './components/Modals/PricingModal';
-import { AuthModal } from './components/Modals/AuthModal';
-import { EmbedModal } from './components/Modals/EmbedModal';
-import { AnalyticsModal } from './components/Modals/AnalyticsModal';
+// Lazy-loaded on-demand modals for optimal web performance & bundle reduction
+const TemplatesModal = React.lazy(() => import('./components/Modals/TemplatesModal').then(m => ({ default: m.TemplatesModal })));
+const ExportModal = React.lazy(() => import('./components/Modals/ExportModal').then(m => ({ default: m.ExportModal })));
+const AiGeneratorModal = React.lazy(() => import('./components/Modals/AiGeneratorModal').then(m => ({ default: m.AiGeneratorModal })));
+const ProjectsModal = React.lazy(() => import('./components/Modals/ProjectsModal').then(m => ({ default: m.ProjectsModal })));
+const PricingModal = React.lazy(() => import('./components/Modals/PricingModal').then(m => ({ default: m.PricingModal })));
+const AuthModal = React.lazy(() => import('./components/Modals/AuthModal').then(m => ({ default: m.AuthModal })));
+const EmbedModal = React.lazy(() => import('./components/Modals/EmbedModal').then(m => ({ default: m.EmbedModal })));
+const AnalyticsModal = React.lazy(() => import('./components/Modals/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { CatalogItem } from './constants/nodeCatalog';
@@ -255,67 +256,78 @@ export const App: React.FC = () => {
         />
       </main>
 
-      {/* Architecture Presets Modal */}
-      <TemplatesModal
-        isOpen={activeModal === 'templates'}
-        onClose={() => setActiveModal(null)}
-        onSelectTemplate={handleSelectTemplate}
-      />
+      {/* Code-split on-demand Modals with React.Suspense */}
+      <React.Suspense fallback={null}>
+        {activeModal === 'templates' && (
+          <TemplatesModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            onSelectTemplate={handleSelectTemplate}
+          />
+        )}
 
-      {/* Export & Spec Generator Modal */}
-      <ExportModal
-        isOpen={activeModal === 'export'}
-        nodes={nodes}
-        edges={edges}
-        onClose={() => setActiveModal(null)}
-        onImportGraph={handleImportGraph}
-      />
+        {activeModal === 'export' && (
+          <ExportModal
+            isOpen={true}
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setActiveModal(null)}
+            onImportGraph={handleImportGraph}
+          />
+        )}
 
-      {/* Notion & Web Iframe Embed Modal */}
-      <EmbedModal
-        isOpen={activeModal === 'embed'}
-        nodes={nodes}
-        edges={edges}
-        onClose={() => setActiveModal(null)}
-      />
+        {activeModal === 'embed' && (
+          <EmbedModal
+            isOpen={true}
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setActiveModal(null)}
+          />
+        )}
 
-      {/* AI Prompt-to-Architecture Modal */}
-      <AiGeneratorModal
-        isOpen={activeModal === 'aiGen'}
-        onClose={() => setActiveModal(null)}
-        onApplyArchitecture={handleApplyAiArchitecture}
-      />
+        {activeModal === 'aiGen' && (
+          <AiGeneratorModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            onApplyArchitecture={handleApplyAiArchitecture}
+          />
+        )}
 
-      {/* Cloud & Local Projects Manager */}
-      <ProjectsModal
-        isOpen={activeModal === 'projects'}
-        nodes={nodes}
-        edges={edges}
-        onClose={() => setActiveModal(null)}
-        onLoadProject={handleLoadSavedProject}
-        onOpenAuth={() => setActiveModal('auth')}
-      />
+        {activeModal === 'projects' && (
+          <ProjectsModal
+            isOpen={true}
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setActiveModal(null)}
+            onLoadProject={handleLoadSavedProject}
+            onOpenAuth={() => setActiveModal('auth')}
+          />
+        )}
 
-      {/* SaaS Pricing & Upgrade Modal */}
-      <PricingModal
-        isOpen={activeModal === 'pricing'}
-        onClose={() => setActiveModal(null)}
-        onOpenAuth={() => setActiveModal('auth')}
-      />
+        {activeModal === 'pricing' && (
+          <PricingModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+            onOpenAuth={() => setActiveModal('auth')}
+          />
+        )}
 
-      {/* User Authentication Modal */}
-      <AuthModal
-        isOpen={activeModal === 'auth'}
-        onClose={() => setActiveModal(null)}
-      />
+        {activeModal === 'auth' && (
+          <AuthModal
+            isOpen={true}
+            onClose={() => setActiveModal(null)}
+          />
+        )}
 
-      {/* Live Simulation & WebPerf Analytics Modal */}
-      <AnalyticsModal
-        isOpen={activeModal === 'analytics'}
-        nodes={nodes}
-        edges={edges}
-        onClose={() => setActiveModal(null)}
-      />
+        {activeModal === 'analytics' && (
+          <AnalyticsModal
+            isOpen={true}
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setActiveModal(null)}
+          />
+        )}
+      </React.Suspense>
       </div>
     </SimulationProvider>
   </MultiplayerProvider>

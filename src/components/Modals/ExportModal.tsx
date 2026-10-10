@@ -9,6 +9,7 @@ import {
   exportDockerComposeFile,
   exportTerraformFile,
 } from '../../utils/export';
+import { sanitizeArchitectureImport } from '../../utils/securitySanitizer';
 import {
   Download,
   Upload,
@@ -71,11 +72,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     reader.onload = event => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-          onImportGraph(parsed.nodes, parsed.edges);
+        const { nodes: sanitizedNodes, edges: sanitizedEdges } = sanitizeArchitectureImport(parsed);
+        if (sanitizedNodes.length > 0) {
+          onImportGraph(sanitizedNodes, sanitizedEdges);
           onClose();
         } else {
-          setImportError('Invalid GraphFlow JSON format: missing nodes or edges array.');
+          setImportError('Invalid GraphFlow architecture JSON: no valid components found.');
         }
       } catch {
         setImportError('Failed to parse JSON file.');
