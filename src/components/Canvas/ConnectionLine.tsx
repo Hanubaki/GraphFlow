@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { GraphNode, GraphEdge, DataPacket, ProtocolType } from '../../types/graph';
-import { getNodeOutputPort, getNodeInputPort, createBezierPath, getBezierPoint } from '../../utils/geometry';
+import { getNodeOutputPort, getNodeInputPort, createBezierPath, getBezierPoint, getBezierTangent } from '../../utils/geometry';
 
 interface ConnectionLineProps {
   edge: GraphEdge;
@@ -127,26 +127,41 @@ interface PacketDotProps {
 
 const PacketDot = React.memo<PacketDotProps>(({ pkt, source, target }) => {
   const pt = getBezierPoint(source, target, pkt.progress);
+  const tangent = getBezierTangent(source, target, pkt.progress);
   const isError = pkt.status === 'error';
   const isWarning = pkt.status === 'warning';
   const color = isError ? '#f43f5e' : isWarning ? '#fbbf24' : '#00f0ff';
 
   return (
-    <g className="pointer-events-none will-change-transform">
+    <g
+      transform={`translate(${pt.x}, ${pt.y}) rotate(${tangent.angleDeg})`}
+      className="pointer-events-none will-change-transform"
+    >
+      {/* Directional Velocity Trail aligned to curve tangent */}
+      <line
+        x1="-8"
+        y1="0"
+        x2="0"
+        y2="0"
+        stroke={color}
+        strokeWidth={isError ? 2.5 : 2}
+        strokeLinecap="round"
+        opacity="0.6"
+      />
       {/* Packet Glow Aura */}
       <circle
-        cx={pt.x}
-        cy={pt.y}
-        r={isError ? 7 : 5}
+        cx="0"
+        cy="0"
+        r={isError ? 6.5 : 4.5}
         fill={color}
-        opacity="0.3"
+        opacity="0.35"
         className={isError ? 'animate-ping' : ''}
       />
       {/* Packet Core */}
       <circle
-        cx={pt.x}
-        cy={pt.y}
-        r={isError ? 4.5 : 3.5}
+        cx="0"
+        cy="0"
+        r={isError ? 4.2 : 3.2}
         fill={color}
         stroke="#ffffff"
         strokeWidth="1.2"
