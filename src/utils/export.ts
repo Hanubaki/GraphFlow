@@ -261,6 +261,23 @@ export function generateTerraform(nodes: GraphNode[], edges: GraphEdge[], name =
     }
   });
 
+  if (edges.length > 0) {
+    tf += `# Security Group ingress rules inferred from architecture pipelines\n`;
+    edges.forEach((edge, idx) => {
+      const from = edge.fromNodeId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      const to = edge.toNodeId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      tf += `resource "aws_security_group_rule" "allow_${from}_to_${to}_${idx}" {\n`;
+      tf += `  type              = "ingress"\n`;
+      tf += `  from_port         = 80\n`;
+      tf += `  to_port           = 8080\n`;
+      tf += `  protocol          = "tcp"\n`;
+      tf += `  cidr_blocks       = ["10.0.0.0/16"]\n`;
+      tf += `  security_group_id = "${to}_sg"\n`;
+      tf += `  description       = "Pipeline ${edge.protocol} from ${from}"\n`;
+      tf += `}\n\n`;
+    });
+  }
+
   return tf;
 }
 

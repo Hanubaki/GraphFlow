@@ -95,7 +95,7 @@ describe('Infrastructure as Code (IaC) Generator Suite', () => {
       id: 'e3',
       fromNodeId: 'auth_service',
       toNodeId: 'session_cache',
-      protocol: 'Redis-RESP',
+      protocol: 'TCP',
       latencyMs: 2,
       errorRate: 0,
     },
