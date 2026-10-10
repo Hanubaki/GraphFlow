@@ -175,12 +175,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
           <button
             onClick={onTogglePlay}
-            className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               isRunning
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
             }`}
             title={isRunning ? 'Pause Traffic' : 'Start Traffic'}
+            aria-label={isRunning ? 'Pause traffic simulation' : 'Start traffic simulation'}
           >
             {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">{isRunning ? 'Pause' : 'Start'}</span>
@@ -189,16 +190,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="h-4 w-px bg-slate-800 mx-1" />
 
           {/* Speed toggles */}
-          <div className="flex gap-0.5">
+          <div className="flex gap-0.5" role="group" aria-label="Simulation speed">
             {[0.5, 1, 2].map(s => (
               <button
                 key={s}
                 onClick={() => onSetSpeed(s)}
-                className={`h-7 px-1.5 rounded text-[11px] font-mono transition-colors ${
+                className={`h-7 px-1.5 rounded text-[11px] font-mono transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
                   speedMultiplier === s
                     ? 'bg-cyan-500/20 text-cyan-400 font-bold'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
+                aria-label={`Set speed to ${s}x`}
               >
                 {s}x
               </button>
@@ -210,12 +212,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={onTriggerSpike}
           disabled={!isRunning}
-          className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 ${
+          className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
             isSpikeMode
               ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
               : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
           } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
           title="Inject Traffic Surge / DDoS"
+          aria-label="Inject traffic surge or spike"
         >
           <Zap className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Spike</span>
@@ -224,12 +227,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Sound toggle */}
         <button
           onClick={onToggleSound}
-          className={`w-8 h-8 rounded-lg border border-slate-800 flex items-center justify-center transition-colors shrink-0 ${
+          className={`w-8 h-8 rounded-lg border border-slate-800 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
             soundEnabled
               ? 'bg-dark-950 text-slate-300 hover:text-white'
               : 'bg-dark-950 text-slate-600'
           }`}
           title={soundEnabled ? 'Mute Sound Effects' : 'Enable Sound Effects'}
+          aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
         >
           {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
         </button>
@@ -237,49 +241,54 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="hidden sm:block h-5 w-px bg-slate-800 mx-0.5" />
 
         {/* Undo / Redo Group */}
-        <div className="hidden sm:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
+        <div className="hidden sm:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="History controls">
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+            className={`w-7 h-7 rounded flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               canUndo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'opacity-30 cursor-not-allowed text-slate-600'
             }`}
             title="Undo (Ctrl+Z)"
+            aria-label="Undo last change"
           >
             <Undo2 className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+            className={`w-7 h-7 rounded flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               canRedo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'opacity-30 cursor-not-allowed text-slate-600'
             }`}
             title="Redo (Ctrl+Y)"
+            aria-label="Redo last change"
           >
             <Redo2 className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Zoom Group */}
-        <div className="hidden lg:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
+        <div className="hidden lg:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="Zoom controls">
           <button
             onClick={onZoomOut}
-            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Zoom Out"
+            aria-label="Zoom out canvas"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onResetZoom}
-            className="h-7 px-1.5 text-[11px] font-mono text-slate-300 hover:text-white transition-colors"
+            className="h-7 px-1.5 text-[11px] font-mono text-slate-300 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Reset Zoom (Auto-Center)"
+            aria-label="Reset zoom and auto-center architecture"
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             onClick={onZoomIn}
-            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Zoom In"
+            aria-label="Zoom in canvas"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
@@ -288,12 +297,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="h-5 w-px bg-slate-800 mx-0.5" />
 
         {/* Studio Tools Segmented Group (Presets, AI Gen, Projects, Embed) */}
-        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
+        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="Studio tools">
           {/* Presets */}
           <button
             onClick={onOpenTemplates}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Architecture Presets"
+            aria-label="Open architecture presets modal"
           >
             <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 3xl:inline">Presets</span>
@@ -304,8 +314,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* AI Generator */}
           <button
             onClick={onOpenAiGenerator}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-purple-950/60 text-purple-300 text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-purple-950/60 text-purple-300 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
             title="AI Prompt-to-Architecture"
+            aria-label="Open AI prompt-to-architecture generator"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
             <span className="hidden 3xl:inline">AI Gen</span>
@@ -316,8 +327,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* Projects */}
           <button
             onClick={onOpenProjects}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Saved Projects & Cloud Links"
+            aria-label="Open saved projects and cloud links modal"
           >
             <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 3xl:inline">Projects</span>
@@ -328,8 +340,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* Embed */}
           <button
             onClick={onOpenEmbed}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Embed Interactive Simulator in Notion / Blogs"
+            aria-label="Open embed simulator modal"
           >
             <Code2 className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 3xl:inline">Embed</span>
@@ -339,8 +352,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Export Button */}
         <button
           onClick={onOpenExport}
-          className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0"
+          className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
           title="Export Architecture"
+          aria-label="Export architecture as JSON, PNG, or SVG"
         >
           <Share2 className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Export</span>
@@ -349,12 +363,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Pro Upgrade Pill */}
         <button
           onClick={onOpenPricing}
-          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md transition-all shrink-0 ${
+          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
             isPro
               ? 'bg-purple-950 border border-purple-800/80 text-purple-300 hover:bg-purple-900/60'
               : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold'
           }`}
           title="View Pro & Team Plans"
+          aria-label="View Pro and Team subscription plans"
         >
           <Crown className={`w-3.5 h-3.5 shrink-0 ${isPro ? 'text-amber-400' : 'text-slate-950'}`} />
           <span>{isPro ? 'PRO' : 'UPGRADE'}</span>
@@ -364,8 +379,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         {user ? (
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors shrink-0"
+            className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title={`Account: ${user.email} (${planTier.toUpperCase()} tier)`}
+            aria-label={`User account: ${user.email}`}
           >
             <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold shrink-0">
               {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
@@ -375,8 +391,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         ) : (
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0"
+            className="flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Sign in to sync cloud architectures"
+            aria-label="Sign in to sync cloud architectures"
           >
             <UserIcon className="w-3.5 h-3.5 shrink-0" />
             <span className="hidden md:inline">Sign In</span>
@@ -386,8 +403,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Clear graph */}
         <button
           onClick={onClearGraph}
-          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0"
+          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
           title="Clear Architecture"
+          aria-label="Clear all nodes and edges from architecture"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
