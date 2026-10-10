@@ -28,7 +28,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       {/* Glow Orbs Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[140px]" />
-        <div className="absolute top-[30%] right-[10%] w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-[140px]" />
         <div className="absolute bottom-[10%] left-[30%] w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[160px]" />
       </div>
 
@@ -97,18 +96,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
 
       {/* Hero Section */}
       <section className="relative z-10 pt-16 md:pt-24 pb-16 px-4 max-w-5xl mx-auto text-center space-y-6">
-        {/* Announce Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-xs font-medium backdrop-blur-sm animate-pulse">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Interactive Distributed System Simulation Engine</span>
-        </div>
-
         {/* Headline */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-[1.1] text-balance">
           Turn Static Architecture Diagrams into{' '}
-          <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-purple-400 bg-clip-text text-transparent">
-            Living Simulations
-          </span>
+          <span className="text-cyan-300">Living Simulations</span>
         </h1>
 
         {/* Subhead */}
@@ -211,7 +202,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             <div className="text-xs text-slate-400 mt-1">Ultralight Bundle Size</div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-purple-400 font-mono">0 Canvas Deps</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono">0 Canvas Deps</div>
             <div className="text-xs text-slate-400 mt-1">Pure SVG & De Casteljau Math</div>
           </div>
           <div>
@@ -223,13 +214,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
 
       {/* Features Bento Grid */}
       <section id="features" className="py-20 px-4 max-w-5xl mx-auto space-y-12 relative z-10">
-        <div className="text-center space-y-2">
-          <h2 className="text-xs font-semibold text-cyan-400 uppercase tracking-widest">
-            Engineering Precision
-          </h2>
-          <p className="text-3xl font-extrabold text-white">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-white text-balance">
             Built for Architects, System Designers, and Developers
-          </p>
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -246,7 +234,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
 
           {/* Card 2 */}
           <div className="p-6 rounded-2xl border border-slate-800 bg-dark-900/60 hover:border-slate-700 transition-colors space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-950 border border-purple-800/50 text-purple-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-sky-950 border border-sky-800/50 text-sky-300 flex items-center justify-center">
               <Sparkles className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">AI Prompt-to-Architecture</h3>
@@ -303,13 +291,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4 max-w-5xl mx-auto space-y-12 relative z-10">
-        <div className="text-center space-y-2">
-          <h2 className="text-xs font-semibold text-purple-400 uppercase tracking-widest">
-            Predictable Pricing
-          </h2>
-          <p className="text-3xl font-extrabold text-white">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-white text-balance">
             Choose the Plan That Fits Your Engineering Scale
-          </p>
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -349,34 +334,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           </div>
 
           {/* Pro Tier (Featured) */}
-          <div className="p-6 rounded-2xl border-2 border-purple-500/80 bg-purple-950/20 relative shadow-[0_0_30px_rgba(168,85,247,0.2)] flex flex-col justify-between">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider shadow-md">
+          <div className="p-6 rounded-2xl border-2 border-cyan-400/70 bg-dark-900 relative shadow-xl shadow-black/40 flex flex-col justify-between">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-cyan-400 text-slate-950 text-[11px] font-semibold">
               Recommended
             </div>
 
             <div>
-              <div className="text-sm font-bold text-purple-300">Pro Developer</div>
+              <div className="text-sm font-bold text-cyan-300">Pro Developer</div>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-3xl font-extrabold text-white">$12</span>
+                <span className="text-3xl font-extrabold text-white tabular-nums">$12</span>
                 <span className="text-xs text-slate-400">/ month</span>
               </div>
               <div className="text-xs text-slate-400">Or $99/year (Save 20%)</div>
 
               <div className="mt-6 space-y-3 text-xs text-slate-200">
                 <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span><strong>AI Architecture Generator</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span><strong>Unlimited</strong> Cloud Saved Projects</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>4K SVG & PDF Spec Export</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Mermaid Markdown Spec Generator</span>
                 </div>
               </div>
@@ -386,7 +371,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               href="https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1"
               target="_blank"
               rel="noopener noreferrer"
-              className="lemonsqueezy-button w-full mt-8 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-950 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
+              className="lemonsqueezy-button w-full mt-8 h-10 rounded-xl bg-slate-100 hover:bg-white text-slate-950 text-xs font-bold shadow-md shadow-black/30 transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900"
             >
               <span>Upgrade to Pro</span>
               <ArrowRight className="w-3.5 h-3.5" />

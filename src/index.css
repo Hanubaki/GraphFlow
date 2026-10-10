@@ -15,12 +15,18 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: #090d16;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: #f1f5f9;
+  caret-color: #22d3ee;
+}
+
+::selection {
+  background-color: rgba(34, 211, 238, 0.28);
+  color: #ecfeff;
 }
 
 code, pre {
-  font-family: 'Fira Code', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 /* Custom scrollbar for dark cyberpunk aesthetic */

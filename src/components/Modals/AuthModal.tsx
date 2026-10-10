@@ -159,7 +159,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 <span
                   className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
                     planTier === 'pro' || planTier === 'team'
-                      ? 'bg-purple-950 border border-purple-800 text-purple-300'
+                      ? 'bg-cyan-950/60 border border-cyan-700/60 text-cyan-200'
                       : 'bg-slate-800 text-slate-300'
                   }`}
                 >

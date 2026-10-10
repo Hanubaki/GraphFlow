@@ -154,7 +154,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           >
             <Cloud className="w-3.5 h-3.5" />
             <span>Terraform (IaC)</span>
-            <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800/60">
+            <span className="text-[9px] font-bold px-1.5 py-px rounded bg-slate-800 text-slate-200 border border-slate-700">
               PRO
             </span>
           </button>
@@ -202,7 +202,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 text-slate-200 font-semibold text-xs mb-1">
-                      <FileText className="w-4 h-4 text-purple-400" />
+                      <FileText className="w-4 h-4 text-cyan-400" />
                       Markdown Architecture Doc
                     </div>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -211,7 +211,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   </div>
                   <button
                     onClick={() => exportMarkdownFile(nodes, edges)}
-                    className="w-full h-9 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-purple-950"
+                    className="w-full h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download .md Spec
@@ -280,12 +280,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-400">
-                  AWS ECS Fargate / RDS / ElastiCache IaC <code className="text-purple-400 font-mono">main.tf</code>
+                  AWS ECS Fargate / RDS / ElastiCache IaC <code className="text-cyan-300 font-mono">main.tf</code>
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => exportTerraformFile(nodes, edges)}
-                    className="h-8 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors shadow-md shadow-purple-950"
+                    className="h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download .tf

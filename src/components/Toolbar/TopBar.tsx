@@ -314,11 +314,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* AI Generator */}
           <button
             onClick={onOpenAiGenerator}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-purple-950/60 text-purple-300 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
+            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-cyan-950/60 text-cyan-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="AI Prompt-to-Architecture"
             aria-label="Open AI prompt-to-architecture generator"
           >
-            <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
             <span className="hidden 3xl:inline">AI Gen</span>
           </button>
 
@@ -411,10 +411,10 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Pro Upgrade Pill */}
         <button
           onClick={handleOpenPricing}
-          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
+          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md shadow-black/30 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:outline-none ${
             isPro
-              ? 'bg-purple-950 border border-purple-800/80 text-purple-300 hover:bg-purple-900/60'
-              : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold'
+              ? 'bg-cyan-950/60 border border-cyan-800/70 text-cyan-200 hover:bg-cyan-900/50'
+              : 'bg-slate-100 hover:bg-white text-slate-950'
           }`}
           title={t('topbar.upgradeTitle')}
           aria-label="View Pro and Team subscription plans"

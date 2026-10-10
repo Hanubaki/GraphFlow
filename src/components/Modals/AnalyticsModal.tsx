@@ -177,7 +177,7 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => controls?.triggerSpike()}
-                    className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md"
+                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-md shadow-black/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   >
                     <Zap className="w-3.5 h-3.5" />
                     Inject Surge
