@@ -40,13 +40,17 @@ export class A11yAnnouncer {
     return el;
   }
 
+  public getLiveElement(): HTMLElement | null {
+    return this.getOrCreateElement();
+  }
+
   public announce(message: string, delayMs = 50): void {
+    const el = this.getOrCreateElement();
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
 
     this.timeoutId = setTimeout(() => {
-      const el = this.getOrCreateElement();
       if (el) {
         // Clear then set to guarantee screen-reader detection
         el.textContent = '';
