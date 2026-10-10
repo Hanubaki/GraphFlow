@@ -13,7 +13,7 @@
 
 **GraphFlow** is a browser-based, high-performance visual architecture design and data flow simulation engine. It empowers developers and architects to design distributed systems (gateways, microservices, caches, message queues, databases) and simulate real-time traffic, latency, network errors, and throughput with animated packets moving along cubic bezier curves.
 
-[Live Demo](#) · [Report Bug](#) · [Request Feature](#)
+[Report Bug](https://github.com/Hanubaki/GraphFlow/issues) · [Request Feature](https://github.com/Hanubaki/GraphFlow/issues)
 
 </div>
 
@@ -77,10 +77,10 @@ flowchart TD
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/graphflow.git
+git clone https://github.com/Hanubaki/GraphFlow.git
 
 # Navigate into project directory
-cd graphflow
+cd GraphFlow
 
 # Install dependencies
 npm install
@@ -116,31 +116,10 @@ npm test
 
 ---
 
-## 💼 LinkedIn Showcase Template
+## 👨‍💻 Author
 
-Copy and customize this post to share your project on LinkedIn:
-
-```markdown
-🚀 Excited to share my latest engineering project: GraphFlow – an interactive Distributed Architecture & Real-Time Data Flow Simulator!
-
-Building distributed systems requires thinking through latency, throughput bottlenecks, and fault tolerance. I built GraphFlow to make system design tangible and interactive.
-
-Key features:
-✨ Custom SVG & Cubic Bezier rendering engine built from scratch (no heavy canvas dependencies).
-⚡ Real-time traffic simulation running on requestAnimationFrame at 60 FPS.
-💥 Live chaos engineering: inject error rates, latency spikes, and simulate DDoS loads.
-🔄 Command pattern Undo/Redo stack with full keyboard accessibility.
-📄 One-click export to Mermaid diagrams and Markdown architecture specifications.
-
-Built with: React 18, TypeScript, Tailwind CSS, Vite, and Vitest.
-
-Check out the live demo: [YOUR_VERCEL_LINK]
-GitHub repository: [YOUR_GITHUB_LINK]
-
-I’d love to hear your feedback! What architectural pattern would you like to see simulated next?
-
-#SoftwareEngineering #SystemDesign #React #TypeScript #WebDevelopment #Frontend #OpenSource
-```
+**Berke Akdemir**
+* GitHub: [@Hanubaki](https://github.com/Hanubaki)
 
 ---
 
