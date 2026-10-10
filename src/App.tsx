@@ -305,5 +305,6 @@ export const App: React.FC = () => {
         onClose={() => setActiveModal(null)}
       />
     </div>
-  );
+  </SimulationProvider>
+);
 };
