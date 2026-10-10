@@ -176,7 +176,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
               <div className="text-xs font-semibold text-slate-100 truncate tracking-wide">
                 {node.title}
               </div>
-              <div className="text-[10px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-400 truncate">
                 {node.subtitle}
               </div>
             </div>
@@ -185,12 +185,12 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
           {/* Status & Circuit Breaker Badge */}
           <div className="flex items-center gap-1.5 shrink-0" title={`Status: ${statusConfig.label}`}>
             {node.circuitBreaker === 'open' && (
-              <span className="px-1 py-0.5 rounded text-[8px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+              <span className="px-1 py-0.5 rounded text-[11px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
                 CB OPEN
               </span>
             )}
             {node.circuitBreaker === 'half-open' && (
-              <span className="px-1 py-0.5 rounded text-[8px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+              <span className="px-1 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
                 CB PROBE
               </span>
             )}
@@ -199,12 +199,12 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         </div>
 
         {/* Metrics Footer */}
-        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-800/80">
+        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1 border-t border-slate-800/80">
           <span className="flex items-center gap-1 text-slate-300">
-            <span className="text-[9px] text-slate-400">LAT</span> {node.latencyMs}ms
+            <span className="text-[11px] text-slate-400">LAT</span> {node.latencyMs}ms
           </span>
           <span className="flex items-center gap-1 text-slate-300">
-            <span className="text-[9px] text-slate-400">RPS</span> {node.throughputRps}
+            <span className="text-[11px] text-slate-400">RPS</span> {node.throughputRps}
           </span>
         </div>
       </div>

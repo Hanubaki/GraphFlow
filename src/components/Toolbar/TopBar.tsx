@@ -152,11 +152,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="hidden sm:block">
           <div className="flex items-center gap-1.5 leading-none">
             <span className="font-bold text-sm text-slate-100 tracking-tight">GraphFlow</span>
-            <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
+            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
               SIM
             </span>
           </div>
-          <div className="text-[10px] text-slate-400 leading-tight mt-0.5">Architecture & Flow Engine</div>
+          <div className="text-[11px] text-slate-400 leading-tight mt-0.5">Architecture & Flow Engine</div>
         </div>
       </button>
 
@@ -379,7 +379,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="hidden lg:flex items-center -space-x-1.5 ml-0.5">
             <div
               style={{ backgroundColor: myPresence.color }}
-              className="w-4 h-4 rounded-full border border-dark-950 flex items-center justify-center text-[8px] font-bold text-slate-950 shadow-sm"
+              className="w-5 h-5 rounded-full border border-dark-950 flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm"
               title={`You: ${myPresence.name}`}
             >
               {myPresence.name[0]}
@@ -388,7 +388,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div
                 key={p.id}
                 style={{ backgroundColor: p.color }}
-                className="w-4 h-4 rounded-full border border-dark-950 flex items-center justify-center text-[8px] font-bold text-slate-950 shadow-sm"
+                className="w-5 h-5 rounded-full border border-dark-950 flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm"
                 title={p.name}
               >
                 {p.name[0]}
@@ -431,7 +431,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             title={`Account: ${user.email} (${planTier.toUpperCase()} tier)`}
             aria-label={`User account: ${user.email}`}
           >
-            <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold shrink-0">
+            <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[11px] font-bold shrink-0">
               {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
             </div>
             <span className="hidden xl:inline max-w-[75px] truncate text-[11px]">{user.email?.split('@')[0]}</span>

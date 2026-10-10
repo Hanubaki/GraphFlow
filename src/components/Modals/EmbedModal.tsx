@@ -56,8 +56,8 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-100">Embed Live Simulation</h2>
-                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-300 border border-cyan-700/50">
+                <h2 className="text-base font-bold text-slate-100">Embed Live Simulation</h2>
+                <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-300 border border-cyan-700/50">
                   VIRAL WIDGET
                 </span>
               </div>

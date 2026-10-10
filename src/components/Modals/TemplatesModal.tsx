@@ -40,7 +40,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
               <LayoutTemplate className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="templates-modal-title" className="text-sm font-bold text-slate-100">Architecture Templates</h2>
+              <h2 id="templates-modal-title" className="text-base font-bold text-slate-100">Architecture Templates</h2>
               <p className="text-xs text-slate-400">Load production-grade distributed architecture presets</p>
             </div>
           </div>
@@ -65,7 +65,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
                   <h3 className="text-sm font-semibold text-slate-100 group-hover:text-cyan-300 transition-colors">
                     {template.name}
                   </h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800/60 text-slate-300">
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800/60 text-slate-300">
                     {template.difficulty}
                   </span>
                 </div>
@@ -75,13 +75,13 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
 
                 {/* Tags & Component Count */}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+                  <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
                     {template.nodes.length} Nodes • {template.edges.length} Connections
                   </span>
                   {template.tags.map(tag => (
                     <span
                       key={tag}
-                      className="text-[10px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/60"
+                      className="text-[11px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/60"
                     >
                       {tag}
                     </span>

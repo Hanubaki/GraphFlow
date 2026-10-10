@@ -90,7 +90,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
               <Cpu className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="font-bold text-xs tracking-tight text-white">GraphFlow</span>
-            <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
+            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
               LIVE EMBED
             </span>
           </div>
@@ -122,7 +122,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
           </button>
 
           {/* Speed Selector */}
-          <div className="flex items-center bg-dark-950 rounded-lg p-0.5 border border-slate-800 text-[10px] font-mono font-semibold">
+          <div className="flex items-center bg-dark-950 rounded-lg p-0.5 border border-slate-800 text-[11px] font-mono font-semibold">
             {[1, 2, 4].map(s => (
               <button
                 key={s}
@@ -140,7 +140,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
           <button
             onClick={triggerSpike}
             disabled={isSpikeMode}
-            className={`h-7 px-2 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+            className={`h-7 px-2 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
               isSpikeMode
                 ? 'bg-amber-500 text-slate-950 animate-pulse'
                 : 'bg-dark-950 border border-slate-800 text-slate-300 hover:border-amber-500/40 hover:text-amber-400'
@@ -224,7 +224,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
           <span className="text-[11px] font-semibold text-slate-200 group-hover:text-white">
             Powered by <strong className="text-cyan-400">GraphFlow</strong>
           </span>
-          <span className="text-[10px] text-slate-400 group-hover:text-cyan-300 flex items-center gap-0.5">
+          <span className="text-[11px] text-slate-400 group-hover:text-cyan-300 flex items-center gap-0.5">
             <span>Open Studio</span>
             <ExternalLink className="w-3 h-3" />
           </span>

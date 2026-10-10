@@ -150,14 +150,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-slate-200 truncate">{user.email}</div>
-                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">ID: {user.id.slice(0, 18)}...</div>
+                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">ID: {user.id.slice(0, 18)}...</div>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
                 <span className="text-slate-400">Subscription Tier:</span>
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold uppercase text-[11px] ${
                     planTier === 'pro' || planTier === 'team'
                       ? 'bg-cyan-950/60 border border-cyan-700/60 text-cyan-200'
                       : 'bg-slate-800 text-slate-300'
@@ -268,7 +268,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-800" />
               </div>
-              <span className="relative bg-dark-900 px-3 text-[10px] uppercase font-mono text-slate-500">
+              <span className="relative bg-dark-900 px-3 text-[11px] uppercase font-mono text-slate-500">
                 Or with email
               </span>
             </div>

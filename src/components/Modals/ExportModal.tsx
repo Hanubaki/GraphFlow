@@ -101,7 +101,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <Share2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="export-modal-title" className="text-sm font-bold text-slate-100">Export & Import Hub</h2>
+              <h2 id="export-modal-title" className="text-base font-bold text-slate-100">Export & Import Hub</h2>
               <p className="text-xs text-slate-400">Save architecture, generate specs, or import files</p>
             </div>
           </div>
@@ -154,7 +154,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           >
             <Cloud className="w-3.5 h-3.5" />
             <span>Terraform (IaC)</span>
-            <span className="text-[9px] font-bold px-1.5 py-px rounded bg-slate-800 text-slate-200 border border-slate-700">
+            <span className="text-[11px] font-bold px-1.5 py-px rounded bg-slate-800 text-slate-200 border border-slate-700">
               PRO
             </span>
           </button>

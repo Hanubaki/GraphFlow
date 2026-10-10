@@ -43,13 +43,13 @@ export const PeerCursorLayer: React.FC<PeerCursorLayerProps> = memo(({ peers }) 
                 backgroundColor: peer.color,
                 boxShadow: `0 0 12px ${peer.color}55`,
               }}
-              className="mt-1 ml-3 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold text-slate-950 flex items-center gap-1.5 shadow-lg whitespace-nowrap animate-fadeIn"
+              className="mt-1 ml-3 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold text-slate-950 flex items-center gap-1.5 shadow-lg whitespace-nowrap animate-fadeIn"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-slate-950/80 animate-ping" />
               <span>{peer.name}</span>
 
               {peer.selectedNodeId && (
-                <span className="opacity-75 text-[9px] bg-slate-950/20 px-1 py-0.2 rounded font-sans">
+                <span className="opacity-75 text-[11px] bg-slate-950/20 px-1 py-0.2 rounded font-sans">
                   inspecting {peer.selectedNodeId}
                 </span>
               )}

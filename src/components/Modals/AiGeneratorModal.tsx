@@ -78,8 +78,8 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 id="ai-gen-modal-title" className="text-sm font-bold text-slate-100">AI Prompt-to-Architecture</h2>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
+                <h2 id="ai-gen-modal-title" className="text-base font-bold text-slate-100">AI Prompt-to-Architecture</h2>
+                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
                   PRO
                 </span>
               </div>
@@ -149,7 +149,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                   placeholder="AIzaSy... (leave blank to use built-in smart engine)"
                   className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-400"
                 />
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[11px] text-slate-500">
                   By default, GraphFlow includes a built-in neural rules synthesizer that runs 100% offline.
                 </p>
               </div>

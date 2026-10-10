@@ -133,7 +133,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   Circuit Breaker
                 </span>
-                <span className="font-mono text-[10px] text-slate-400 uppercase">
+                <span className="font-mono text-[11px] text-slate-400 uppercase">
                   {selectedNode.circuitBreaker || 'closed'}
                 </span>
               </div>
@@ -150,7 +150,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <button
                       key={cb}
                       onClick={() => onUpdateNode(selectedNode.id, { circuitBreaker: cb })}
-                      className={`h-7 rounded-lg border text-[10px] font-semibold flex items-center justify-center transition-all ${
+                      className={`h-7 rounded-lg border text-[11px] font-semibold flex items-center justify-center transition-all ${
                         isActive
                           ? config.active
                           : 'bg-dark-950 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -389,7 +389,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 <Info className="w-3.5 h-3.5 text-cyan-400" />
                 Keyboard Shortcuts
               </div>
-              <div className="space-y-1 text-slate-400 font-mono text-[10px]">
+              <div className="space-y-1 text-slate-400 font-mono text-[11px]">
                 <div className="flex justify-between">
                   <span>Undo / Redo:</span>
                   <span className="text-slate-200">Ctrl+Z / Ctrl+Y</span>

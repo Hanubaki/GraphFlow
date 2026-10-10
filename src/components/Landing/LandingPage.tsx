@@ -38,8 +38,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             <Cpu className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-base tracking-tight text-white">GraphFlow</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
-            PRO 1.0
+          <span className="text-[11px] font-mono px-1.5 py-0.5 rounded border border-slate-800 text-slate-400">
+            v1.0
           </span>
         </div>
 
@@ -59,18 +59,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenPricing}
-            className="hidden sm:inline-flex text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 transition-colors cursor-pointer"
-          >
-            Pricing
-          </button>
           {user ? (
             <button
               onClick={onOpenAuth}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-800 bg-dark-950/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
             >
-              <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[10px] font-bold">
+              <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[11px] font-bold">
                 {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
               </div>
               <span className="hidden sm:inline text-xs">{user.email?.split('@')[0]}</span>
@@ -86,7 +80,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           )}
           <button
             onClick={onEnterApp}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-950/50 transition-all hover:gap-2 cursor-pointer"
+            className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-950"
           >
             <span>Open Studio</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -112,7 +106,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             onClick={onEnterApp}
-            className="w-full sm:w-auto h-11 px-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-sm shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all hover:scale-105"
+            className="w-full sm:w-auto h-11 px-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-950"
           >
             <Play className="w-4 h-4 fill-slate-950" />
             <span>Start Simulating Free</span>
@@ -121,31 +115,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             href="https://github.com/Hanubaki/GraphFlow"
             target="_blank"
             rel="noreferrer"
-            className="w-full sm:w-auto h-11 px-6 rounded-xl border border-slate-700 bg-dark-900/60 hover:bg-slate-800 text-slate-200 text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+            className="w-full sm:w-auto h-11 px-6 rounded-xl border border-slate-700 bg-dark-900/60 hover:bg-slate-800 text-slate-200 text-sm font-semibold flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-950"
           >
             <Github className="w-4 h-4" />
             <span>Star on GitHub</span>
           </a>
         </div>
 
-        {/* Live Interactive Hero Canvas Teaser */}
+        <p className="text-sm text-slate-400">
+          Open source (MIT) · Runs in your browser · No install, no canvas runtime
+        </p>
+
+        {/* Illustrative Topology Preview */}
         <div id="demo" className="pt-10">
           <div
-            onClick={onEnterApp}
-            className="group relative rounded-2xl border border-slate-800 bg-dark-900/90 shadow-2xl p-4 md:p-6 backdrop-blur-xl cursor-pointer hover:border-cyan-500/50 transition-all overflow-hidden"
+            role="img"
+            aria-label="Illustrative preview of a GraphFlow topology: client, API gateway, microservice, and database with latency and throughput readouts"
+            className="relative rounded-2xl border border-slate-800 bg-dark-900/90 shadow-2xl p-4 md:p-6 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent z-10 pointer-events-none" />
 
             {/* Mock Editor Toolbar */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 text-xs font-mono text-slate-400">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-slate-200 font-semibold">SIMULATION ACTIVE • 730 RPS</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                <span className="text-slate-200 font-semibold">Simulation running · 730 rps</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span>LATENCY: 18ms</span>
-                <span>PACKETS: 14,290</span>
-                <span className="text-cyan-400 underline group-hover:text-cyan-300">Click to Open Editor →</span>
+              <div className="hidden sm:flex items-center gap-3">
+                <span>p50 18 ms</span>
               </div>
             </div>
 
@@ -153,61 +150,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             <div className="min-h-[17rem] w-full relative grid grid-cols-2 lg:grid-cols-4 gap-3 items-center justify-items-center px-2 py-8">
               {/* Client Node */}
               <div className="w-full max-w-[180px] p-3 rounded-xl border border-slate-800 bg-dark-950/90 shadow-lg text-left">
-                <div className="text-[10px] text-cyan-400 font-mono">CLIENT</div>
+                <div className="text-[11px] text-cyan-400 font-mono">CLIENT</div>
                 <div className="text-xs font-bold text-white truncate">Next.js Store</div>
-                <div className="text-[10px] text-slate-500 mt-1">LAT: 15ms • 450 rps</div>
+                <div className="text-[11px] text-slate-400 mt-1">LAT: 15ms • 450 rps</div>
               </div>
 
               {/* Gateway Node */}
-              <div className="w-full max-w-[180px] p-3 rounded-xl border border-cyan-500/50 bg-cyan-950/20 shadow-[0_0_20px_rgba(6,182,212,0.2)] text-left">
-                <div className="text-[10px] text-indigo-400 font-mono">INGRESS</div>
+              <div className="w-full max-w-[180px] p-3 rounded-xl border border-cyan-500/50 bg-cyan-950/20 text-left">
+                <div className="text-[11px] text-indigo-400 font-mono">INGRESS</div>
                 <div className="text-xs font-bold text-white truncate">Kong API Gateway</div>
-                <div className="text-[10px] text-slate-400 mt-1">LAT: 6ms • 1500 rps</div>
+                <div className="text-[11px] text-slate-400 mt-1">LAT: 6ms • 1500 rps</div>
               </div>
 
               {/* Service Node */}
               <div className="w-full max-w-[180px] p-3 rounded-xl border border-purple-500/40 bg-purple-950/20 text-left">
-                <div className="text-[10px] text-purple-400 font-mono">MICROSERVICE</div>
+                <div className="text-[11px] text-purple-400 font-mono">MICROSERVICE</div>
                 <div className="text-xs font-bold text-white truncate">Order Processor</div>
-                <div className="text-[10px] text-slate-400 mt-1">LAT: 35ms • Kafka Sync</div>
+                <div className="text-[11px] text-slate-400 mt-1">LAT: 35ms • Kafka Sync</div>
               </div>
 
               {/* DB Node */}
               <div className="w-full max-w-[180px] p-3 rounded-xl border border-blue-500/40 bg-blue-950/20 text-left">
-                <div className="text-[10px] text-blue-400 font-mono">DATABASE</div>
+                <div className="text-[11px] text-blue-400 font-mono">DATABASE</div>
                 <div className="text-xs font-bold text-white truncate">PostgreSQL Multi-AZ</div>
-                <div className="text-[10px] text-slate-400 mt-1">LAT: 28ms • SQL Query</div>
+                <div className="text-[11px] text-slate-400 mt-1">LAT: 28ms • SQL Query</div>
               </div>
             </div>
-
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs shadow-lg group-hover:scale-105 transition-transform">
-                Launch Full Interactive Simulator
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Metrics Banner */}
-      <section className="border-y border-slate-800 bg-dark-950/60 py-8 px-4 relative z-10">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-mono">60 FPS</div>
-            <div className="text-xs text-slate-400 mt-1">Fluid Native Simulation</div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono">&lt; 75 KB</div>
-            <div className="text-xs text-slate-400 mt-1">Ultralight Bundle Size</div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono">0 Canvas Deps</div>
-            <div className="text-xs text-slate-400 mt-1">Pure SVG & De Casteljau Math</div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">100% Free</div>
-            <div className="text-xs text-slate-400 mt-1">Open Core Architecture</div>
           </div>
         </div>
       </section>
@@ -227,7 +195,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <Activity className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">Real-Time Traffic Engine</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Cubic bezier velocity calculations simulate real request transit times, queue delays, and throughput bottlenecks in real-time.
             </p>
           </div>
@@ -238,7 +206,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <Sparkles className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">AI Prompt-to-Architecture</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Describe your system in plain text. GraphFlow automatically synthesizes gateways, services, databases, and connects them with optimal protocols.
             </p>
           </div>
@@ -249,7 +217,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <Zap className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">Chaos & DDoS Simulation</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Trigger traffic spikes, configure error rates, and observe how your system handles degraded nodes with visual HTTP 500 error packets.
             </p>
           </div>
@@ -260,7 +228,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <RotateCcw className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">Command Pattern History</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Full undo/redo stack (`Ctrl+Z`, `Ctrl+Y`) and keyboard shortcuts ensure zero loss of architecture design context.
             </p>
           </div>
@@ -271,7 +239,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <Terminal className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">Mermaid & README Export</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Export high-res diagrams or generate production-ready Markdown specifications with embedded Mermaid syntax for GitHub repositories.
             </p>
           </div>
@@ -282,7 +250,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <Share2 className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-white">Zero-Cost Instant URL Share</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Compresses active architecture state directly into a shareable URL hash. Send it to colleagues to replicate your exact simulation instantly.
             </p>
           </div>

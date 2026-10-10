@@ -153,7 +153,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
               <FolderKanban className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="projects-modal-title" className="text-sm font-bold text-slate-100">Project Manager & Cloud Sharing</h2>
+              <h2 id="projects-modal-title" className="text-base font-bold text-slate-100">Project Manager & Cloud Sharing</h2>
               <p className="text-xs text-slate-400">Save designs, sync to database, or copy instant share links</p>
             </div>
           </div>
@@ -292,7 +292,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                           <div className="text-xs font-semibold text-slate-100 truncate group-hover:text-cyan-300 transition-colors">
                             {proj.title}
                           </div>
-                          <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                             <span>{new Date(proj.updatedAt || proj.updated_at).toLocaleDateString()}</span>
                             <span>•</span>
                             <span className="text-cyan-400">{proj.nodes.length} nodes</span>

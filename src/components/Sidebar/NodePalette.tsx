@@ -48,7 +48,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
               <span className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 Component Palette
               </span>
-              <span className="text-[10px] text-cyan-400 font-mono bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
+              <span className="text-[11px] text-cyan-400 font-mono bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
                 Drag or Click
               </span>
             </div>
@@ -76,7 +76,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
         {categories.map(category => (
           <div key={category} className="space-y-1.5">
             {!isCollapsed && (
-              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-1">
+              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1">
                 {category}
               </div>
             )}
@@ -107,7 +107,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
                         <div className="text-xs font-medium text-slate-200 truncate group-hover:text-cyan-300 transition-colors">
                           {item.title}
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate">
+                        <div className="text-[11px] text-slate-400 truncate">
                           {item.subtitle}
                         </div>
                       </div>

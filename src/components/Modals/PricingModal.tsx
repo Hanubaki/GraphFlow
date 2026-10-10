@@ -113,7 +113,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
               }`}
             >
               <span>Annual</span>
-              <span className="text-[10px] bg-cyan-400/15 px-1.5 py-px rounded text-cyan-300">
+              <span className="text-[11px] bg-cyan-400/15 px-1.5 py-px rounded text-cyan-300">
                 Save 20%
               </span>
             </button>

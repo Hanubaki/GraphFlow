@@ -94,7 +94,7 @@ const ConnectionWire = React.memo<ConnectionWireProps>(({
         className="overflow-visible pointer-events-auto"
       >
         <div
-          className={`flex items-center justify-center gap-1.5 h-6 px-2 rounded-full border text-[10px] font-mono tracking-tight shadow-md backdrop-blur-sm transition-transform group-hover:scale-105 ${badgeStyle} ${
+          className={`flex items-center justify-center gap-1.5 h-6 px-2 rounded-full border text-[11px] font-mono tracking-tight shadow-md backdrop-blur-sm transition-transform group-hover:scale-105 ${badgeStyle} ${
             isSelected ? 'ring-1 ring-cyan-400' : ''
           }`}
         >
