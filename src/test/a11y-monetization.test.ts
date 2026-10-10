@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   checkFeatureEntitlement,
   buildLemonCheckoutUrl,
@@ -13,6 +13,14 @@ import { a11yAnnouncer } from '../utils/a11yAnnouncer';
 import { GraphNode } from '../types/graph';
 
 describe('SaaS Monetization & Tier Gating Engine', () => {
+  it('defines structured tier limits for Free, Pro, and Team', () => {
+    expect(TIER_LIMITS.free.maxCloudProjects).toBe(3);
+    expect(TIER_LIMITS.pro.maxCloudProjects).toBe(1000);
+    expect(TIER_LIMITS.team.maxCloudProjects).toBe(10000);
+    expect(TIER_LIMITS.pro.canExportTerraform).toBe(true);
+    expect(TIER_LIMITS.free.canExportTerraform).toBe(false);
+  });
+
   it('enforces Free tier project limits and allows Pro unlimited projects', () => {
     // Free tier: max 3 projects
     expect(checkFeatureEntitlement('cloud_sync_unlimited', 'free', 2).allowed).toBe(true);
