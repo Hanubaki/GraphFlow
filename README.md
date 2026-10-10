@@ -9,7 +9,7 @@
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg?style=flat-square)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?style=flat-square)](https://vite.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?style=flat-square)](https://tailwindcss.com/)
-[![Tests](https://img.shields.io/badge/Vitest-Passing-success.svg?style=flat-square)](https://github.com/Hanubaki/GraphFlow)
+[![CI](https://github.com/Hanubaki/GraphFlow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Hanubaki/GraphFlow/actions/workflows/ci.yml)
 
 <p align="center">
   <a href="#overview">Overview</a> •
