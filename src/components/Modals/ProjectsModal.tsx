@@ -74,6 +74,8 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
         loadCloud();
       }
     }
+  }, [isOpen, user, loadCloud]);
+
   // Accessibility: close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
