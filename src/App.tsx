@@ -22,6 +22,7 @@ import { SavedProject, parseShareUrl } from './services/projectStorage';
 import { CloudProject } from './types/auth';
 import { calculateAutoCenter } from './utils/viewportMath';
 import { createNodeFromCatalog } from './utils/nodeFactory';
+import { telemetry } from './utils/telemetry';
 
 export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | null;
 
@@ -121,13 +122,31 @@ export const App: React.FC = () => {
     const centerWorldY = Math.round((-pan.y + window.innerHeight / 2) / zoom - 45);
     const newNode = createNodeFromCatalog(item, { x: centerWorldX, y: centerWorldY });
     addNode(newNode);
-  }, [addNode, pan, zoom]);
+    soundFx.playNodeAdded();
+    telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodes.length + 1 });
+  }, [addNode, pan, zoom, nodes.length]);
 
   // Add node at exact canvas coordinates (drop target)
   const handleAddNodeAt = useCallback((item: CatalogItem, x: number, y: number) => {
     const newNode = createNodeFromCatalog(item, { x, y });
     addNode(newNode);
-  }, [addNode]);
+    soundFx.playNodeAdded();
+    telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodes.length + 1 });
+  }, [addNode, nodes.length]);
+
+  // Delete node with audio feedback & telemetry
+  const handleDeleteNode = useCallback((id: string) => {
+    removeNode(id);
+    soundFx.playNodeDeleted();
+    telemetry.track('Node Removed', { canvasNodeCount: Math.max(0, nodes.length - 1) });
+  }, [removeNode, nodes.length]);
+
+  // Load architecture template with success chime
+  const handleSelectTemplate = useCallback((template: any) => {
+    loadTemplate(template);
+    soundFx.playSuccess();
+    telemetry.track('Preset Loaded', { templateId: template.id, nodeCount: template.nodes.length });
+  }, [loadTemplate]);
 
   // Import JSON graph
   const handleImportGraph = useCallback((importedNodes: GraphNode[], importedEdges: GraphEdge[]) => {
@@ -135,6 +154,8 @@ export const App: React.FC = () => {
     setEdges(importedEdges);
     setPan({ x: 0, y: 0 });
     setZoom(1);
+    soundFx.playSuccess();
+    telemetry.track('Architecture Imported', { nodeCount: importedNodes.length, edgeCount: importedEdges.length });
   }, [setNodes, setEdges, setPan, setZoom]);
 
   if (viewMode === 'embed') {
@@ -210,7 +231,7 @@ export const App: React.FC = () => {
               onSelectNode={selectNode}
               onSelectEdge={selectEdge}
               onMoveNode={moveNode}
-              onDeleteNode={removeNode}
+              onDeleteNode={handleDeleteNode}
               onDeleteEdge={removeEdge}
               onAddEdge={addEdge}
               onAddNodeAt={handleAddNodeAt}
@@ -225,7 +246,7 @@ export const App: React.FC = () => {
           edges={edges}
           onUpdateNode={updateNode}
           onUpdateEdge={updateEdge}
-          onDeleteNode={removeNode}
+          onDeleteNode={handleDeleteNode}
           onDeleteEdge={removeEdge}
         />
       </main>
@@ -234,7 +255,7 @@ export const App: React.FC = () => {
       <TemplatesModal
         isOpen={activeModal === 'templates'}
         onClose={() => setActiveModal(null)}
-        onSelectTemplate={loadTemplate}
+        onSelectTemplate={handleSelectTemplate}
       />
 
       {/* Export & Spec Generator Modal */}

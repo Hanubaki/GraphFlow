@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Check, Sparkles, X, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { soundFx } from '../../utils/sound';
+import { telemetry } from '../../utils/telemetry';
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -12,6 +14,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
   const [isAnnual, setIsAnnual] = useState(true);
   const { user, isPro, planTier } = useAuth();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).createLemonSqueezy) {
+      (window as any).createLemonSqueezy();
+      (window as any).LemonSqueezy?.Setup?.({
+        eventHandler: (event: { event: string }) => {
+          if (event.event === 'Checkout.Success') {
+            soundFx.playSuccess();
+          }
+        },
+      });
+    }
+  }, []);
+
   if (!isOpen) return null;
 
   const defaultCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1';
@@ -20,6 +35,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
     : defaultCheckoutUrl;
 
   const handleProClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    soundFx.playClick();
+    telemetry.track('Checkout Clicked', {
+      tier: 'pro',
+      billingCycle: isAnnual ? 'annual' : 'monthly',
+      source: 'pricing_modal',
+    });
+
     if (!user && onOpenAuth) {
       e.preventDefault();
       onClose();

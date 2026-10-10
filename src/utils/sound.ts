@@ -117,6 +117,75 @@ class SoundFX {
       osc.stop(ctx.currentTime + 0.2);
     } catch {}
   }
+
+  public playNodeAdded() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch {}
+  }
+
+  public playNodeDeleted() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.exponentialRampToValueAtTime(130, now + 0.09);
+
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } catch {}
+  }
+
+  public playSuccess() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = now + idx * 0.05;
+        const duration = 0.25;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.03, start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration);
+      });
+    } catch {}
+  }
 }
 
 export const soundFx = new SoundFX();
