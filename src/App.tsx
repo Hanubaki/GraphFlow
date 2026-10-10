@@ -20,6 +20,10 @@ import { GraphNode, GraphEdge } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
 import { SavedProject, parseShareUrl } from './services/projectStorage';
 import { CloudProject } from './types/auth';
+import { calculateAutoCenter } from './utils/viewportMath';
+import { createNodeFromCatalog } from './utils/nodeFactory';
+
+export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | null;
 
 export const App: React.FC = () => {
   const {
@@ -60,13 +64,7 @@ export const App: React.FC = () => {
     },
   });
 
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [isEmbedOpen, setIsEmbedOpen] = useState(false);
-  const [isAiGenOpen, setIsAiGenOpen] = useState(false);
-  const [isProjectsOpen, setIsProjectsOpen] = useState(false);
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [viewMode, setViewMode] = useState<'landing' | 'studio' | 'embed'>(() => {
     if (typeof window === 'undefined') return 'landing';
     if (window.location.hash.includes('#embed=')) return 'embed';
@@ -92,28 +90,11 @@ export const App: React.FC = () => {
 
   const handleAutoCenter = useCallback((targetNodes = nodes) => {
     if (typeof window === 'undefined' || targetNodes.length === 0) return;
-    const availableWidth = Math.max(400, window.innerWidth - 256 - 320);
-    const availableHeight = Math.max(300, window.innerHeight - 56);
-    
-    const minX = Math.min(...targetNodes.map(n => n.x));
-    const maxX = Math.max(...targetNodes.map(n => n.x + n.width));
-    const minY = Math.min(...targetNodes.map(n => n.y));
-    const maxY = Math.max(...targetNodes.map(n => n.y + n.height));
-
-    const graphWidth = Math.max(400, maxX - minX);
-    const graphHeight = Math.max(300, maxY - minY);
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    const scaleX = (availableWidth - 80) / graphWidth;
-    const scaleY = (availableHeight - 80) / graphHeight;
-    const targetScale = Math.min(1.0, Math.max(0.45, Math.min(scaleX, scaleY)));
-
-    const targetPanX = Math.round((availableWidth / 2) - (centerX * targetScale));
-    const targetPanY = Math.round((availableHeight / 2) - (centerY * targetScale));
-
-    setZoom(targetScale);
-    setPan({ x: targetPanX, y: targetPanY });
+    const result = calculateAutoCenter(targetNodes, window.innerWidth, window.innerHeight);
+    if (result) {
+      setZoom(result.zoom);
+      setPan(result.pan);
+    }
   }, [nodes, setZoom, setPan]);
 
   // Auto-center on initial mount
@@ -138,46 +119,13 @@ export const App: React.FC = () => {
   const handleAddNodeFromPalette = useCallback((item: CatalogItem) => {
     const centerWorldX = Math.round((-pan.x + window.innerWidth / 2) / zoom - 95);
     const centerWorldY = Math.round((-pan.y + window.innerHeight / 2) / zoom - 45);
-
-    const newNode: GraphNode = {
-      id: `node-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type: item.type,
-      title: item.title,
-      subtitle: item.subtitle,
-      x: centerWorldX,
-      y: centerWorldY,
-      width: 190,
-      height: 90,
-      status: 'healthy',
-      latencyMs: item.defaultLatencyMs,
-      errorRate: item.defaultErrorRate,
-      throughputRps: item.defaultThroughput,
-      color: item.color,
-      iconName: item.iconName,
-    };
-
+    const newNode = createNodeFromCatalog(item, { x: centerWorldX, y: centerWorldY });
     addNode(newNode);
   }, [addNode, pan, zoom]);
 
   // Add node at exact canvas coordinates (drop target)
   const handleAddNodeAt = useCallback((item: CatalogItem, x: number, y: number) => {
-    const newNode: GraphNode = {
-      id: `node-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type: item.type,
-      title: item.title,
-      subtitle: item.subtitle,
-      x,
-      y,
-      width: 190,
-      height: 90,
-      status: 'healthy',
-      latencyMs: item.defaultLatencyMs,
-      errorRate: item.defaultErrorRate,
-      throughputRps: item.defaultThroughput,
-      color: item.color,
-      iconName: item.iconName,
-    };
-
+    const newNode = createNodeFromCatalog(item, { x, y });
     addNode(newNode);
   }, [addNode]);
 
@@ -203,17 +151,17 @@ export const App: React.FC = () => {
       <>
         <LandingPage
           onEnterApp={() => setViewMode('studio')}
-          onOpenPricing={() => setIsPricingOpen(true)}
-          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenPricing={() => setActiveModal('pricing')}
+          onOpenAuth={() => setActiveModal('auth')}
         />
         <PricingModal
-          isOpen={isPricingOpen}
-          onClose={() => setIsPricingOpen(false)}
-          onOpenAuth={() => setIsAuthOpen(true)}
+          isOpen={activeModal === 'pricing'}
+          onClose={() => setActiveModal(null)}
+          onOpenAuth={() => setActiveModal('auth')}
         />
         <AuthModal
-          isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
+          isOpen={activeModal === 'auth'}
+          onClose={() => setActiveModal(null)}
         />
       </>
     );
@@ -232,13 +180,13 @@ export const App: React.FC = () => {
           onZoomIn={() => setZoom(z => Math.min(2.5, z * 1.2))}
           onZoomOut={() => setZoom(z => Math.max(0.3, z / 1.2))}
           onResetZoom={() => handleAutoCenter()}
-          onOpenTemplates={() => setIsTemplatesOpen(true)}
-          onOpenExport={() => setIsExportOpen(true)}
-          onOpenEmbed={() => setIsEmbedOpen(true)}
-          onOpenAiGenerator={() => setIsAiGenOpen(true)}
-          onOpenProjects={() => setIsProjectsOpen(true)}
-          onOpenPricing={() => setIsPricingOpen(true)}
-          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenTemplates={() => setActiveModal('templates')}
+          onOpenExport={() => setActiveModal('export')}
+          onOpenEmbed={() => setActiveModal('embed')}
+          onOpenAiGenerator={() => setActiveModal('aiGen')}
+          onOpenProjects={() => setActiveModal('projects')}
+          onOpenPricing={() => setActiveModal('pricing')}
+          onOpenAuth={() => setActiveModal('auth')}
           onOpenHome={() => setViewMode('landing')}
           onClearGraph={clearGraph}
         />
@@ -284,56 +232,56 @@ export const App: React.FC = () => {
 
       {/* Architecture Presets Modal */}
       <TemplatesModal
-        isOpen={isTemplatesOpen}
-        onClose={() => setIsTemplatesOpen(false)}
+        isOpen={activeModal === 'templates'}
+        onClose={() => setActiveModal(null)}
         onSelectTemplate={loadTemplate}
       />
 
       {/* Export & Spec Generator Modal */}
       <ExportModal
-        isOpen={isExportOpen}
+        isOpen={activeModal === 'export'}
         nodes={nodes}
         edges={edges}
-        onClose={() => setIsExportOpen(false)}
+        onClose={() => setActiveModal(null)}
         onImportGraph={handleImportGraph}
       />
 
       {/* Notion & Web Iframe Embed Modal */}
       <EmbedModal
-        isOpen={isEmbedOpen}
+        isOpen={activeModal === 'embed'}
         nodes={nodes}
         edges={edges}
-        onClose={() => setIsEmbedOpen(false)}
+        onClose={() => setActiveModal(null)}
       />
 
       {/* AI Prompt-to-Architecture Modal */}
       <AiGeneratorModal
-        isOpen={isAiGenOpen}
-        onClose={() => setIsAiGenOpen(false)}
+        isOpen={activeModal === 'aiGen'}
+        onClose={() => setActiveModal(null)}
         onApplyArchitecture={handleApplyAiArchitecture}
       />
 
       {/* Cloud & Local Projects Manager */}
       <ProjectsModal
-        isOpen={isProjectsOpen}
+        isOpen={activeModal === 'projects'}
         nodes={nodes}
         edges={edges}
-        onClose={() => setIsProjectsOpen(false)}
+        onClose={() => setActiveModal(null)}
         onLoadProject={handleLoadSavedProject}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => setActiveModal('auth')}
       />
 
       {/* SaaS Pricing & Upgrade Modal */}
       <PricingModal
-        isOpen={isPricingOpen}
-        onClose={() => setIsPricingOpen(false)}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        isOpen={activeModal === 'pricing'}
+        onClose={() => setActiveModal(null)}
+        onOpenAuth={() => setActiveModal('auth')}
       />
 
       {/* User Authentication Modal */}
       <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
+        isOpen={activeModal === 'auth'}
+        onClose={() => setActiveModal(null)}
       />
     </div>
   );
