@@ -14,13 +14,12 @@ const TelemetryPillBase: React.FC<TelemetryPillProps> = ({
   onOpenAnalytics,
 }) => {
   return (
-    <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs shrink-0 select-none">
-      <button
-        onClick={onOpenAnalytics}
-        className="flex items-center gap-2.5 h-8 px-3 rounded-lg bg-dark-950 border border-slate-800 hover:border-slate-700 text-[11px] text-slate-300 shadow-inner transition-colors group cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-        title="Open Live Simulation & WebPerf Analytics"
-        aria-label="Open performance analytics dashboard"
-      >
+    <button
+      onClick={onOpenAnalytics}
+      className="flex items-center gap-2.5 h-8 px-3 rounded-lg bg-dark-950 border border-slate-800 hover:border-slate-700 text-[11px] text-slate-300 shadow-inner transition-colors group cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none select-none font-mono"
+      title="Open Live Simulation & WebPerf Analytics"
+      aria-label="Open performance analytics dashboard"
+    >
         <div className="flex items-center gap-1.5">
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
@@ -65,7 +64,6 @@ const TelemetryPillBase: React.FC<TelemetryPillProps> = ({
 
         <Activity className="w-3 h-3 text-cyan-400 opacity-60 group-hover:opacity-100 transition-opacity ml-1" />
       </button>
-    </div>
   );
 };
 

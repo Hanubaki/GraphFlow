@@ -158,11 +158,13 @@ export const TopBar: React.FC<TopBarProps> = ({
       </button>
 
       {/* Center: Sleek Unified Live Telemetry Pill (Memoized) */}
-      <TelemetryPill
-        metrics={metrics}
-        isRunning={isRunning}
-        onOpenAnalytics={onOpenAnalytics}
-      />
+      <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs shrink-0">
+        <TelemetryPill
+          metrics={metrics}
+          isRunning={isRunning}
+          onOpenAnalytics={onOpenAnalytics}
+        />
+      </div>
 
       {/* Right Controls Container */}
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">

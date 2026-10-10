@@ -44,21 +44,26 @@ describe('Web Performance & Telemetry Architecture Suite', () => {
     });
   });
 
-  describe('3. Generative UI Dashboard Artifact Specification', () => {
-    it('verifies simulation_analytics_dashboard.html artifact incorporates Tailwind and theme tokens', () => {
-      const artifactPath = path.resolve(
-        'C:/Users/berke/.gemini/antigravity/brain/6a17d182-96a6-4ce0-b65c-3dee808fc2fe/simulation_analytics_dashboard.html'
-      );
-      
-      expect(fs.existsSync(artifactPath)).toBe(true);
-      const htmlContent = fs.readFileSync(artifactPath, 'utf-8');
+  describe('3. Analytics Modal & Telemetry Pill Architecture', () => {
+    it('verifies AnalyticsModal incorporates 60 FPS status and WebPerf Scorecard', () => {
+      const modalPath = path.resolve(__dirname, '../components/Modals/AnalyticsModal.tsx');
+      const content = fs.readFileSync(modalPath, 'utf-8');
 
-      expect(htmlContent).toContain('https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js');
-      expect(htmlContent).toContain('var(--card)');
-      expect(htmlContent).toContain('var(--foreground)');
-      expect(htmlContent).toContain('chartCanvas');
-      expect(htmlContent).toContain('toggleSpike');
-      expect(htmlContent).toContain('togglePause');
+      expect(content).toContain('60 FPS ACTIVE');
+      expect(content).toContain('WebPerf Scorecard');
+      expect(content).toContain('Topology Health');
+      expect(content).toContain('1 Hz Metrics Throttling');
+      expect(content).toContain('16.6ms / frame');
+    });
+
+    it('verifies TelemetryPill isolates memoized metrics re-renders', () => {
+      const pillPath = path.resolve(__dirname, '../components/Toolbar/TelemetryPill.tsx');
+      const content = fs.readFileSync(pillPath, 'utf-8');
+
+      expect(content).toContain('areTelemetryPillPropsEqual');
+      expect(content).toContain('React.memo(TelemetryPillBase, areTelemetryPillPropsEqual)');
+      expect(content).toContain('metrics.currentRps');
+      expect(content).toContain('metrics.avgLatencyMs');
     });
   });
 });
