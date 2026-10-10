@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.github
+.agent
+.gemini
+.env
+.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.md

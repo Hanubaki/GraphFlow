@@ -154,6 +154,15 @@ npm run dev
 
 The application will be available at `http://localhost:5173`.
 
+### Running with Docker
+
+```bash
+# Build and run with Docker Compose
+docker compose up -d
+```
+
+The containerized application will be available at `http://localhost:8080`.
+
 ---
 
 ## Testing & Verification
