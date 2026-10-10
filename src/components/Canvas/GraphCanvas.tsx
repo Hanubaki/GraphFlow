@@ -55,12 +55,23 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     mouseY: 0,
   });
 
-  // State for in-progress connection line
-  const [connectingState, setConnectingState] = useState<{
-    sourceNodeId: string;
-    startPos: { x: number; y: number };
-    currentPos: { x: number; y: number };
-  } | null>(null);
+  // Touch gesture refs
+  const touchPanRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
+  const touchPinchRef = useRef<{ initialDistance: number; initialZoom: number; midpoint: { x: number; y: number }; initialPan: { x: number; y: number } } | null>(null);
+
+  // Helper functions for multi-touch mathematics
+  const getTouchDistance = (t1: React.Touch, t2: React.Touch): number => {
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getTouchMidpoint = (t1: React.Touch, t2: React.Touch, rect: DOMRect) => {
+    return {
+      x: (t1.clientX + t2.clientX) / 2 - rect.left,
+      y: (t1.clientY + t2.clientY) / 2 - rect.top,
+    };
+  };
 
   // Canvas pan with mouse drag
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -102,6 +113,108 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const handleMouseUp = () => {
     if (isPanning) setIsPanning(false);
     if (connectingState) setConnectingState(null);
+  };
+
+  // Mobile multi-touch gesture handlers: pinch-to-zoom and two-finger/single-finger pan
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+
+    if (e.touches.length === 2) {
+      // Two-finger pinch-to-zoom & pan initialization
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const distance = getTouchDistance(t1, t2);
+      const midpoint = getTouchMidpoint(t1, t2, rect);
+
+      touchPinchRef.current = {
+        initialDistance: Math.max(10, distance),
+        initialZoom: zoom,
+        midpoint,
+        initialPan: { ...pan },
+      };
+      touchPanRef.current = null;
+      setIsPanning(true);
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      // Single-finger canvas pan on background
+      const target = e.target as HTMLElement;
+      if (e.target !== containerRef.current && !target.classList.contains('canvas-background')) {
+        return;
+      }
+
+      onSelectNode(null);
+      onSelectEdge(null);
+
+      const touch = e.touches[0];
+      touchPanRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        initialPanX: pan.x,
+        initialPanY: pan.y,
+      };
+      touchPinchRef.current = null;
+      setIsPanning(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+
+    // Two-finger pinch-to-zoom & two-finger pan
+    if (e.touches.length === 2 && touchPinchRef.current) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const currentDist = getTouchDistance(t1, t2);
+      const currentMid = getTouchMidpoint(t1, t2, rect);
+
+      const { initialDistance, initialZoom, midpoint: initMid, initialPan } = touchPinchRef.current;
+      const scale = currentDist / initialDistance;
+      const targetZoom = Math.min(2.5, Math.max(0.3, initialZoom * scale));
+
+      // Focal point zoom into midpoint with translation delta
+      const dx = currentMid.x - initMid.x;
+      const dy = currentMid.y - initMid.y;
+
+      const newPanX = currentMid.x - (initMid.x - initialPan.x) * (targetZoom / initialZoom) + dx;
+      const newPanY = currentMid.y - (initMid.y - initialPan.y) * (targetZoom / initialZoom) + dy;
+
+      setZoom(targetZoom);
+      setPan({ x: newPanX, y: newPanY });
+      return;
+    }
+
+    // Single-finger canvas pan
+    if (e.touches.length === 1 && touchPanRef.current) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchPanRef.current.startX;
+      const dy = touch.clientY - touchPanRef.current.startY;
+      setPan({
+        x: touchPanRef.current.initialPanX + dx,
+        y: touchPanRef.current.initialPanY + dy,
+      });
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) {
+      touchPanRef.current = null;
+      touchPinchRef.current = null;
+      setIsPanning(false);
+    } else if (e.touches.length === 1 && touchPinchRef.current) {
+      // Transition from two-finger pinch to single-finger pan
+      const touch = e.touches[0];
+      touchPanRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        initialPanX: pan.x,
+        initialPanY: pan.y,
+      };
+      touchPinchRef.current = null;
+    }
   };
 
   // Wheel zoom centered on cursor
@@ -180,9 +293,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`relative w-full h-full overflow-hidden bg-dark-950 canvas-background ${
+      className={`relative w-full h-full overflow-hidden bg-dark-950 canvas-background touch-none ${
         isPanning ? 'cursor-grabbing' : 'cursor-default'
       }`}
     >

@@ -34,8 +34,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
     nodeY: node.y,
   });
 
+  // Mouse Drag Handler
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Only drag on left click and avoid port triggers
     if (e.button !== 0) return;
     e.stopPropagation();
     onSelect(node.id);
@@ -65,6 +65,42 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
     window.addEventListener('mouseup', handleMouseUp);
   }, [node.id, node.x, node.y, onMove, onSelect]);
 
+  // Mobile Touch Drag Handler
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    onSelect(node.id);
+
+    const touch = e.touches[0];
+    dragStartPos.current = {
+      mouseX: touch.clientX,
+      mouseY: touch.clientY,
+      nodeX: node.x,
+      nodeY: node.y,
+    };
+    setIsDragging(true);
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      const currentTouch = moveEvent.touches[0];
+      const currentZoom = zoomRef.current;
+      const dx = (currentTouch.clientX - dragStartPos.current.mouseX) / currentZoom;
+      const dy = (currentTouch.clientY - dragStartPos.current.mouseY) / currentZoom;
+      onMove(node.id, Math.round(dragStartPos.current.nodeX + dx), Math.round(dragStartPos.current.nodeY + dy));
+    };
+
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+  }, [node.id, node.x, node.y, onMove, onSelect]);
+
   const handleOutputPortMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     const portX = node.x + node.width;
@@ -72,7 +108,14 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
     onStartConnect(node.id, { x: portX, y: portY });
   }, [node.id, node.x, node.y, node.width, node.height, onStartConnect]);
 
-  const handleInputPortMouseUp = useCallback((e: React.MouseEvent) => {
+  const handleOutputPortTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    const portX = node.x + node.width;
+    const portY = node.y + node.height / 2;
+    onStartConnect(node.id, { x: portX, y: portY });
+  }, [node.id, node.x, node.y, node.width, node.height, onStartConnect]);
+
+  const handleInputPortMouseUp = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     onEndConnect(node.id);
   }, [node.id, onEndConnect]);
@@ -92,7 +135,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         height: `${node.height}px`,
       }}
       onMouseDown={handleMouseDown}
-      className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border backdrop-blur-md bg-dark-900/90 ${
+      onTouchStart={handleTouchStart}
+      className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border backdrop-blur-md bg-dark-900/90 touch-none ${
         isSelected
           ? 'border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400'
           : 'border-slate-800 hover:border-slate-700 shadow-lg shadow-black/40'
@@ -141,31 +185,33 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         </div>
       </div>
 
-      {/* Input Port (Left Handle) */}
+      {/* Input Port (Left Handle) - 44px padded hit area */}
       <div
         onMouseUp={handleInputPortMouseUp}
+        onTouchEnd={handleInputPortMouseUp}
         title="Connect input here"
-        className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-all flex items-center justify-center cursor-crosshair z-10"
+        className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-all flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
       >
         <div className="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover:bg-cyan-300" />
       </div>
 
-      {/* Output Port (Right Handle) */}
+      {/* Output Port (Right Handle) - 44px padded hit area */}
       <div
         onMouseDown={handleOutputPortMouseDown}
+        onTouchStart={handleOutputPortTouchStart}
         title="Drag to connect output"
-        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-all flex items-center justify-center cursor-crosshair z-10"
+        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-all flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
       >
         <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
       </div>
 
-      {/* Quick Delete Floating Action (visible on hover) */}
+      {/* Quick Delete Floating Action (visible on hover or tap) */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onDelete(node.id);
         }}
-        className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-md z-20"
+        className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-md z-20 after:absolute after:-inset-2 after:content-['']"
         title="Delete Component"
       >
         ×
