@@ -32,3 +32,4 @@ Herhangi bir yeni öneri veya geliştirme yapılmadan önce bu dosya kontrol edi
 | **web-audio-synthesis** | **TAMAMLANDI** | `d1750db` | Web Audio API ses motoru (`src/services/audioEngine.ts`). |
 | **security-hardening** | **TAMAMLANDI** | `src/utils/securitySanitizer.ts`, `vercel.json` | XSS veri sanitizasyonu, güvenli JSON/URL import koruması, CSP ve güvenlik başlıkları. |
 | **webperf-audit** | **TAMAMLANDI** | `src/App.tsx`, `vite.config.ts` | React.lazy & Suspense ile 8 modalın dinamik kod bölmesi (on-demand bundle splitting), LCP/FCP optimizasyonu. |
+| **impeccable** | **TAMAMLANDI** | `a548670`, `.agent/skills/impeccable/` | AI Design Director motoru, UI anti-pattern detektörü, 30+ tasarım rehberi ve komut seti. |
