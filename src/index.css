@@ -47,3 +47,15 @@ code, pre {
   background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* Accessibility: WCAG 2.1 AA Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

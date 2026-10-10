@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GraphNode, GraphEdge } from '../../types/graph';
 import {
   exportArchitectureJson,
@@ -41,6 +41,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
+  // Accessibility: close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   if (!isOpen) return null;
 
   const markdownContent = generateMarkdownDoc(nodes, edges, 'Distributed System');
@@ -76,7 +85,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="export-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+    >
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -85,23 +99,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <Share2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100">Export & Import Hub</h2>
+              <h2 id="export-modal-title" className="text-sm font-bold text-slate-100">Export & Import Hub</h2>
               <p className="text-xs text-slate-400">Save architecture, generate specs, or import files</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+            aria-label="Close export modal"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-slate-800 px-4 bg-dark-950/40 overflow-x-auto">
+        <div role="tablist" aria-label="Export format selection" className="flex border-b border-slate-800 px-4 bg-dark-950/40 overflow-x-auto">
           <button
+            role="tab"
+            aria-selected={activeTab === 'export'}
             onClick={() => setActiveTab('export')}
-            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               activeTab === 'export'
                 ? 'border-cyan-400 text-cyan-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -111,8 +128,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             File Export & Import
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'docker'}
             onClick={() => setActiveTab('docker')}
-            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               activeTab === 'docker'
                 ? 'border-cyan-400 text-cyan-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -122,19 +141,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             Docker Compose
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'terraform'}
             onClick={() => setActiveTab('terraform')}
-            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               activeTab === 'terraform'
                 ? 'border-cyan-400 text-cyan-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Cloud className="w-3.5 h-3.5" />
-            Terraform (IaC)
+            <span>Terraform (IaC)</span>
+            <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800/60">
+              PRO
+            </span>
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'markdown'}
             onClick={() => setActiveTab('markdown')}
-            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               activeTab === 'markdown'
                 ? 'border-cyan-400 text-cyan-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -146,7 +172,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Tab Content */}
-        <div className="p-5 overflow-y-auto flex-1">
+        <div role="tabpanel" aria-label={activeTab} className="p-5 overflow-y-auto flex-1">
           {activeTab === 'export' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { GraphNode, GraphEdge, ArchitectureTemplate } from '../types/graph';
 import { TEMPLATES } from '../constants/templates';
+import { a11yAnnouncer } from '../utils/a11yAnnouncer';
+import { findAdjacentNodeInDirection, getNextNodeInCycle } from '../utils/a11ySpatial';
 
 interface HistorySnapshot {
   nodes: GraphNode[];
@@ -103,12 +105,21 @@ export function useGraphStore(options?: GraphStoreOptions) {
 
   const selectNode = useCallback((id: string | null) => {
     setSelectedNodeId(id);
-    if (id) setSelectedEdgeId(null);
-  }, []);
+    if (id) {
+      setSelectedEdgeId(null);
+      const found = nodes.find(n => n.id === id);
+      if (found) {
+        a11yAnnouncer.announceNodeSelected(found.title, found.subtitle);
+      }
+    }
+  }, [nodes]);
 
   const selectEdge = useCallback((id: string | null) => {
     setSelectedEdgeId(id);
-    if (id) setSelectedNodeId(null);
+    if (id) {
+      setSelectedNodeId(null);
+      a11yAnnouncer.announce('Selected pipeline connection');
+    }
   }, []);
 
   const undo = useCallback(() => {
@@ -161,7 +172,7 @@ export function useGraphStore(options?: GraphStoreOptions) {
     options?.onSound?.('click');
   }, [nodes, edges, recordSnapshot, options]);
 
-  // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Delete, Esc)
+  // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Delete, Esc, Tab, Arrow Navigation, Shift+Arrow Nudge)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if typing inside input / textarea
@@ -172,26 +183,75 @@ export function useGraphStore(options?: GraphStoreOptions) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (e.shiftKey) {
           redo();
+          a11yAnnouncer.announce('Redo last action');
         } else {
           undo();
+          a11yAnnouncer.announce('Undo last action');
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         redo();
+        a11yAnnouncer.announce('Redo last action');
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedNodeId) {
+          const found = nodes.find(n => n.id === selectedNodeId);
           removeNode(selectedNodeId);
+          a11yAnnouncer.announce(`Deleted component ${found?.title || selectedNodeId}`);
         } else if (selectedEdgeId) {
           removeEdge(selectedEdgeId);
+          a11yAnnouncer.announce('Deleted pipeline connection');
         }
       } else if (e.key === 'Escape') {
         setSelectedNodeId(null);
         setSelectedEdgeId(null);
+        a11yAnnouncer.announce('Deselected all components');
+      } else if (e.key === 'Tab') {
+        // Accessible Tab cycling between components on canvas
+        e.preventDefault();
+        const nextNode = getNextNodeInCycle(nodes, selectedNodeId, e.shiftKey);
+        if (nextNode) {
+          setSelectedNodeId(nextNode.id);
+          setSelectedEdgeId(null);
+          a11yAnnouncer.announceNodeSelected(nextNode.title, nextNode.subtitle);
+        }
+      } else if (selectedNodeId && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        const currentNode = nodes.find(n => n.id === selectedNodeId);
+        if (!currentNode) return;
+
+        if (e.shiftKey) {
+          // Shift + Arrow: Nudge node position on canvas with grid step
+          e.preventDefault();
+          const NUDGE_STEP = 20;
+          let newX = currentNode.x;
+          let newY = currentNode.y;
+          if (e.key === 'ArrowLeft') newX = Math.max(0, currentNode.x - NUDGE_STEP);
+          if (e.key === 'ArrowRight') newX = currentNode.x + NUDGE_STEP;
+          if (e.key === 'ArrowUp') newY = Math.max(0, currentNode.y - NUDGE_STEP);
+          if (e.key === 'ArrowDown') newY = currentNode.y + NUDGE_STEP;
+
+          moveNode(currentNode.id, newX, newY);
+          a11yAnnouncer.announceNodeMoved(currentNode.title, newX, newY);
+        } else {
+          // Plain Arrow: Spatial navigation to adjacent node in vector direction
+          e.preventDefault();
+          const dirMap: Record<string, 'left' | 'right' | 'up' | 'down'> = {
+            ArrowLeft: 'left',
+            ArrowRight: 'right',
+            ArrowUp: 'up',
+            ArrowDown: 'down',
+          };
+          const adjacent = findAdjacentNodeInDirection(currentNode, nodes, dirMap[e.key]);
+          if (adjacent) {
+            setSelectedNodeId(adjacent.id);
+            setSelectedEdgeId(null);
+            a11yAnnouncer.announceNodeSelected(adjacent.title, adjacent.subtitle);
+          }
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, selectedNodeId, selectedEdgeId, removeNode, removeEdge]);
+  }, [undo, redo, selectedNodeId, selectedEdgeId, removeNode, removeEdge, nodes, moveNode]);
 
   return {
     nodes,

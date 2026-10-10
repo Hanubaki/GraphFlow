@@ -74,7 +74,14 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
         loadCloud();
       }
     }
-  }, [isOpen, user, loadCloud]);
+  // Accessibility: close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -130,7 +137,12 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="projects-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none"
+    >
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -139,13 +151,14 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
               <FolderKanban className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100">Project Manager & Cloud Sharing</h2>
+              <h2 id="projects-modal-title" className="text-sm font-bold text-slate-100">Project Manager & Cloud Sharing</h2>
               <p className="text-xs text-slate-400">Save designs, sync to database, or copy instant share links</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+            aria-label="Close projects modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -174,10 +187,12 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
           </div>
 
           {/* Storage Mode Toggle Tabs */}
-          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-dark-950 border border-slate-800 text-xs font-semibold">
+          <div role="tablist" aria-label="Storage mode tabs" className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-dark-950 border border-slate-800 text-xs font-semibold">
             <button
+              role="tab"
+              aria-selected={activeTab === 'cloud'}
               onClick={() => setActiveTab('cloud')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-colors cursor-pointer ${
+              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
                 activeTab === 'cloud'
                   ? 'bg-slate-800 text-slate-100 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -187,8 +202,10 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
               <span>Cloud Database Sync {user ? `(${cloudProjects.length})` : ''}</span>
             </button>
             <button
+              role="tab"
+              aria-selected={activeTab === 'local'}
               onClick={() => setActiveTab('local')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-colors cursor-pointer ${
+              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
                 activeTab === 'local'
                   ? 'bg-slate-800 text-slate-100 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'

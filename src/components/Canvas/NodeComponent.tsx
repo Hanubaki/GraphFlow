@@ -134,9 +134,23 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         width: `${node.width}px`,
         height: `${node.height}px`,
       }}
+      tabIndex={0}
+      role="button"
+      aria-label={`${node.title} (${node.subtitle}), status: ${node.status}, latency: ${node.latencyMs}ms`}
+      aria-selected={isSelected}
+      onFocus={() => onSelect(node.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(node.id);
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault();
+          onDelete(node.id);
+        }
+      }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border backdrop-blur-md bg-dark-900/90 touch-none ${
+      className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border backdrop-blur-md bg-dark-900/90 touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
         isSelected
           ? 'border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400'
           : 'border-slate-800 hover:border-slate-700 shadow-lg shadow-black/40'

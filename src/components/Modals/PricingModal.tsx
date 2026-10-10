@@ -12,7 +12,7 @@ interface PricingModalProps {
 
 export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onOpenAuth }) => {
   const [isAnnual, setIsAnnual] = useState(true);
-  const { user, isPro, planTier } = useAuth();
+  const { user, isPro, planTier, refreshProfile } = useAuth();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).createLemonSqueezy) {
@@ -21,11 +21,23 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
         eventHandler: (event: { event: string }) => {
           if (event.event === 'Checkout.Success') {
             soundFx.playSuccess();
+            refreshProfile?.();
           }
         },
       });
     }
-  }, []);
+  }, [refreshProfile]);
+
+  // Accessibility: close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -50,13 +62,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pricing-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none"
+    >
       <div className="bg-dark-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-6 text-center border-b border-slate-800 bg-gradient-to-b from-purple-950/20 to-transparent relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+            aria-label="Close pricing modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -65,7 +83,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
             <Sparkles className="w-3.5 h-3.5" />
             GraphFlow Pro & Cloud
           </div>
-          <h2 className="text-2xl font-bold text-slate-100 tracking-tight">
+          <h2 id="pricing-modal-title" className="text-2xl font-bold text-slate-100 tracking-tight">
             Supercharge Your System Architecture Workflow
           </h2>
           <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
@@ -180,9 +198,19 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
             </div>
 
             {isPro ? (
-              <div className="w-full mt-6 py-2 px-3 rounded-xl bg-purple-900/50 border border-purple-500/50 text-purple-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Active Subscription</span>
+              <div className="space-y-2 mt-6">
+                <div className="w-full py-2 px-3 rounded-xl bg-purple-900/50 border border-purple-500/50 text-purple-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Active Subscription</span>
+                </div>
+                <a
+                  href="https://app.lemonsqueezy.com/my-orders"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-1.5 px-3 rounded-xl border border-slate-700 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+                >
+                  Manage Invoices & Billing
+                </a>
               </div>
             ) : (
               <a
