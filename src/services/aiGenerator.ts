@@ -107,7 +107,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
   });
 
   // 3. Core Services
-  if (p.includes('video') || p.includes('stream')) {
+  if (p.includes('video') || p.includes('netflix') || p.includes('youtube')) {
     specs.push({
       id: 'service-core',
       type: 'service',
