@@ -25,17 +25,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
   const { user } = useAuth();
   return (
     <div className="min-h-screen w-full bg-[#090d16] text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden relative">
-      {/* Glow Orbs Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[140px]" />
-        <div className="absolute bottom-[10%] left-[30%] w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[160px]" />
-      </div>
-
       {/* Navigation Bar */}
       <nav className="relative z-30 border-b border-slate-800/80 bg-dark-900/80 backdrop-blur-xl sticky top-0 px-4 md:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-            <Cpu className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center">
+            <Cpu className="w-4 h-4 text-slate-950" />
           </div>
           <span className="font-bold text-base tracking-tight text-white">GraphFlow</span>
           <span className="text-[11px] font-mono px-1.5 py-0.5 rounded border border-slate-800 text-slate-400">
@@ -389,8 +383,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-dark-950 py-10 px-4 text-center text-xs text-slate-500 space-y-3">
         <div className="flex items-center justify-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center">
-            <Cpu className="w-3 h-3 text-white" />
+          <div className="w-6 h-6 rounded-md bg-cyan-500 flex items-center justify-center">
+            <Cpu className="w-3 h-3 text-slate-950" />
           </div>
           <span className="font-bold text-sm text-slate-300">GraphFlow</span>
         </div>

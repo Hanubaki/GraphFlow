@@ -71,14 +71,41 @@ code, pre {
   }
 }
 
-/* Accessibility: WCAG 2.1 AA Reduced Motion Support */
+/* Accessibility: selective reduced-motion path (WCAG 2.3.3).
+   Remove spatial movement and decorative loops; keep color/opacity feedback and
+   slow down (not erase) motion that carries meaning: edge flow direction and loading. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
   *,
   ::before,
   ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    transition-property: color, background-color, border-color, outline-color, opacity, fill, stroke !important;
+  }
+
+  /* Decorative loops and entrance motion: off */
+  .animate-ping,
+  .animate-bounce,
+  .animate-in,
+  .animate-fadeIn,
+  .animate-fade-in {
+    animation: none !important;
+  }
+
+  /* Status pulses: static dot; the status color still carries the state */
+  .animate-pulse,
+  .animate-pulse-slow {
+    animation: none !important;
+  }
+
+  /* Meaningful motion: keep, but calmer */
+  .animate-flow-dash {
+    animation-duration: 6s !important;
+  }
+
+  .animate-spin {
+    animation-duration: 2.5s !important;
   }
 }

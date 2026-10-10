@@ -52,9 +52,9 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
     <div role="dialog" aria-modal="true" aria-labelledby="embed-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none">
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-transparent">
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-800/50 text-cyan-400">
               <Code2 className="w-5 h-5" />
             </div>
             <div>

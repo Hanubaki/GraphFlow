@@ -86,8 +86,8 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
         {/* Left: Brand & Telemetry */}
         <div className="flex items-center gap-2 pointer-events-auto bg-dark-900/90 border border-slate-800/80 backdrop-blur-xl px-3 py-1.5 rounded-xl shadow-xl">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center">
-              <Cpu className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 rounded-md bg-cyan-500 flex items-center justify-center">
+              <Cpu className="w-3.5 h-3.5 text-slate-950" />
             </div>
             <span className="font-bold text-xs tracking-tight text-white">GraphFlow</span>
             <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">

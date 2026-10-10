@@ -146,8 +146,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         className="flex items-center gap-2 shrink-0 text-left hover:opacity-90 transition-opacity"
         title="Return to Home / Landing Page"
       >
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.35)] shrink-0">
-          <Cpu className="w-4 h-4 text-white" />
+        <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center shrink-0">
+          <Cpu className="w-4 h-4 text-slate-950" />
         </div>
         <div className="hidden sm:block">
           <div className="flex items-center gap-1.5 leading-none">
@@ -214,7 +214,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           disabled={!isRunning}
           className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
             isSpikeMode
-              ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
+              ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
               : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
           } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
           title={t('topbar.spikeTitle')}

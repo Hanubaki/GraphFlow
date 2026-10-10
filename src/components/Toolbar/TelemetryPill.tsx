@@ -23,7 +23,7 @@ const TelemetryPillBase: React.FC<TelemetryPillProps> = ({
         <div className="flex items-center gap-1.5">
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
-              isRunning ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
+              isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
             }`}
           />
           <span className="font-semibold text-slate-200">
