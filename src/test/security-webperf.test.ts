@@ -43,7 +43,7 @@ describe('Security Hardening & Data Sanitization Engine', () => {
 
   it('sanitizes untrusted node objects and bounds numeric values', () => {
     const rawMaliciousNode = {
-      id: 'node<script>1</script>',
+      id: 'node1<script>alert(1)</script>',
       title: '<script>alert(1)</script>Microservice A',
       subtitle: '<b onmouseover="alert(2)">Subtitle</b>',
       type: 'invalid_type_attacker',
