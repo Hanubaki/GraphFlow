@@ -172,11 +172,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             </div>
 
             {/* Living Pipeline Diagram Canvas */}
-            <div className="relative py-4 px-2 bg-dark-950/40 rounded-xl border border-slate-800/60 bg-grid-dots">
-              {/* Connected Pipeline on Desktop (lg) / Adaptive on Mobile */}
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0">
+            <div className="relative p-4 md:p-5 bg-dark-950/40 rounded-xl border border-slate-800/60 bg-grid-dots">
+              {/* Pipeline Flow Banner */}
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800/60 text-[11px] font-mono text-slate-400">
+                <span className="flex items-center gap-1.5 text-cyan-400">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>DATA PIPELINE: EDGE ➔ GATEWAY ➔ WORKER ➔ DATABASE</span>
+                </span>
+                <span className="hidden sm:inline text-slate-400">
+                  PACKET VELOCITY: {isSurgeActive ? '180 px/s' : '90 px/s'}
+                </span>
+              </div>
+
+              {/* Responsive 4-Node Architecture Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 relative">
                 {/* Node 1: Client */}
-                <div className="w-full lg:w-48 p-3 rounded-xl border border-slate-800 bg-dark-950/90 shadow-lg text-left relative overflow-hidden shrink-0 group-hover:border-slate-700 transition-colors">
+                <div className="p-3.5 rounded-xl border border-slate-800 bg-dark-950/90 shadow-lg text-left relative overflow-hidden group-hover:border-slate-700 transition-colors">
                   <div className="absolute top-0 inset-x-0 h-1 bg-[#38bdf8]" />
                   <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-0.5">
                     <div className="flex items-center gap-1.5 text-sky-400 font-semibold">
@@ -187,33 +198,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                   </div>
                   <div className="text-xs font-bold text-white mt-1.5 truncate">Next.js Storefront</div>
                   <div className="text-[11px] text-slate-400 truncate">Edge App Router</div>
-                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
                     <span>LAT {isSurgeActive ? '38ms' : '15ms'}</span>
                     <span className="text-slate-300">{isSurgeActive ? '1,200 rps' : '450 rps'}</span>
                   </div>
-                </div>
-
-                {/* Wire 1: Client -> Gateway */}
-                <div className="flex-1 w-full lg:w-auto flex flex-col items-center justify-center relative px-1 py-1 lg:py-0">
-                  {/* Desktop horizontal wire */}
-                  <div className="hidden lg:flex items-center w-full relative">
-                    <div className="w-full h-0.5 bg-slate-800 relative overflow-hidden">
-                      <div className="w-full h-full border-t border-dashed border-cyan-400/80 animate-flow-dash" />
-                    </div>
-                    {/* Flowing animated packet */}
-                    <span className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)] animate-pulse" />
+                  <div className="mt-2 pt-1.5 border-t border-slate-800/40 flex items-center justify-between text-[11px] font-mono text-cyan-400">
+                    <span className="px-1.5 py-0.5 rounded bg-dark-900 border border-cyan-900/60 text-[11px]">HTTP/REST</span>
+                    <span className="animate-pulse">──▶</span>
                   </div>
-                  {/* Mobile vertical line */}
-                  <div className="lg:hidden w-0.5 h-5 bg-slate-800 relative">
-                    <div className="w-full h-full border-l border-dashed border-cyan-400/80 animate-flow-dash" />
-                  </div>
-                  <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-dark-950 border border-cyan-900/60 text-cyan-400 -mt-2 lg:mt-1">
-                    HTTP/REST
-                  </span>
                 </div>
 
                 {/* Node 2: API Gateway */}
-                <div className="w-full lg:w-48 p-3 rounded-xl border border-cyan-500/50 bg-cyan-950/20 shadow-lg text-left relative overflow-hidden shrink-0">
+                <div className="p-3.5 rounded-xl border border-cyan-500/50 bg-cyan-950/20 shadow-lg text-left relative overflow-hidden">
                   <div className="absolute top-0 inset-x-0 h-1 bg-[#818cf8]" />
                   <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-0.5">
                     <div className="flex items-center gap-1.5 text-indigo-400 font-semibold">
@@ -223,33 +219,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                     <span className={`w-2 h-2 rounded-full ${isSurgeActive ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                   </div>
                   <div className="text-xs font-bold text-white mt-1.5 truncate">Kong API Gateway</div>
-                  <div className="text-[11px] text-slate-400 truncate">Rate Limit & Auth</div>
-                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <div className="text-[11px] text-slate-400 truncate">Rate Limit &amp; Auth</div>
+                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
                     <span>LAT {isSurgeActive ? '24ms' : '6ms'}</span>
                     <span className="text-slate-300">{isSurgeActive ? '2,450 rps' : '730 rps'}</span>
                   </div>
-                </div>
-
-                {/* Wire 2: Gateway -> Service */}
-                <div className="flex-1 w-full lg:w-auto flex flex-col items-center justify-center relative px-1 py-1 lg:py-0">
-                  {/* Desktop horizontal wire */}
-                  <div className="hidden lg:flex items-center w-full relative">
-                    <div className="w-full h-0.5 bg-slate-800 relative overflow-hidden">
-                      <div className="w-full h-full border-t border-dashed border-purple-400/80 animate-flow-dash" />
-                    </div>
-                    <span className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.9)] animate-pulse" />
+                  <div className="mt-2 pt-1.5 border-t border-slate-800/40 flex items-center justify-between text-[11px] font-mono text-purple-300">
+                    <span className="px-1.5 py-0.5 rounded bg-dark-900 border border-purple-900/60 text-[11px]">gRPC</span>
+                    <span className="animate-pulse">──▶</span>
                   </div>
-                  {/* Mobile vertical line */}
-                  <div className="lg:hidden w-0.5 h-5 bg-slate-800 relative">
-                    <div className="w-full h-full border-l border-dashed border-purple-400/80 animate-flow-dash" />
-                  </div>
-                  <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-dark-950 border border-purple-900/60 text-purple-300 -mt-2 lg:mt-1">
-                    gRPC
-                  </span>
                 </div>
 
                 {/* Node 3: Microservice */}
-                <div className="w-full lg:w-48 p-3 rounded-xl border border-purple-500/40 bg-purple-950/20 shadow-lg text-left relative overflow-hidden shrink-0">
+                <div className="p-3.5 rounded-xl border border-purple-500/40 bg-purple-950/20 shadow-lg text-left relative overflow-hidden">
                   <div className="absolute top-0 inset-x-0 h-1 bg-[#a855f7]" />
                   <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-0.5">
                     <div className="flex items-center gap-1.5 text-purple-400 font-semibold">
@@ -260,32 +242,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                   </div>
                   <div className="text-xs font-bold text-white mt-1.5 truncate">Order Processor</div>
                   <div className="text-[11px] text-slate-400 truncate">Kafka Sync Worker</div>
-                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
                     <span>LAT {isSurgeActive ? '92ms' : '35ms'}</span>
                     <span className="text-slate-300">{isSurgeActive ? '2,380 rps' : '710 rps'}</span>
                   </div>
-                </div>
-
-                {/* Wire 3: Service -> Database */}
-                <div className="flex-1 w-full lg:w-auto flex flex-col items-center justify-center relative px-1 py-1 lg:py-0">
-                  {/* Desktop horizontal wire */}
-                  <div className="hidden lg:flex items-center w-full relative">
-                    <div className="w-full h-0.5 bg-slate-800 relative overflow-hidden">
-                      <div className="w-full h-full border-t border-dashed border-blue-400/80 animate-flow-dash" />
-                    </div>
-                    <span className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.9)] animate-pulse" />
+                  <div className="mt-2 pt-1.5 border-t border-slate-800/40 flex items-center justify-between text-[11px] font-mono text-blue-300">
+                    <span className="px-1.5 py-0.5 rounded bg-dark-900 border border-blue-900/60 text-[11px]">SQL Query</span>
+                    <span className="animate-pulse">──▶</span>
                   </div>
-                  {/* Mobile vertical line */}
-                  <div className="lg:hidden w-0.5 h-5 bg-slate-800 relative">
-                    <div className="w-full h-full border-l border-dashed border-blue-400/80 animate-flow-dash" />
-                  </div>
-                  <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-dark-950 border border-blue-900/60 text-blue-300 -mt-2 lg:mt-1">
-                    SQL Query
-                  </span>
                 </div>
 
                 {/* Node 4: Database */}
-                <div className="w-full lg:w-48 p-3 rounded-xl border border-blue-500/40 bg-blue-950/20 shadow-lg text-left relative overflow-hidden shrink-0">
+                <div className="p-3.5 rounded-xl border border-blue-500/40 bg-blue-950/20 shadow-lg text-left relative overflow-hidden">
                   <div className="absolute top-0 inset-x-0 h-1 bg-[#3b82f6]" />
                   <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-0.5">
                     <div className="flex items-center gap-1.5 text-blue-400 font-semibold">
@@ -296,9 +264,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                   </div>
                   <div className="text-xs font-bold text-white mt-1.5 truncate">PostgreSQL Multi-AZ</div>
                   <div className="text-[11px] text-slate-400 truncate">Read Replica Pool</div>
-                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
                     <span>LAT {isSurgeActive ? '65ms' : '28ms'}</span>
                     <span className="text-slate-300">{isSurgeActive ? '2,350 rps' : '700 rps'}</span>
+                  </div>
+                  <div className="mt-2 pt-1.5 border-t border-slate-800/40 flex items-center justify-between text-[11px] font-mono text-emerald-400">
+                    <span className="px-1.5 py-0.5 rounded bg-dark-900 border border-emerald-900/60 text-[11px]">POOL HEALTH</span>
+                    <span>99.99%</span>
                   </div>
                 </div>
               </div>
