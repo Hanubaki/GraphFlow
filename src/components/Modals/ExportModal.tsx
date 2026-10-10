@@ -4,6 +4,10 @@ import {
   exportArchitectureJson,
   exportMarkdownFile,
   generateMarkdownDoc,
+  generateDockerCompose,
+  generateTerraform,
+  exportDockerComposeFile,
+  exportTerraformFile,
 } from '../../utils/export';
 import {
   Download,
@@ -14,6 +18,8 @@ import {
   Check,
   X,
   Share2,
+  Box,
+  Cloud,
 } from 'lucide-react';
 
 interface ExportModalProps {
@@ -31,13 +37,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
   onImportGraph,
 }) => {
-  const [activeTab, setActiveTab] = useState<'export' | 'markdown'>('export');
+  const [activeTab, setActiveTab] = useState<'export' | 'markdown' | 'docker' | 'terraform'>('export');
   const [copied, setCopied] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const markdownContent = generateMarkdownDoc(nodes, edges, 'Distributed System');
+  const dockerComposeContent = generateDockerCompose(nodes, edges, 'graphflow');
+  const terraformContent = generateTerraform(nodes, edges, 'graphflow');
 
   const handleCopyMarkdown = () => {
     navigator.clipboard.writeText(markdownContent);
@@ -90,10 +98,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-slate-800 px-4 bg-dark-950/40">
+        <div className="flex border-b border-slate-800 px-4 bg-dark-950/40 overflow-x-auto">
           <button
             onClick={() => setActiveTab('export')}
-            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
               activeTab === 'export'
                 ? 'border-cyan-400 text-cyan-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -103,8 +111,30 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             File Export & Import
           </button>
           <button
+            onClick={() => setActiveTab('docker')}
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
+              activeTab === 'docker'
+                ? 'border-cyan-400 text-cyan-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Box className="w-3.5 h-3.5" />
+            Docker Compose
+          </button>
+          <button
+            onClick={() => setActiveTab('terraform')}
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
+              activeTab === 'terraform'
+                ? 'border-cyan-400 text-cyan-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Cloud className="w-3.5 h-3.5" />
+            Terraform (IaC)
+          </button>
+          <button
             onClick={() => setActiveTab('markdown')}
-            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
               activeTab === 'markdown'
                 ? 'border-cyan-400 text-cyan-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -181,6 +211,74 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <div className="text-xs text-rose-400 font-mono mt-2">{importError}</div>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'docker' && (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-400">
+                  Ready-to-run container network <code className="text-cyan-400 font-mono">docker-compose.yml</code>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => exportDockerComposeFile(nodes, edges)}
+                    className="h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download .yml
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(dockerComposeContent);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied!' : 'Copy Compose'}
+                  </button>
+                </div>
+              </div>
+
+              <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-80 leading-relaxed whitespace-pre select-text">
+                {dockerComposeContent}
+              </pre>
+            </div>
+          )}
+
+          {activeTab === 'terraform' && (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-400">
+                  AWS ECS Fargate / RDS / ElastiCache IaC <code className="text-purple-400 font-mono">main.tf</code>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => exportTerraformFile(nodes, edges)}
+                    className="h-8 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors shadow-md shadow-purple-950"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download .tf
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(terraformContent);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied!' : 'Copy Terraform'}
+                  </button>
+                </div>
+              </div>
+
+              <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-80 leading-relaxed whitespace-pre select-text">
+                {terraformContent}
+              </pre>
             </div>
           )}
 

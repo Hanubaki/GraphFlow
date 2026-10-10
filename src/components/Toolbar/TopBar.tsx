@@ -21,9 +21,11 @@ import {
   Languages,
   User as UserIcon,
   Activity,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSimulationControls } from '../../context/SimulationContext';
+import { useMultiplayer } from '../../context/MultiplayerContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { telemetry } from '../../utils/telemetry';
 import { TelemetryPill } from './TelemetryPill';
@@ -89,6 +91,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const { user, isPro, planTier } = useAuth();
   const { locale, setLocale, t } = useI18n();
+  const { peers, myPresence, totalCollaborators } = useMultiplayer();
 
   let contextControls = null;
   try {
@@ -357,6 +360,41 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Activity className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 3xl:inline">Analytics</span>
           </button>
+        </div>
+
+        {/* Real-time Multiplayer Collaborators Stack */}
+        <div
+          className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 shrink-0 text-xs font-mono"
+          title={`Active Collaborators (${totalCollaborators}): You (${myPresence.name})${peers.map(p => `, ${p.name}`).join('')}`}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <Users className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-[11px] font-semibold text-slate-200">
+            {totalCollaborators} <span className="hidden xl:inline text-slate-400">Live</span>
+          </span>
+          {/* Mini avatar stack */}
+          <div className="hidden lg:flex items-center -space-x-1.5 ml-0.5">
+            <div
+              style={{ backgroundColor: myPresence.color }}
+              className="w-4 h-4 rounded-full border border-dark-950 flex items-center justify-center text-[8px] font-bold text-slate-950 shadow-sm"
+              title={`You: ${myPresence.name}`}
+            >
+              {myPresence.name[0]}
+            </div>
+            {peers.slice(0, 3).map(p => (
+              <div
+                key={p.id}
+                style={{ backgroundColor: p.color }}
+                className="w-4 h-4 rounded-full border border-dark-950 flex items-center justify-center text-[8px] font-bold text-slate-950 shadow-sm"
+                title={p.name}
+              >
+                {p.name[0]}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Export Button */}

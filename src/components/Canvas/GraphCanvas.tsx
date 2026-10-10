@@ -1,11 +1,13 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { GraphNode, GraphEdge, DataPacket } from '../../types/graph';
 import { CatalogItem } from '../../constants/nodeCatalog';
 import { GridBackground } from './GridBackground';
 import { NodeComponent } from './NodeComponent';
 import { ConnectionLine } from './ConnectionLine';
+import { PeerCursorLayer } from './PeerCursorLayer';
 import { createBezierPath } from '../../utils/geometry';
 import { useSimulationPackets } from '../../context/SimulationContext';
+import { useMultiplayer } from '../../context/MultiplayerContext';
 
 interface ConnectingState {
   sourceNodeId: string;
@@ -52,6 +54,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 }) => {
   const contextPackets = useSimulationPackets();
   const packets = propPackets ?? contextPackets;
+  const { peers, broadcastCursor, clearCursor, updateSelection } = useMultiplayer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [connectingState, setConnectingState] = useState<ConnectingState | null>(null);
@@ -61,6 +64,11 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     mouseX: 0,
     mouseY: 0,
   });
+
+  // Synchronize peer selected node state
+  useEffect(() => {
+    updateSelection(selectedNodeId);
+  }, [selectedNodeId, updateSelection]);
 
   // Touch gesture refs
   const touchPanRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
@@ -109,12 +117,21 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       });
     }
 
-    if (connectingState && containerRef.current) {
+    if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const worldX = (e.clientX - rect.left - pan.x) / zoom;
       const worldY = (e.clientY - rect.top - pan.y) / zoom;
-      setConnectingState(prev => (prev ? { ...prev, currentPos: { x: worldX, y: worldY } } : null));
+      broadcastCursor(worldX, worldY);
+
+      if (connectingState) {
+        setConnectingState(prev => (prev ? { ...prev, currentPos: { x: worldX, y: worldY } } : null));
+      }
     }
+  };
+
+  const handleMouseLeave = () => {
+    clearCursor();
+    if (isPanning) setIsPanning(false);
   };
 
   const handleMouseUp = () => {
@@ -306,6 +323,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       onTouchCancel={handleTouchEnd}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onMouseLeave={handleMouseLeave}
       className={`relative w-full h-full overflow-hidden bg-dark-950 canvas-background touch-none ${
         isPanning ? 'cursor-grabbing' : 'cursor-default'
       }`}
@@ -320,6 +338,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }}
         className="absolute inset-0 pointer-events-none"
       >
+        {/* Remote Collaborator Cursors */}
+        <PeerCursorLayer peers={peers} />
+
         {/* SVG Layer for Connections & Animated Packets */}
         <svg className="absolute inset-0 w-[50000px] h-[50000px] overflow-visible pointer-events-none">
           <defs>

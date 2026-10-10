@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGraphStore } from './hooks/useGraphStore';
 import { SimulationProvider } from './context/SimulationContext';
+import { MultiplayerProvider } from './context/MultiplayerContext';
 import { soundFx } from './utils/sound';
 import { TopBar } from './components/Toolbar/TopBar';
 import { NodePalette } from './components/Sidebar/NodePalette';
@@ -190,8 +191,9 @@ export const App: React.FC = () => {
   }
 
   return (
-    <SimulationProvider nodes={nodes} edges={edges}>
-      <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
+    <MultiplayerProvider>
+      <SimulationProvider nodes={nodes} edges={edges}>
+        <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
         {/* Top Navigation & Simulation Controller */}
         <TopBar
           canUndo={canUndo}
@@ -314,7 +316,8 @@ export const App: React.FC = () => {
         edges={edges}
         onClose={() => setActiveModal(null)}
       />
-    </div>
-  </SimulationProvider>
+      </div>
+    </SimulationProvider>
+  </MultiplayerProvider>
 );
 };
