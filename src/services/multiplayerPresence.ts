@@ -234,7 +234,7 @@ export class MultiplayerPresenceManager {
 
       this.peers.set(msg.peer.id, {
         ...msg.peer,
-        lastActive: Date.now(),
+        lastActive: msg.peer.lastActive ?? Date.now(),
       });
       this.notifyListeners();
     } else if (msg.type === 'presence:leave' && msg.id) {
