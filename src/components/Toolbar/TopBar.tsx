@@ -18,10 +18,13 @@ import {
   FolderKanban,
   Crown,
   Code2,
+  Languages,
   User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSimulationControls } from '../../context/SimulationContext';
+import { useI18n } from '../../i18n/I18nContext';
+import { telemetry } from '../../utils/telemetry';
 
 interface TopBarProps {
   isRunning?: boolean;
@@ -81,6 +84,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onClearGraph,
 }) => {
   const { user, isPro, planTier } = useAuth();
+  const { locale, setLocale, t } = useI18n();
 
   let contextControls = null;
   try {
@@ -106,6 +110,26 @@ export const TopBar: React.FC<TopBarProps> = ({
   const onSetSpeed = propOnSetSpeed ?? contextControls?.setSpeedMultiplier ?? (() => {});
   const onTriggerSpike = propOnTriggerSpike ?? contextControls?.triggerSpike ?? (() => {});
   const onToggleSound = propOnToggleSound ?? contextControls?.toggleSound ?? (() => {});
+
+  const handleTogglePlay = () => {
+    telemetry.track('Simulation Toggled', { isRunning: !isRunning, speedMultiplier });
+    onTogglePlay();
+  };
+
+  const handleTriggerSpike = () => {
+    telemetry.track('Simulation Spike Injected', { isSpike: !isSpikeMode });
+    onTriggerSpike();
+  };
+
+  const handleOpenExport = () => {
+    telemetry.track('Modal Opened', { modalName: 'export' });
+    onOpenExport();
+  };
+
+  const handleOpenPricing = () => {
+    telemetry.track('Checkout Clicked', { tier: 'pro', source: 'topbar_upgrade_pill' });
+    onOpenPricing();
+  };
 
   return (
     <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-3 md:px-4 z-30 select-none gap-2 w-full max-w-full overflow-hidden">
@@ -174,17 +198,17 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Play/Pause + Speed Group */}
         <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
           <button
-            onClick={onTogglePlay}
+            onClick={handleTogglePlay}
             className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
               isRunning
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
             }`}
-            title={isRunning ? 'Pause Traffic' : 'Start Traffic'}
-            aria-label={isRunning ? 'Pause traffic simulation' : 'Start traffic simulation'}
+            title={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
+            aria-label={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
           >
             {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{isRunning ? 'Pause' : 'Start'}</span>
+            <span className="hidden sm:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
           </button>
 
           <div className="h-4 w-px bg-slate-800 mx-1" />
@@ -210,18 +234,18 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Traffic Spike Button */}
         <button
-          onClick={onTriggerSpike}
+          onClick={handleTriggerSpike}
           disabled={!isRunning}
           className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
             isSpikeMode
               ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
               : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
           } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
-          title="Inject Traffic Surge / DDoS"
-          aria-label="Inject traffic surge or spike"
+          title={t('topbar.spikeTitle')}
+          aria-label={t('topbar.spikeTitle')}
         >
           <Zap className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Spike</span>
+          <span className="hidden md:inline">{t('topbar.spike')}</span>
         </button>
 
         {/* Sound toggle */}
@@ -351,28 +375,28 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Export Button */}
         <button
-          onClick={onOpenExport}
+          onClick={handleOpenExport}
           className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-          title="Export Architecture"
+          title={t('topbar.exportTitle')}
           aria-label="Export architecture as JSON, PNG, or SVG"
         >
           <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Export</span>
+          <span className="hidden sm:inline">{t('topbar.export')}</span>
         </button>
 
         {/* Pro Upgrade Pill */}
         <button
-          onClick={onOpenPricing}
+          onClick={handleOpenPricing}
           className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
             isPro
               ? 'bg-purple-950 border border-purple-800/80 text-purple-300 hover:bg-purple-900/60'
               : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold'
           }`}
-          title="View Pro & Team Plans"
+          title={t('topbar.upgradeTitle')}
           aria-label="View Pro and Team subscription plans"
         >
           <Crown className={`w-3.5 h-3.5 shrink-0 ${isPro ? 'text-amber-400' : 'text-slate-950'}`} />
-          <span>{isPro ? 'PRO' : 'UPGRADE'}</span>
+          <span>{isPro ? t('topbar.pro') : t('topbar.upgrade')}</span>
         </button>
 
         {/* User Account / Sign In */}
@@ -392,19 +416,34 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={onOpenAuth}
             className="flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Sign in to sync cloud architectures"
+            title={t('topbar.signInTitle')}
             aria-label="Sign in to sync cloud architectures"
           >
             <UserIcon className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden md:inline">Sign In</span>
+            <span className="hidden md:inline">{t('topbar.signIn')}</span>
           </button>
         )}
+
+        {/* Language Switcher */}
+        <button
+          onClick={() => {
+            const nextLocale = locale === 'en' ? 'tr' : 'en';
+            setLocale(nextLocale);
+            telemetry.track('Locale Changed' as any, { locale: nextLocale });
+          }}
+          className="flex items-center gap-1 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-mono font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+          title={locale === 'en' ? 'Türkçe diline geç' : 'Switch to English'}
+          aria-label={`Current language: ${locale.toUpperCase()}. Click to switch language.`}
+        >
+          <Languages className="w-3.5 h-3.5 text-cyan-400" />
+          <span>{locale.toUpperCase()}</span>
+        </button>
 
         {/* Clear graph */}
         <button
           onClick={onClearGraph}
           className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-500 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
-          title="Clear Architecture"
+          title={t('topbar.clear')}
           aria-label="Clear all nodes and edges from architecture"
         >
           <Trash2 className="w-3.5 h-3.5" />
