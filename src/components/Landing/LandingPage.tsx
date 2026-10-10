@@ -10,7 +10,6 @@ import {
   Activity,
   Github,
   Play,
-  RotateCcw,
   User as UserIcon,
   Globe,
   Network,
