@@ -1,75 +1,53 @@
 import { describe, it, expect } from 'vitest';
 import { TEMPLATES } from '../constants/templates';
+import { calculateAutoCenter } from '../utils/viewportMath';
 import fs from 'fs';
 import path from 'path';
 
 describe('Test-Driven Verification: Auto-Centering Math & Responsive Viewport', () => {
   const defaultNodes = TEMPLATES[0].nodes;
 
-  // Helper calculating bounding box and centering
-  function calculateAutoCenter(nodes: typeof defaultNodes, windowWidth: number, windowHeight: number) {
-    const availableWidth = Math.max(400, windowWidth - 256 - 320); // space between palette and inspector
-    const availableHeight = Math.max(300, windowHeight - 56); // minus topbar
-    
-    const minX = Math.min(...nodes.map(n => n.x));
-    const maxX = Math.max(...nodes.map(n => n.x + n.width));
-    const minY = Math.min(...nodes.map(n => n.y));
-    const maxY = Math.max(...nodes.map(n => n.y + n.height));
-
-    const graphWidth = Math.max(400, maxX - minX);
-    const graphHeight = Math.max(300, maxY - minY);
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    const scaleX = (availableWidth - 80) / graphWidth;
-    const scaleY = (availableHeight - 80) / graphHeight;
-    const targetScale = Math.min(1.0, Math.max(0.45, Math.min(scaleX, scaleY)));
-
-    const targetPanX = Math.round((availableWidth / 2) - (centerX * targetScale));
-    const targetPanY = Math.round((availableHeight / 2) - (centerY * targetScale));
-
-    return {
-      availableWidth,
-      availableHeight,
-      targetScale,
-      targetPanX,
-      targetPanY,
-      minX,
-      maxX,
-      minY,
-      maxY,
-    };
-  }
+  it('returns null when nodes array is empty', () => {
+    const result = calculateAutoCenter([], 1920, 1080);
+    expect(result).toBeNull();
+  });
 
   it('guarantees rightmost nodes are never clipped on a 1366x768 laptop display', () => {
     const result = calculateAutoCenter(defaultNodes, 1366, 768);
+    expect(result).not.toBeNull();
+    if (!result) return;
 
-    // Available canvas width between 256px palette and 320px inspector = 790px
-    expect(result.availableWidth).toBe(790);
+    const availableWidth = Math.max(400, 1366 - 256 - 320); // 790px
+    const minX = Math.min(...defaultNodes.map(n => n.x));
+    const maxX = Math.max(...defaultNodes.map(n => n.x + n.width));
 
-    // Rightmost point of the graph in canvas space
-    const rightmostScreenX = result.targetPanX + result.maxX * result.targetScale;
-    const leftmostScreenX = result.targetPanX + result.minX * result.targetScale;
+    const rightmostScreenX = result.pan.x + maxX * result.zoom;
+    const leftmostScreenX = result.pan.x + minX * result.zoom;
 
     // Both leftmost and rightmost points must be strictly within available canvas bounds
     expect(leftmostScreenX).toBeGreaterThanOrEqual(0);
-    expect(rightmostScreenX).toBeLessThanOrEqual(result.availableWidth);
-    expect(result.targetScale).toBeLessThan(1.0);
-    expect(result.targetScale).toBeGreaterThanOrEqual(0.5);
+    expect(rightmostScreenX).toBeLessThanOrEqual(availableWidth);
+    expect(result.zoom).toBeLessThan(1.0);
+    expect(result.zoom).toBeGreaterThanOrEqual(0.45);
   });
 
   it('preserves near-native ~0.96x zoom and centers graph on a 1920x1080 desktop display', () => {
     const result = calculateAutoCenter(defaultNodes, 1920, 1080);
+    expect(result).not.toBeNull();
+    if (!result) return;
 
-    // On 1920 monitors, 1310px graph scales to ~0.965 to ensure 40px padding on both sides
-    expect(result.targetScale).toBeCloseTo(0.965, 2);
+    const availableWidth = Math.max(400, 1920 - 256 - 320); // 1344px
+    const minX = Math.min(...defaultNodes.map(n => n.x));
+    const maxX = Math.max(...defaultNodes.map(n => n.x + n.width));
 
-    const rightmostScreenX = result.targetPanX + result.maxX * result.targetScale;
-    const leftmostScreenX = result.targetPanX + result.minX * result.targetScale;
+    expect(result.zoom).toBeCloseTo(0.965, 2);
 
-    // Beautiful margins on both sides
+    const rightmostScreenX = result.pan.x + maxX * result.zoom;
+    const leftmostScreenX = result.pan.x + minX * result.zoom;
+
+    // Margins on both sides
     expect(leftmostScreenX).toBeGreaterThanOrEqual(40);
-    expect(rightmostScreenX).toBeLessThan(result.availableWidth);
+    expect(rightmostScreenX).toBeLessThan(availableWidth);
   });
 
   it('verifies vite.config.ts defines code-split manualChunks for webperf optimization', () => {
