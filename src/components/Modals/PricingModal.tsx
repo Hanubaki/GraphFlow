@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Check, X, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { Check, X, ArrowRight, ShieldCheck, UserCheck, Mail } from 'lucide-react';
 import { soundFx } from '../../utils/sound';
 import { telemetry } from '../../utils/telemetry';
 
@@ -227,7 +227,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
           {/* Team Tier */}
           <div className="p-5 rounded-2xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between">
             <div>
-              <div className="text-sm font-bold text-slate-200">Engineering Team</div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-bold text-slate-200">Engineering Team</div>
+                <span className="px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700 text-[11px] font-mono text-slate-400">
+                  Coming Soon
+                </span>
+              </div>
               <div className="flex items-baseline gap-1 mt-2">
                 <span className="text-2xl font-extrabold text-slate-100">
                   {isAnnual ? '$32' : '$39'}
@@ -256,14 +261,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                alert('Team Plan Checkout: Contact sales or checkout via Lemon Squeezy!');
-              }}
-              className="w-full mt-6 py-2 px-3 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors"
+            <a
+              href="mailto:berkeakdemir5855@gmail.com?subject=GraphFlow%20Engineering%20Team%20Access%20Request"
+              className="w-full mt-6 py-2 px-3 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
             >
-              Start Team Trial
-            </button>
+              <span>Contact for Team Access</span>
+              <Mail className="w-3.5 h-3.5 text-slate-400" />
+            </a>
           </div>
         </div>
       </div>

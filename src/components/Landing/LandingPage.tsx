@@ -14,6 +14,7 @@ import {
   Globe,
   Network,
   Database,
+  Mail,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -495,7 +496,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           {/* Team Tier */}
           <div className="p-6 rounded-2xl border border-slate-800 bg-dark-900/60 flex flex-col justify-between">
             <div>
-              <div className="text-sm font-bold text-slate-200">Engineering Team</div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-bold text-slate-200">Engineering Team</div>
+                <span className="px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700 text-[11px] font-mono text-slate-400">
+                  Coming Soon
+                </span>
+              </div>
               <div className="flex items-baseline gap-1 mt-2">
                 <span className="text-3xl font-extrabold text-white">$39</span>
                 <span className="text-xs text-slate-400">/ month</span>
@@ -522,12 +528,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               </div>
             </div>
 
-            <button
-              onClick={onOpenPricing}
-              className="w-full mt-8 h-10 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors"
+            <a
+              href="mailto:berkeakdemir5855@gmail.com?subject=GraphFlow%20Engineering%20Team%20Access%20Request"
+              className="w-full mt-8 h-10 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
             >
-              Start Team Trial
-            </button>
+              <span>Contact for Team Access</span>
+              <Mail className="w-3.5 h-3.5 text-slate-400" />
+            </a>
           </div>
         </div>
       </section>
