@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Cpu,
   Zap,
@@ -9,6 +9,7 @@ import {
   Globe,
   Network,
   Layers,
+  Database,
   Mail,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -23,7 +24,11 @@ import {
   SURGE_RATE,
   TICK_SECONDS,
   type SurgePhase,
+  type SurgeState,
 } from './surgeModel';
+import { DEMO_CANVAS, DEMO_EDGES, DEMO_NODES, demoEdgePath } from './demoGraph';
+import { generateDockerCompose, generateMarkdownDoc, generateTerraform } from '../../utils/export';
+import { generateShareUrl } from '../../services/projectStorage';
 
 interface LandingPageProps {
   onEnterApp: () => void;
@@ -31,144 +36,134 @@ interface LandingPageProps {
   onOpenAuth?: () => void;
 }
 
+const GITHUB_URL = 'https://github.com/Hanubaki/GraphFlow';
 const CONTACT_MAILTO = 'mailto:berkeakdemir5855@gmail.com?subject=GraphFlow%20Engineering%20Team%20Access%20Request';
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 
+/* Shared type and control styles ------------------------------------ */
+
+const display = 'font-semibold tracking-[-0.035em] [font-stretch:112%] text-slate-50';
+const ring =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-950';
+const btnPrimary = `inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-slate-50 hover:bg-white text-slate-950 text-sm font-medium transition-colors ${ring}`;
+const btnSecondary = `inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg border border-slate-800 hover:bg-slate-900 text-slate-200 text-sm font-medium transition-colors ${ring}`;
+
+const usePrefersReducedMotion = () => {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!mq) return;
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, []);
+  return reduced;
+};
+
 /* ------------------------------------------------------------------ */
-/* Live demo pieces                                                    */
+/* Studio frame: the live demo, drawn like the real canvas             */
 /* ------------------------------------------------------------------ */
 
-/** Packets moving along an edge. Faster flow = shorter loop. */
-const FlowTrack: React.FC<{ rate: number }> = ({ rate }) => {
-  const duration = Math.min(2.4, Math.max(0.45, 1200 / Math.max(rate, 1)));
+const NODE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Globe,
+  Network,
+  Zap,
+  Layers,
+  Cpu,
+  Database,
+};
+
+/** Live rate (msg/s) carried by each demo edge. */
+const edgeRate = (edgeId: string, s: SurgeState): number => {
+  switch (edgeId) {
+    case 'e1':
+    case 'e3':
+      return s.producerRate;
+    case 'e2':
+      return s.producerRate * 1.6;
+    default:
+      return s.consumerRate;
+  }
+};
+
+const EdgePackets: React.FC<{ d: string; rate: number; length: number; reduced: boolean }> = ({ d, rate, length, reduced }) => {
+  const speed = (60 + rate * 0.06) * (reduced ? 0.3 : 1); // px per second
+  const dur = Math.max(0.4, Math.round((length / speed) * 10) / 10);
+  const count = Math.max(1, Math.round(length / 48));
   return (
-    <span aria-hidden="true" className="relative h-1 flex-1 overflow-hidden">
-      <span className="absolute inset-x-0 top-1/2 h-px bg-slate-700" />
-      {[0, 1, 2].map(i => (
-        <span
-          key={i}
-          className="absolute inset-0 animate-flow-x"
-          style={{ animationDuration: `${duration}s`, animationDelay: `${-(duration / 3) * i}s` }}
-        >
-          <span className="absolute top-0 left-0 w-1.5 h-1 rounded-full bg-slate-300" />
-        </span>
+    <g key={dur}>
+      {Array.from({ length: count }, (_, i) => (
+        <circle key={i} r="2.5" fill="#e1e3e6">
+          <animateMotion dur={`${dur}s`} begin={`-${((dur / count) * i).toFixed(2)}s`} repeatCount="indefinite" path={d} />
+        </circle>
       ))}
-    </span>
+    </g>
   );
 };
 
-/** A thin meter for real quantities (queue depth, utilization). */
-const Meter: React.FC<{ value: number; tone: 'neutral' | 'degraded'; label: string }> = ({ value, tone, label }) => (
-  <div
-    className="h-1 w-full rounded-full bg-slate-800 overflow-hidden"
-    role="meter"
-    aria-label={label}
-    aria-valuemin={0}
-    aria-valuemax={100}
-    aria-valuenow={Math.round(value * 100)}
-  >
-    <div
-      className={`h-full rounded-full ${tone === 'degraded' ? 'bg-amber-400' : 'bg-slate-400'}`}
-      style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }}
-    />
-  </div>
-);
+const nodeMetrics = (id: string, s: SurgeState): [string, string] => {
+  const p99 = gatewayP99Ms(s);
+  switch (id) {
+    case 'storefront':
+      return [`${fmt(s.producerRate)}/s`, `${p99 + 9} ms`];
+    case 'api-gateway':
+      return [`${fmt(s.producerRate)}/s`, `p99 ${p99} ms`];
+    case 'session-cache':
+      return [`${fmt(s.producerRate * 1.6)}/s`, '2 ms'];
+    case 'orders-created':
+      return [`${fmt(s.depth)} queued`, `${consumerLagSeconds(s).toFixed(1)} s lag`];
+    case 'order-worker':
+      return [`${fmt(s.consumerRate)}/s`, `${Math.round((s.consumerRate / CONSUMER_CAPACITY) * 100)}%`];
+    default:
+      return [`${fmt(s.consumerRate)} w/s`, '12 ms'];
+  }
+};
 
-interface DemoNodeProps {
-  icon: React.ReactNode;
-  kind: string;
-  name: string;
-  detail: string;
-  strip: string;
-  degraded: boolean;
-  metrics: Array<{ label: string; value: string }>;
-  footer: React.ReactNode;
-}
+const nodeDegraded = (id: string, s: SurgeState): boolean => {
+  if (id === 'api-gateway') return surgePhase(s) === 'surging';
+  if (id === 'orders-created') return consumerLagSeconds(s) > 1;
+  if (id === 'order-worker') return s.consumerRate >= CONSUMER_CAPACITY * 0.99;
+  return false;
+};
 
-/** Mirrors the studio's canvas node: category strip, name, live metrics. */
-const DemoNode: React.FC<DemoNodeProps> = ({ icon, kind, name, detail, strip, degraded, metrics, footer }) => (
-  <div
-    className={`relative overflow-hidden rounded-xl border bg-dark-950 p-3.5 text-left transition-colors duration-300 ${
-      degraded ? 'border-amber-500/50' : 'border-slate-800'
-    }`}
-  >
-    <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: strip }} />
-    <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
-      <span className="flex items-center gap-1.5">
-        {icon}
-        <span>{kind}</span>
-      </span>
-      <span
-        className={`w-2 h-2 rounded-full ${degraded ? 'bg-amber-400' : 'bg-emerald-400'}`}
-        title={degraded ? 'Degraded' : 'Healthy'}
-      />
-    </div>
-    <div className="mt-2 text-sm font-semibold text-white truncate">{name}</div>
-    <div className="text-[11px] text-slate-400 truncate">{detail}</div>
-    <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1">
-      {metrics.map(m => (
-        <div key={m.label} className="min-w-0">
-          <dt className="text-[11px] text-slate-400 truncate">{m.label}</dt>
-          <dd className="font-mono text-xs text-slate-100 tabular-nums truncate">{m.value}</dd>
-        </div>
-      ))}
-    </dl>
-    <div className="mt-3 pt-2.5 border-t border-slate-800">{footer}</div>
-  </div>
-);
-
-const Egress: React.FC<{ protocol: string; rate: number }> = ({ protocol, rate }) => (
-  <div className="flex items-center gap-2 text-[11px] text-slate-400">
-    <span className="font-mono shrink-0">{protocol}</span>
-    <FlowTrack rate={rate} />
-  </div>
-);
-
-/** Consumer lag over the last 30 s. */
-const LagChart: React.FC<{ history: number[]; phase: SurgePhase }> = ({ history, phase }) => {
+/** Backlog over the last 30 s. */
+const LagChart: React.FC<{ history: number[]; active: boolean }> = ({ history, active }) => {
   const w = 300;
-  const h = 64;
+  const h = 72;
   const max = Math.max(10000, ...history);
-  const points = history.map((d, i) => `${((i / (history.length - 1)) * w).toFixed(2)},${(h - 2 - (d / max) * (h - 6)).toFixed(2)}`);
-  const line = `M${points.join(' L')}`;
-  const area = `${line} L${w},${h} L0,${h} Z`;
-  const active = phase !== 'steady' || history.some(d => d > 0);
-
+  const pts = history.map((d, i) => `${((i / (history.length - 1)) * w).toFixed(2)},${(h - 2 - (d / max) * (h - 8)).toFixed(2)}`);
+  const line = `M${pts.join(' L')}`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-16 block" aria-hidden="true">
-      <line x1="0" x2={w} y1={h - 2} y2={h - 2} className="stroke-slate-800" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-      <path d={area} className={active ? 'fill-amber-400/10' : 'fill-transparent'} />
-      <path
-        d={line}
-        fill="none"
-        strokeWidth="1.5"
-        vectorEffect="non-scaling-stroke"
-        className={active ? 'stroke-amber-300' : 'stroke-slate-600'}
-      />
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-[72px] block" aria-hidden="true">
+      <line x1="0" x2={w} y1={h - 2} y2={h - 2} stroke="#24262a" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      {active && <path d={`${line} L${w},${h} L0,${h} Z`} fill="rgba(251,191,36,0.08)" />}
+      <path d={line} fill="none" strokeWidth="1.5" vectorEffect="non-scaling-stroke" stroke={active ? '#fcd34d' : '#4e5158'} />
     </svg>
   );
 };
 
-const phaseCopy = (phase: SurgePhase, lastDrainSeconds: number | null, peakDepth: number): string => {
+const phaseCopy = (phase: SurgePhase, s: SurgeState): string => {
   if (phase === 'surging') {
-    return `Producers are outpacing the consumer by ${fmt(SURGE_RATE - CONSUMER_CAPACITY)} msg/s. The topic is backing up.`;
+    return `Producers are ${fmt(SURGE_RATE - CONSUMER_CAPACITY)} msg/s ahead of the consumer. The topic is backing up.`;
   }
   if (phase === 'draining') {
-    return `Surge over. The consumer is working through the backlog at ${fmt(CONSUMER_CAPACITY - BASE_RATE)} msg/s.`;
+    return `Surge over. The worker is clearing the backlog at ${fmt(CONSUMER_CAPACITY - BASE_RATE)} msg/s.`;
   }
-  if (lastDrainSeconds !== null) {
-    return `Last surge peaked at ${fmt(peakDepth)} queued messages and took ${lastDrainSeconds.toFixed(1)} s to drain.`;
+  if (s.lastDrainSeconds !== null) {
+    return `Last surge peaked at ${fmt(s.peakDepth)} messages and took ${s.lastDrainSeconds.toFixed(1)} s to drain.`;
   }
-  return `Producers send ${fmt(BASE_RATE)} msg/s and the consumer can handle ${fmt(CONSUMER_CAPACITY)}. Inject a surge to see what happens when that flips.`;
+  return `${fmt(BASE_RATE)} msg/s in, capacity for ${fmt(CONSUMER_CAPACITY)}. Inject a surge and watch orders.created.`;
 };
 
-const LiveDemo: React.FC<{ onEnterApp: () => void }> = ({ onEnterApp }) => {
+const StudioFrame: React.FC = () => {
   const { state, triggerSurge } = useSurgeSimulation();
+  const reduced = usePrefersReducedMotion();
   const frameRef = useRef<HTMLDivElement>(null);
   const userTriggered = useRef(false);
 
-  // Play one surge the first time the demo is actually on screen.
+  // Play one surge the first time the frame is actually on screen.
   useEffect(() => {
     const el = frameRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
@@ -182,7 +177,7 @@ const LiveDemo: React.FC<{ onEnterApp: () => void }> = ({ onEnterApp }) => {
           }, 1200);
         }
       },
-      { threshold: 0.4 },
+      { threshold: 0.35 },
     );
     observer.observe(el);
     return () => {
@@ -191,239 +186,373 @@ const LiveDemo: React.FC<{ onEnterApp: () => void }> = ({ onEnterApp }) => {
     };
   }, [triggerSurge]);
 
-  const handleSurge = () => {
-    userTriggered.current = true;
-    triggerSurge();
-  };
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = canvasWrapRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => {
+      const next = Math.min(1, entry.contentRect.width / (DEMO_CANVAS.width + 32));
+      setScale(prev => (Math.abs(prev - next) < 0.005 ? prev : next));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const edges = useMemo(
+    () =>
+      DEMO_EDGES.map(e => {
+        const d = demoEdgePath(e);
+        const nums = d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+        const length = Math.hypot(nums[6] - nums[0], nums[7] - nums[1]) * 1.15;
+        return { ...e, d, length };
+      }),
+    [],
+  );
 
   const phase = surgePhase(state);
   const surging = phase === 'surging';
-  const p99 = gatewayP99Ms(state);
-  const lag = consumerLagSeconds(state);
   const eta = drainEtaSeconds(state);
-  const utilization = state.consumerRate / CONSUMER_CAPACITY;
-  const queueDegraded = lag > 1;
   const secondsLeft = Math.ceil(state.surgeTicksRemaining * TICK_SECONDS);
+  const backlogActive = phase !== 'steady' || state.history.some(d => d > 0);
 
-  const statusLine =
+  const status =
     phase === 'surging'
-      ? `Surge · ${fmt(state.producerRate)} msg/s · ${secondsLeft} s left`
+      ? `Surge · ${secondsLeft} s left`
       : phase === 'draining'
-        ? `Draining · ${fmt(state.depth)} queued${eta !== null ? ` · ~${eta.toFixed(1)} s to empty` : ''}`
-        : `Steady · ${fmt(state.producerRate)} msg/s`;
+        ? `Draining${eta !== null ? ` · ~${eta.toFixed(0)} s` : ''}`
+        : 'Running';
 
   return (
-    <div ref={frameRef} className="rounded-2xl border border-slate-800 bg-dark-900 shadow-2xl overflow-hidden">
-      {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 md:px-5 py-3 border-b border-slate-800">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span
-            aria-hidden="true"
-            className={`w-2 h-2 rounded-full shrink-0 ${phase === 'steady' ? 'bg-emerald-400' : 'bg-amber-400'}`}
-          />
-          <span className="font-mono text-xs text-slate-200 tabular-nums truncate">{statusLine}</span>
+    <div ref={frameRef} className="rounded-xl border border-slate-800 bg-slate-950 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] overflow-hidden">
+      {/* Window chrome */}
+      <div className="h-11 px-3 md:px-4 flex items-center justify-between gap-3 border-b border-slate-800">
+        <div className="flex items-center gap-2 min-w-0 text-[13px]">
+          <span className="w-5 h-5 rounded bg-cyan-500 grid place-items-center shrink-0">
+            <Cpu className="w-3 h-3 text-slate-950" aria-hidden="true" />
+          </span>
+          <span className="text-slate-400 truncate">checkout</span>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-100 truncate">production</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:flex items-center gap-2 text-[12px] text-slate-300">
+            <span className={`w-1.5 h-1.5 rounded-full ${phase === 'steady' ? 'bg-emerald-400' : 'bg-amber-400'}`} aria-hidden="true" />
+            <span className="font-mono tabular-nums">{status}</span>
+          </span>
           <button
             type="button"
-            onClick={handleSurge}
+            onClick={() => {
+              userTriggered.current = true;
+              triggerSurge();
+            }}
             disabled={surging}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 text-xs font-semibold text-slate-100 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:border-amber-500/40 disabled:bg-amber-950/40 disabled:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900"
+            className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-slate-700 bg-slate-900 hover:bg-slate-800 text-[12px] font-medium text-slate-100 transition-colors disabled:cursor-not-allowed disabled:border-amber-500/40 disabled:text-amber-200 disabled:bg-amber-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
           >
             <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{surging ? 'Surge running' : 'Inject 10 s surge'}</span>
+            <span>{surging ? 'Surging' : 'Inject surge'}</span>
           </button>
-          <button
-            type="button"
-            onClick={onEnterApp}
-            className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-cyan-300 transition-colors hover:text-cyan-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_288px]">
+        {/* Canvas */}
+        <div ref={canvasWrapRef} className="relative overflow-hidden bg-grid-dots">
+          <div
+            className="relative mx-auto"
+            style={{ width: (DEMO_CANVAS.width + 32) * scale, height: (DEMO_CANVAS.height + 32) * scale }}
           >
-            <span>Build your own</span>
-            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
+            <div
+              className="absolute left-0 top-0 origin-top-left"
+              style={{
+                width: DEMO_CANVAS.width,
+                height: DEMO_CANVAS.height,
+                margin: 16 * scale,
+                transform: scale < 1 ? `scale(${scale})` : undefined,
+              }}
+            >
+              <svg
+                className="absolute inset-0"
+                width={DEMO_CANVAS.width}
+                height={DEMO_CANVAS.height}
+                viewBox={`0 0 ${DEMO_CANVAS.width} ${DEMO_CANVAS.height}`}
+                aria-hidden="true"
+              >
+                {edges.map(e => (
+                  <path key={e.id} d={e.d} fill="none" stroke="#35373c" strokeWidth="1.5" />
+                ))}
+                {edges.map(e => (
+                  <EdgePackets key={e.id} d={e.d} length={e.length} rate={edgeRate(e.id, state)} reduced={reduced} />
+                ))}
+              </svg>
+
+              {DEMO_NODES.map(n => {
+                const Icon = NODE_ICONS[n.iconName] ?? Cpu;
+                const degraded = nodeDegraded(n.id, state);
+                const selected = n.id === 'orders-created';
+                const [a, b] = nodeMetrics(n.id, state);
+                return (
+                  <div
+                    key={n.id}
+                    className={`absolute rounded-lg border bg-dark-900 overflow-hidden transition-colors duration-300 ${
+                      selected
+                        ? 'border-cyan-400/60 ring-1 ring-cyan-400/40'
+                        : degraded
+                          ? 'border-amber-500/50'
+                          : 'border-slate-800'
+                    }`}
+                    style={{ left: n.x, top: n.y, width: n.width, height: n.height }}
+                  >
+                    <div className="h-[3px]" style={{ backgroundColor: n.color }} aria-hidden="true" />
+                    <div className="px-2.5 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-6 h-6 rounded-md border border-slate-800 bg-dark-950 grid place-items-center shrink-0"
+                          style={{ color: n.color }}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[12px] font-semibold leading-tight text-slate-50 truncate">{n.title}</div>
+                          <div className="text-[11px] leading-tight text-slate-400 truncate">{n.subtitle}</div>
+                        </div>
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${degraded ? 'bg-amber-400' : 'bg-emerald-400'}`}
+                          title={degraded ? 'Degraded' : 'Healthy'}
+                        />
+                      </div>
+                      <div className="mt-2.5 flex items-center justify-between font-mono text-[11px] tabular-nums text-slate-300">
+                        <span>{a}</span>
+                        <span className={degraded ? 'text-amber-300' : ''}>{b}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
+
+        {/* Inspector */}
+        <aside className="border-t lg:border-t-0 lg:border-l border-slate-800 p-5 flex flex-col gap-5" aria-label="Inspector">
+          <div className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-md border border-slate-800 bg-dark-900 grid place-items-center text-[#f59e0b]">
+              <Layers className="w-4 h-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-slate-50">orders.created</div>
+              <div className="text-[12px] text-slate-400">Kafka topic, 6 partitions</div>
+            </div>
+          </div>
+
+          <dl className="text-[13px] divide-y divide-slate-800/80 border-y border-slate-800/80">
+            {[
+              ['Queued', fmt(state.depth)],
+              ['Consumer lag', `${consumerLagSeconds(state).toFixed(1)} s`],
+              ['In', `${fmt(state.producerRate)} msg/s`],
+              ['Out', `${fmt(state.consumerRate)} msg/s`],
+              [
+                phase === 'draining' ? 'Drain ETA' : 'Last drain',
+                phase === 'draining'
+                  ? eta !== null
+                    ? `${eta.toFixed(1)} s`
+                    : '—'
+                  : state.lastDrainSeconds !== null
+                    ? `${state.lastDrainSeconds.toFixed(1)} s`
+                    : '—',
+              ],
+            ].map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between py-2">
+                <dt className="text-slate-400">{k}</dt>
+                <dd className="font-mono tabular-nums text-slate-100">{v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div>
+            <div className="flex items-baseline justify-between text-[12px] text-slate-400 mb-2">
+              <span>Backlog, last 30 s</span>
+              <span className="font-mono tabular-nums text-slate-300">peak {fmt(state.peakDepth)}</span>
+            </div>
+            <LagChart history={state.history} active={backlogActive} />
+          </div>
+
+          <p className="text-[13px] leading-relaxed text-slate-300" aria-live="polite">
+            {phaseCopy(phase, state)}
+          </p>
+        </aside>
       </div>
 
-      {/* Topology */}
-      <div className="p-4 md:p-5 bg-dark-950/60 bg-grid-dots">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-          <DemoNode
-            icon={<Globe className="w-3.5 h-3.5" aria-hidden="true" />}
-            kind="Client"
-            name="Storefront"
-            detail="Next.js on the edge"
-            strip="#38bdf8"
-            degraded={false}
-            metrics={[
-              { label: 'Requests', value: `${fmt(state.producerRate)}/s` },
-              { label: 'p99', value: `${p99 + 9} ms` },
-            ]}
-            footer={<Egress protocol="HTTPS" rate={state.producerRate} />}
-          />
-          <DemoNode
-            icon={<Network className="w-3.5 h-3.5" aria-hidden="true" />}
-            kind="Gateway"
-            name="Kong"
-            detail="Auth and rate limits"
-            strip="#818cf8"
-            degraded={surging}
-            metrics={[
-              { label: 'Requests', value: `${fmt(state.producerRate)}/s` },
-              { label: 'p99', value: `${p99} ms` },
-            ]}
-            footer={<Egress protocol="produce" rate={state.producerRate} />}
-          />
-          <DemoNode
-            icon={<Layers className="w-3.5 h-3.5" aria-hidden="true" />}
-            kind="Kafka topic"
-            name="orders.created"
-            detail="6 partitions"
-            strip="#f59e0b"
-            degraded={queueDegraded}
-            metrics={[
-              { label: 'Queued', value: fmt(state.depth) },
-              { label: 'Lag', value: `${lag.toFixed(1)} s` },
-            ]}
-            footer={
-              <div className="space-y-1.5">
-                <Meter value={state.depth / 10000} tone={queueDegraded ? 'degraded' : 'neutral'} label="Queue depth" />
-                <Egress protocol="consume" rate={state.consumerRate} />
-              </div>
-            }
-          />
-          <DemoNode
-            icon={<Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
-            kind="Consumer"
-            name="order-worker"
-            detail="Writes to Postgres"
-            strip="#a855f7"
-            degraded={utilization >= 0.99}
-            metrics={[
-              { label: 'Processed', value: `${fmt(state.consumerRate)}/s` },
-              { label: 'Capacity', value: `${fmt(CONSUMER_CAPACITY)}/s` },
-            ]}
-            footer={
-              <div className="space-y-1.5">
-                <Meter value={utilization} tone={utilization >= 0.99 ? 'degraded' : 'neutral'} label="Consumer utilization" />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>Utilization</span>
-                  <span className="font-mono tabular-nums text-slate-200">{Math.round(utilization * 100)}%</span>
-                </div>
-              </div>
-            }
-          />
-        </div>
-      </div>
-
-      {/* Lag over time */}
-      <div className="px-4 md:px-5 pt-4 pb-4 border-t border-slate-800">
-        <div className="flex items-baseline justify-between text-[11px] text-slate-400 mb-2">
-          <span>Messages waiting in orders.created, last 30 s</span>
-          <span className="font-mono tabular-nums text-slate-300">peak {fmt(state.peakDepth)}</span>
-        </div>
-        <LagChart history={state.history} phase={phase} />
-        <p className="mt-3 text-sm text-slate-300" aria-live="polite">
-          {phaseCopy(phase, state.lastDrainSeconds, state.peakDepth)}
-        </p>
+      {/* Telemetry strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-slate-800 border-t border-slate-800">
+        {[
+          ['Inbound', `${fmt(state.producerRate)} msg/s`],
+          ['Gateway p99', `${gatewayP99Ms(state)} ms`],
+          ['Consumer load', `${Math.round((state.consumerRate / CONSUMER_CAPACITY) * 100)}%`],
+          ['Last drain', state.lastDrainSeconds !== null ? `${state.lastDrainSeconds.toFixed(1)} s` : '—'],
+        ].map(([k, v]) => (
+          <div key={k} className="bg-slate-950 px-4 md:px-5 py-3.5">
+            <div className="text-[12px] text-slate-400">{k}</div>
+            <div className="mt-0.5 font-mono text-base tabular-nums text-slate-50">{v}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/* Feature rows                                                        */
+/* Artifacts                                                           */
 /* ------------------------------------------------------------------ */
 
-const FEATURES: Array<{ title: string; body: string; tag?: string; artifact: string }> = [
-  {
-    title: 'Break it on purpose',
-    body: 'Raise a service’s error rate, slow down a dependency, or throw a traffic spike at the edge. Failed requests travel through the graph, so you can see which services take the hit and where retries pile up.',
-    artifact: `payment-svc    error rate   0.00  ->  0.25
-order-svc      5xx/s           0  ->    31
-api-gateway    p99          41ms  ->  186ms
-storefront     errors       0.0%  ->   4.1%`,
-  },
-  {
-    title: 'Describe a system, get a starting point',
-    body: 'Write what you need in plain English and GraphFlow lays out the services, queues, caches, and databases with protocols and latencies filled in. Then you edit it like any other diagram.',
-    tag: 'Pro',
-    artifact: `> checkout with a Redis session cache, Kafka for
-  order events, and a Postgres primary
-
-+ api-gateway      gateway
-+ checkout-svc     service
-+ session-cache    cache      Redis
-+ orders.created   queue      Kafka
-+ order-worker     service
-+ orders-db        database   PostgreSQL`,
-  },
-  {
-    title: 'Export what you drew',
-    body: 'Docker Compose and Mermaid exports are free. Pro adds Terraform scaffolding for AWS: a VPC, an ECS cluster, and one resource per node, ready to edit.',
-    artifact: `resource "aws_db_instance" "orders_db" {
-  engine         = "postgres"
-  engine_version = "16.1"
-  instance_class = "db.t4g.micro"
-}
-
-resource "aws_ecs_service" "order_worker_svc" {
-  launch_type   = "FARGATE"
-  desired_count = 2
-}`,
-  },
-  {
-    title: 'Share a link, not a screenshot',
-    body: 'The whole graph is encoded into the URL. Paste it in a pull request or a design doc and whoever opens it gets the same running simulation, without an account.',
-    artifact: `https://graph-flow-virid.vercel.app/#share=eyJub2Rlc
-yI6W3siaWQiOiJhcGktZ2F0ZXdheSIsInR5cGUiOiJnYXRld2F5
-IiwidGl0bGUiOiJLb25nIn0seyJpZCI6Im9yZGVycy5jcmVhdGV…`,
-  },
+const FAULT_ROWS: Array<{ service: string; signal: string; before: string; after: string; state: 'ok' | 'warn' }> = [
+  { service: 'orders-db', signal: 'p99 latency', before: '12 ms', after: '192 ms', state: 'warn' },
+  { service: 'order-worker', signal: 'processed', before: '1,500/s', after: '410/s', state: 'warn' },
+  { service: 'orders.created', signal: 'queued', before: '0', after: '18,400', state: 'warn' },
+  { service: 'api-gateway', signal: 'p99 latency', before: '18 ms', after: '21 ms', state: 'ok' },
+  { service: 'storefront', signal: 'errors', before: '0.0%', after: '0.0%', state: 'ok' },
 ];
+
+const FaultPanel: React.FC = () => (
+  <div className="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 md:px-5 h-11 border-b border-slate-800 text-[13px]">
+      <span className="text-slate-200">
+        Fault: <span className="font-mono text-slate-50">orders-db</span> latency +180 ms
+      </span>
+      <span className="text-[12px] text-slate-400">Example run</span>
+    </div>
+    <div className="overflow-x-auto">
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="text-left text-slate-400">
+            <th className="font-normal px-4 md:px-5 py-2.5">Service</th>
+            <th className="hidden sm:table-cell font-normal px-4 py-2.5">Signal</th>
+            <th className="font-normal px-4 py-2.5 text-right">Before</th>
+            <th className="font-normal px-4 md:px-5 py-2.5 text-right">During</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800/80 border-t border-slate-800/80">
+          {FAULT_ROWS.map(r => (
+            <tr key={r.service}>
+              <td className="px-4 md:px-5 py-2.5">
+                <span className="flex items-center gap-2 font-mono text-slate-100">
+                  <span className={`w-1.5 h-1.5 rounded-full ${r.state === 'warn' ? 'bg-amber-400' : 'bg-emerald-400'}`} aria-hidden="true" />
+                  {r.service}
+                </span>
+                <span className="sm:hidden block pl-3.5 text-[12px] text-slate-400">{r.signal}</span>
+              </td>
+              <td className="hidden sm:table-cell px-4 py-2.5 text-slate-400">{r.signal}</td>
+              <td className="px-4 py-2.5 text-right font-mono tabular-nums text-slate-300">{r.before}</td>
+              <td className={`px-4 md:px-5 py-2.5 text-right font-mono tabular-nums ${r.state === 'warn' ? 'text-amber-300' : 'text-slate-100'}`}>
+                {r.after}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p className="px-4 md:px-5 py-3 border-t border-slate-800 text-[13px] text-slate-300">
+      The queue absorbs the slow database: checkout stays fast while the backlog grows. Now you know what to alert on.
+    </p>
+  </div>
+);
+
+type ExportTab = 'terraform' | 'compose' | 'mermaid';
+
+const CodeLine: React.FC<{ text: string }> = ({ text }) => {
+  const trimmed = text.trimStart();
+  if (trimmed.startsWith('#') || trimmed.startsWith('//')) return <span className="text-slate-400">{text}</span>;
+  return <span className="text-slate-200">{text}</span>;
+};
+
+const ExportViewer: React.FC = () => {
+  const [tab, setTab] = useState<ExportTab>('compose');
+  const files = useMemo(() => {
+    const doc = generateMarkdownDoc(DEMO_NODES, DEMO_EDGES, 'checkout');
+    const mermaid = doc.match(/```mermaid\n([\s\S]*?)```/)?.[1] ?? '';
+    return {
+      compose: { name: 'docker-compose.yml', body: generateDockerCompose(DEMO_NODES, DEMO_EDGES, 'checkout') },
+      terraform: { name: 'main.tf', body: generateTerraform(DEMO_NODES, DEMO_EDGES, 'checkout') },
+      mermaid: { name: 'architecture.md', body: mermaid },
+    } satisfies Record<ExportTab, { name: string; body: string }>;
+  }, []);
+  const lines = files[tab].body.replace(/\n+$/, '').split('\n');
+  const tabs: Array<{ id: ExportTab; label: string; pro?: boolean }> = [
+    { id: 'compose', label: 'Docker Compose' },
+    { id: 'mermaid', label: 'Mermaid' },
+    { id: 'terraform', label: 'Terraform', pro: true },
+  ];
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-2 h-11 border-b border-slate-800">
+        <div role="tablist" aria-label="Export format" className="flex items-center gap-1 overflow-x-auto">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              aria-selected={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={`h-7 px-2.5 rounded-md text-[13px] whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 ${
+                tab === t.id ? 'bg-slate-800 text-slate-50' : 'text-slate-400 hover:text-slate-100'
+              }`}
+            >
+              {t.label}
+              {t.pro && <span className="ml-1.5 text-[11px] text-slate-400">Pro</span>}
+            </button>
+          ))}
+        </div>
+        <span className="hidden sm:block pr-2 font-mono text-[12px] text-slate-400">{files[tab].name}</span>
+      </div>
+      <pre className="m-0 max-h-[360px] overflow-auto py-4 font-mono text-[12px] leading-[1.7]">
+        {lines.map((l, i) => (
+          <div key={i} className="flex">
+            <span className="select-none w-12 shrink-0 pr-4 text-right text-slate-600 tabular-nums">{i + 1}</span>
+            <code className="whitespace-pre pr-6">
+              <CodeLine text={l || ' '} />
+            </code>
+          </div>
+        ))}
+      </pre>
+    </div>
+  );
+};
 
 /* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-950';
-
 export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth }) => {
   const { user } = useAuth();
+  const shareUrl = useMemo(() => generateShareUrl(DEMO_NODES, DEMO_EDGES), []);
 
   return (
-    <div className="min-h-screen w-full bg-[#090d16] text-slate-100 font-sans overflow-x-hidden">
+    <div className="min-h-screen w-full bg-dark-950 text-slate-200 font-sans antialiased overflow-x-hidden">
       {/* Navigation */}
-      <nav className="sticky top-0 z-30 h-16 border-b border-slate-800 bg-dark-900/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto h-full px-4 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-cyan-500 flex items-center justify-center">
-              <Cpu className="w-4 h-4 text-slate-950" aria-hidden="true" />
-            </div>
-            <span className="font-bold text-base tracking-tight text-white">GraphFlow</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-400">
-            <a href="#demo" className="hover:text-slate-100 transition-colors">Demo</a>
-            <a href="#features" className="hover:text-slate-100 transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-slate-100 transition-colors">Pricing</a>
-            <a
-              href="https://github.com/Hanubaki/GraphFlow"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 hover:text-slate-100 transition-colors"
-            >
-              <Github className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>GitHub</span>
+      <nav className="sticky top-0 z-30 border-b border-slate-800/70 bg-dark-950/80 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto h-14 px-5 md:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <a href="#top" className="flex items-center gap-2" aria-label="GraphFlow home">
+              <span className="w-6 h-6 rounded-md bg-cyan-500 grid place-items-center">
+                <Cpu className="w-3.5 h-3.5 text-slate-950" aria-hidden="true" />
+              </span>
+              <span className="text-[15px] font-semibold tracking-[-0.01em] text-slate-50">GraphFlow</span>
             </a>
+            <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-400">
+              <a href="#features" className="hover:text-slate-50 transition-colors">Features</a>
+              <a href="#export" className="hover:text-slate-50 transition-colors">Export</a>
+              <a href="#pricing" className="hover:text-slate-50 transition-colors">Pricing</a>
+              <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-slate-50 transition-colors">GitHub</a>
+            </div>
           </div>
-
           <div className="flex items-center gap-2">
             {user ? (
               <button
                 onClick={onOpenAuth}
-                className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors ${focusRing}`}
+                className={`inline-flex items-center gap-2 h-8 px-2.5 rounded-lg text-[13px] text-slate-300 hover:text-slate-50 hover:bg-slate-900 transition-colors ${ring}`}
               >
-                <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center text-[11px] font-bold">
+                <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-100 grid place-items-center text-[11px] font-semibold">
                   {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
                 </span>
                 <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
@@ -431,210 +560,265 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             ) : (
               <button
                 onClick={onOpenAuth}
-                className={`hidden sm:inline-flex items-center h-9 px-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors ${focusRing}`}
+                className={`hidden sm:inline-flex items-center h-8 px-3 rounded-lg text-[13px] text-slate-300 hover:text-slate-50 transition-colors ${ring}`}
               >
                 Sign in
               </button>
             )}
             <button
               onClick={onEnterApp}
-              className={`inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-colors ${focusRing}`}
+              className={`inline-flex items-center h-8 px-3.5 rounded-lg bg-slate-50 hover:bg-white text-slate-950 text-[13px] font-medium transition-colors ${ring}`}
             >
-              <span>Open studio</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              Open studio
             </button>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <header className="max-w-6xl mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-10 md:pb-14">
-        <div className="grid lg:grid-cols-[1.2fr_1fr] gap-8 lg:gap-16 lg:items-end">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.05] text-balance">
-            Architecture diagrams that actually run.
-          </h1>
-          <div className="space-y-6 lg:pb-1.5">
-            <p className="text-base md:text-lg text-slate-300 leading-relaxed max-w-[52ch]">
-              Draw your gateways, services, queues, and databases, then push traffic through them. Watch latency climb,
-              queues back up, and failures spread before any of it reaches production.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={onEnterApp}
-                className={`h-11 px-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm inline-flex items-center justify-center gap-2 transition-colors ${focusRing}`}
-              >
-                <span>Open the studio</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </button>
-              <a
-                href="https://github.com/Hanubaki/GraphFlow"
-                target="_blank"
-                rel="noreferrer"
-                className={`h-11 px-6 rounded-xl border border-slate-700 bg-dark-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors ${focusRing}`}
-              >
-                <Github className="w-4 h-4" aria-hidden="true" />
-                <span>View source</span>
-              </a>
-            </div>
-            <p className="text-xs text-slate-400">Free and open source (MIT). Runs in your browser, nothing to install.</p>
+      <header id="top" className="max-w-6xl mx-auto px-5 md:px-8 pt-20 md:pt-28">
+        <h1 className={`${display} max-w-[13ch] text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-[4.75rem]`}>
+          Architecture diagrams that actually run.
+        </h1>
+        <div className="mt-8 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+          <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400">
+            Draw your services, queues, and databases, then push traffic through them. See where latency builds, which
+            queue backs up, and how long recovery takes.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={onEnterApp} className={btnPrimary}>
+              <span>Open the studio</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className={btnSecondary}>
+              <Github className="w-4 h-4" aria-hidden="true" />
+              <span>View source</span>
+            </a>
           </div>
         </div>
       </header>
 
-      {/* Live demo */}
-      <section id="demo" aria-label="Live simulation" className="max-w-6xl mx-auto px-4 md:px-8 scroll-mt-20">
-        <LiveDemo onEnterApp={onEnterApp} />
+      {/* Product */}
+      <section aria-label="Live simulation" className="relative mt-14 md:mt-20">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-white/[0.025] to-transparent"
+        />
+        <div className="relative max-w-6xl mx-auto px-3 md:px-8">
+          <StudioFrame />
+          <p className="mt-4 px-2 md:px-0 text-[13px] text-slate-400">
+            Live, in your browser. Free and open source under MIT, nothing to install.
+          </p>
+        </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="max-w-6xl mx-auto px-4 md:px-8 py-24 md:py-32 scroll-mt-16">
-        <div className="grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16">
-          <div className="lg:sticky lg:top-28 self-start space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight text-white text-balance">Draw it, break it, ship it.</h2>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Most architecture diagrams show how a system should work. GraphFlow shows how it behaves once real
-              traffic, failures, and slow dependencies show up.
+      {/* Statement */}
+      <section className="max-w-6xl mx-auto px-5 md:px-8 py-28 md:py-40">
+        <p className="max-w-[36ch] text-[1.75rem] md:text-[2.5rem] leading-[1.15] tracking-[-0.025em] font-medium text-slate-500">
+          <span className="text-slate-50">A diagram shows how a system should work.</span> GraphFlow shows how it
+          behaves: the queue that backs up, the dependency that drags everything down, the minutes it takes to recover.
+        </p>
+      </section>
+
+      {/* Feature: fault injection */}
+      <section id="features" className="border-t border-slate-800/70 scroll-mt-14">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-16">
+            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Break it on purpose</h2>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400 md:pt-2">
+              Slow down a database, raise a service’s error rate, or throw a spike at the edge. Failures travel through
+              the graph, so you see which services take the hit and which ones the design protects.
             </p>
           </div>
+          <div className="mt-12 md:mt-16">
+            <FaultPanel />
+          </div>
+        </div>
+      </section>
 
-          <div className="border-y border-slate-800 divide-y divide-slate-800">
-            {FEATURES.map(f => (
-              <article
-                key={f.title}
-                className="py-8 md:py-10 grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-5 md:gap-8"
-              >
-                <div className="space-y-2.5">
-                  <h3 className="text-base font-bold text-white text-balance">
-                    {f.title}
-                    {f.tag && (
-                      <span className="ml-2 align-[2px] px-1.5 py-0.5 rounded border border-slate-700 text-[11px] font-medium text-slate-400">
-                        {f.tag}
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{f.body}</p>
-                </div>
-                <pre className="m-0 p-4 rounded-xl border border-slate-800 bg-dark-950 font-mono text-[11px] leading-relaxed text-slate-300 overflow-x-auto whitespace-pre">
-                  {f.artifact}
-                </pre>
-              </article>
-            ))}
-            <p className="py-5 text-xs text-slate-400">
-              Rendered with plain SVG and requestAnimationFrame. No canvas engine, no plugins.
+      {/* Feature: export */}
+      <section id="export" className="border-t border-slate-800/70 scroll-mt-14">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-16">
+            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Export what you drew</h2>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400 md:pt-2">
+              These are the real files GraphFlow generates for the checkout system above. Docker Compose and Mermaid are
+              free; Terraform for AWS comes with Pro.
             </p>
+          </div>
+          <div className="mt-12 md:mt-16">
+            <ExportViewer />
+          </div>
+        </div>
+      </section>
+
+      {/* Feature pair */}
+      <section className="border-t border-slate-800/70">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 grid md:grid-cols-2 md:divide-x divide-slate-800/70">
+          <div className="py-20 md:py-28 md:pr-12 space-y-4">
+            <h3 className={`${display} text-2xl md:text-[1.75rem] leading-tight`}>
+              Start from a sentence
+              <span className="ml-2 align-middle text-[12px] font-medium tracking-normal [font-stretch:100%] text-slate-400 border border-slate-700 rounded px-1.5 py-0.5">
+                Pro
+              </span>
+            </h3>
+            <p className="text-[15px] leading-relaxed text-slate-400 max-w-[44ch]">
+              Describe the system in plain English. GraphFlow lays out the services, queues, and stores with protocols and
+              latencies filled in, then you edit it like any other diagram.
+            </p>
+            <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 p-4 text-[13px]">
+              <p className="text-slate-100">“Checkout with a Redis session cache, Kafka for order events, and a Postgres primary.”</p>
+              <ul className="mt-3 pt-3 border-t border-slate-800 grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-[12px] text-slate-300">
+                {DEMO_NODES.map(n => (
+                  <li key={n.id} className="flex items-center gap-2 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: n.color }} aria-hidden="true" />
+                    <span className="truncate">{n.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="py-20 md:py-28 md:pl-12 space-y-4 border-t md:border-t-0 border-slate-800/70">
+            <h3 className={`${display} text-2xl md:text-[1.75rem] leading-tight`}>Share a link, not a screenshot</h3>
+            <p className="text-[15px] leading-relaxed text-slate-400 max-w-[44ch]">
+              The whole graph is encoded in the URL. Paste it into a pull request or a design doc, and whoever opens it
+              gets the same running simulation. No account needed.
+            </p>
+            <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <p className="font-mono text-[12px] leading-relaxed text-slate-300 break-all line-clamp-3">{shareUrl}</p>
+              <a
+                href={shareUrl}
+                className={`mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-50 hover:text-white ${ring} rounded`}
+              >
+                <span>Open this graph in the studio</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="max-w-6xl mx-auto px-4 md:px-8 pb-24 md:pb-32 scroll-mt-16">
-        <div className="max-w-xl space-y-3 mb-10">
-          <h2 className="text-3xl font-bold tracking-tight text-white">Pricing</h2>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            The simulator, templates, and Mermaid and Docker exports are free. Pro adds AI generation, cloud projects,
-            and Terraform.
-          </p>
+      <section id="pricing" className="border-t border-slate-800/70 scroll-mt-14">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-16 mb-12 md:mb-16">
+            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Pricing</h2>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400 md:pt-2">
+              The simulator, templates, sharing, and Mermaid and Docker exports are free. Pro adds AI generation, cloud
+              projects, and Terraform.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-px bg-slate-800 rounded-xl overflow-hidden border border-slate-800">
+            {/* Community */}
+            <div className="bg-dark-950 p-6 md:p-8 flex flex-col">
+              <h3 className="text-[15px] font-semibold text-slate-50">Community</h3>
+              <p className="mt-4 flex items-baseline gap-1.5">
+                <span className={`${display} text-4xl tabular-nums`}>$0</span>
+              </p>
+              <p className="mt-1 text-[13px] text-slate-400">Free forever</p>
+              <ul className="mt-8 space-y-3 text-[14px] text-slate-300 flex-1">
+                {['Live traffic simulation', 'Starter templates', 'JSON, Mermaid and Docker Compose export', 'Share by link'].map(item => (
+                  <li key={item} className="flex gap-2.5">
+                    <Check className="w-4 h-4 mt-0.5 text-slate-500 shrink-0" aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <button onClick={onEnterApp} className={`mt-10 ${btnSecondary}`}>
+                Start in the browser
+              </button>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-dark-900 p-6 md:p-8 flex flex-col">
+              <h3 className="text-[15px] font-semibold text-slate-50">Pro</h3>
+              <p className="mt-4 flex items-baseline gap-1.5">
+                <span className={`${display} text-4xl tabular-nums`}>$12</span>
+                <span className="text-[13px] text-slate-400">/ month</span>
+              </p>
+              <p className="mt-1 text-[13px] text-slate-400">or $99 / year</p>
+              <ul className="mt-8 space-y-3 text-[14px] text-slate-200 flex-1">
+                {['Everything in Community', 'AI architecture generator', 'Unlimited cloud projects', 'Terraform export for AWS'].map(item => (
+                  <li key={item} className="flex gap-2.5">
+                    <Check className="w-4 h-4 mt-0.5 text-slate-300 shrink-0" aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`lemonsqueezy-button mt-10 ${btnPrimary}`}
+              >
+                <span>Upgrade to Pro</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </a>
+            </div>
+
+            {/* Team */}
+            <div className="bg-dark-950 p-6 md:p-8 flex flex-col">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[15px] font-semibold text-slate-50">Engineering Team</h3>
+                <span className="text-[12px] text-slate-400">Coming soon</span>
+              </div>
+              <p className="mt-4 flex items-baseline gap-1.5">
+                <span className={`${display} text-4xl tabular-nums`}>$39</span>
+                <span className="text-[13px] text-slate-400">/ month</span>
+              </p>
+              <p className="mt-1 text-[13px] text-slate-400">Up to 10 seats</p>
+              <ul className="mt-8 space-y-3 text-[14px] text-slate-300 flex-1">
+                {['Everything in Pro', 'Live multiplayer editing', 'Embeds for Notion and docs'].map(item => (
+                  <li key={item} className="flex gap-2.5">
+                    <Check className="w-4 h-4 mt-0.5 text-slate-500 shrink-0" aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <a href={CONTACT_MAILTO} className={`mt-10 ${btnSecondary}`}>
+                <Mail className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                <span>Ask about early access</span>
+              </a>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div className="grid md:grid-cols-3 rounded-2xl border border-slate-800 overflow-hidden divide-y md:divide-y-0 md:divide-x divide-slate-800">
-          {/* Community */}
-          <div className="p-6 md:p-8 flex flex-col">
-            <h3 className="text-sm font-bold text-slate-200">Community</h3>
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-white tabular-nums">$0</span>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">Free forever</p>
-            <ul className="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-              {['Live traffic simulation', 'Starter templates', 'JSON, Mermaid and Docker Compose export', 'Share by link'].map(item => (
-                <li key={item} className="flex gap-2.5">
-                  <Check className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" aria-hidden="true" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={onEnterApp}
-              className={`mt-8 h-10 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors ${focusRing}`}
-            >
-              Start in the browser
+      {/* Closing */}
+      <section className="border-t border-slate-800/70">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-28 md:py-36">
+          <h2 className={`${display} max-w-[17ch] text-4xl md:text-6xl leading-[1.03]`}>
+            Find the bottleneck before production does.
+          </h2>
+          <div className="mt-10 flex flex-wrap gap-3">
+            <button onClick={onEnterApp} className={btnPrimary}>
+              <span>Open the studio</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </button>
-          </div>
-
-          {/* Pro */}
-          <div className="relative p-6 md:p-8 flex flex-col bg-dark-900">
-            <div aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-cyan-400" />
-            <h3 className="text-sm font-bold text-cyan-300">Pro</h3>
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-white tabular-nums">$12</span>
-              <span className="text-xs text-slate-400">/ month</span>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">or $99 / year</p>
-            <ul className="mt-6 space-y-3 text-sm text-slate-200 flex-1">
-              {['Everything in Community', 'AI architecture generator', 'Unlimited cloud projects', 'Terraform export for AWS'].map(item => (
-                <li key={item} className="flex gap-2.5">
-                  <Check className="w-4 h-4 mt-0.5 text-cyan-400 shrink-0" aria-hidden="true" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href="https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`lemonsqueezy-button mt-8 h-10 rounded-xl bg-slate-100 hover:bg-white text-slate-950 text-xs font-bold transition-colors inline-flex items-center justify-center gap-1.5 ${focusRing}`}
-            >
-              <span>Upgrade to Pro</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </a>
-          </div>
-
-          {/* Team */}
-          <div className="p-6 md:p-8 flex flex-col">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-slate-200">Engineering Team</h3>
-              <span className="px-2 py-0.5 rounded-full border border-slate-700 text-[11px] text-slate-400">Coming soon</span>
-            </div>
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-white tabular-nums">$39</span>
-              <span className="text-xs text-slate-400">/ month</span>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">Up to 10 seats</p>
-            <ul className="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-              {['Everything in Pro', 'Live multiplayer editing', 'Embeds for Notion and docs'].map(item => (
-                <li key={item} className="flex gap-2.5">
-                  <Check className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" aria-hidden="true" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href={CONTACT_MAILTO}
-              className={`mt-8 h-10 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5 ${focusRing}`}
-            >
-              <Mail className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-              <span>Ask about early access</span>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className={btnSecondary}>
+              <Github className="w-4 h-4" aria-hidden="true" />
+              <span>Star on GitHub</span>
             </a>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <footer className="border-t border-slate-800/70">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[13px] text-slate-400">
           <div className="flex items-center gap-2.5">
-            <div className="w-5 h-5 rounded-md bg-cyan-500 flex items-center justify-center">
+            <span className="w-5 h-5 rounded bg-cyan-500 grid place-items-center">
               <Cpu className="w-3 h-3 text-slate-950" aria-hidden="true" />
-            </div>
-            <span className="font-semibold text-slate-300">GraphFlow</span>
+            </span>
+            <span className="text-slate-200 font-medium">GraphFlow</span>
             <span>© 2026 · MIT licensed</span>
           </div>
           <div className="flex items-center gap-5">
-            <button onClick={onEnterApp} className="hover:text-slate-100 transition-colors">Studio</button>
-            <button onClick={onOpenPricing} className="hover:text-slate-100 transition-colors">Pricing</button>
-            <a href="https://github.com/Hanubaki/GraphFlow" target="_blank" rel="noreferrer" className="hover:text-slate-100 transition-colors">
-              GitHub
-            </a>
-            <a href="mailto:berkeakdemir5855@gmail.com" className="hover:text-slate-100 transition-colors">Contact</a>
+            <button onClick={onEnterApp} className="hover:text-slate-50 transition-colors">Studio</button>
+            <button onClick={onOpenPricing} className="hover:text-slate-50 transition-colors">Pricing</button>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-slate-50 transition-colors">GitHub</a>
+            <a href="mailto:berkeakdemir5855@gmail.com" className="hover:text-slate-50 transition-colors">Contact</a>
           </div>
         </div>
       </footer>

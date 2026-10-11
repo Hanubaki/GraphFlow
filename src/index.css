@@ -14,8 +14,8 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #090d16;
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background-color: #08090a;
+  font-family: 'Mona Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: #f1f5f9;
   caret-color: #22d3ee;
 }
@@ -29,43 +29,29 @@ code, pre {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-/* Custom scrollbar for dark cyberpunk aesthetic */
+/* Custom scrollbar, themed from the graphite palette */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 16, 18, 0.6);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: rgba(53, 55, 60, 0.9);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 1);
+  background: rgba(111, 115, 123, 1);
 }
 
 /* Grid pattern */
 .bg-grid-dots {
   background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px);
   background-size: 24px 24px;
-}
-
-/* Landing demo: packets travelling along an edge */
-@keyframes flow-x {
-  from {
-    transform: translateX(-8%);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
-.animate-flow-x {
-  animation: flow-x 1.6s linear infinite;
 }
 
 /* Touch ergonomics: expand compact controls to a 44x44px hit area on coarse pointers (WCAG 2.5.8) */
@@ -114,8 +100,7 @@ code, pre {
   }
 
   /* Meaningful motion: keep, but calmer */
-  .animate-flow-dash,
-  .animate-flow-x {
+  .animate-flow-dash {
     animation-duration: 6s !important;
   }
 
