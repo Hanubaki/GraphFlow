@@ -54,6 +54,20 @@ code, pre {
   background-size: 24px 24px;
 }
 
+/* Landing demo: packets travelling along an edge */
+@keyframes flow-x {
+  from {
+    transform: translateX(-8%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.animate-flow-x {
+  animation: flow-x 1.6s linear infinite;
+}
+
 /* Touch ergonomics: expand compact controls to a 44x44px hit area on coarse pointers (WCAG 2.5.8) */
 @media (pointer: coarse) {
   :is(button, a, [role='button'], [role='tab']):is([class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='w-6'], [class~='w-7']):not([class~='absolute']):not([class~='fixed']) {
@@ -100,7 +114,8 @@ code, pre {
   }
 
   /* Meaningful motion: keep, but calmer */
-  .animate-flow-dash {
+  .animate-flow-dash,
+  .animate-flow-x {
     animation-duration: 6s !important;
   }
 
