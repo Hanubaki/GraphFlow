@@ -184,7 +184,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             aria-label={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
           >
             {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span className="hidden xl:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
+            <span className="hidden 3xl:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
           </button>
 
           <div className="h-4 w-px bg-slate-800 mx-1" />
@@ -221,7 +221,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           aria-label={t('topbar.spikeTitle')}
         >
           <Zap className="w-3.5 h-3.5" />
-          <span className="hidden xl:inline">{t('topbar.spike')}</span>
+          <span className="hidden 3xl:inline">{t('topbar.spike')}</span>
         </button>
 
         {/* Sound toggle */}
@@ -373,10 +373,10 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
           <Users className="w-3.5 h-3.5 text-cyan-400" />
           <span className="text-[11px] font-semibold text-slate-200">
-            {totalCollaborators} <span className="hidden 2xl:inline text-slate-400">Live</span>
+            {totalCollaborators} <span className="hidden 3xl:inline text-slate-400">Live</span>
           </span>
           {/* Mini avatar stack */}
-          <div className="hidden 2xl:flex items-center -space-x-1.5 ml-0.5">
+          <div className="hidden 3xl:flex items-center -space-x-1.5 ml-0.5">
             <div
               style={{ backgroundColor: myPresence.color }}
               className="w-5 h-5 rounded-full border border-dark-950 flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm"
@@ -405,7 +405,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           aria-label="Export architecture as JSON, Markdown, Docker Compose, or Terraform"
         >
           <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden xl:inline">{t('topbar.export')}</span>
+          <span className="hidden 3xl:inline">{t('topbar.export')}</span>
         </button>
 
         {/* Pro Upgrade Pill */}
@@ -434,7 +434,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[11px] font-bold shrink-0">
               {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
             </div>
-            <span className="hidden 2xl:inline max-w-[75px] truncate text-[11px]">{user.email?.split('@')[0]}</span>
+            <span className="hidden 3xl:inline max-w-[75px] truncate text-[11px]">{user.email?.split('@')[0]}</span>
           </button>
         ) : (
           <button
@@ -444,7 +444,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             aria-label="Sign in to sync cloud architectures"
           >
             <UserIcon className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden xl:inline">{t('topbar.signIn')}</span>
+            <span className="hidden 3xl:inline">{t('topbar.signIn')}</span>
           </button>
         )}
 
