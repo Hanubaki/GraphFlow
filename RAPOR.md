@@ -2,7 +2,7 @@
 
 **Son Güncelleme:** 14 Ekim 2026
 **Canlı Üretim Adresi:** https://graph-flow-virid.vercel.app
-**Git Durumu:** `main...origin/main` (`c6af10f` - %100 Senkronize)
+**Git Durumu:** `main` (`dc9d044` - Lemon Squeezy CSP ve gömülü ödeme penceresi düzeltmesi dahil)
 **Test ve Derleme Durumu:** 18/18 Test Dosyası, 109/109 Birim Testi Başarılı, 0 TypeScript Hatası
 
 ---
@@ -23,11 +23,12 @@
    - `10px` ızgara hizalaması (`Snap-to-Grid`) ve `Ctrl+D` düğüm kopyalama kısayolu eklendi.
    - Ücretsiz planda Terraform (IaC) dışa aktarma ve 3 üzeri bulut proje kaydetme işlemleri kilitlenerek doğrudan Lemon Squeezy satın alma ekranına (`PricingModal`) bağlandı.
 
+4. **Lemon Squeezy Gömülü Ödeme Penceresi (CSP) Düzeltmesi (`vercel.json`, `src/components/Modals/PricingModal.tsx`):**
+   - `https://graphflow.lemonsqueezy.com` alt alan adının site içi pencerede (iframe) engellenmeden açılması için `vercel.json` güvenlik başlıklarına `https://*.lemonsqueezy.com` izni eklendi ve `PricingModal` açılışında `createLemonSqueezy()` tetiklemesi sağlandı.
+
 ---
 
 ## 2. Gelir Yolu (Lemon Squeezy Mağaza Onayı — Canlıya Geçiş Adımı)
 
-Lemon Squeezy inceleme ekibinden (`hello@lemonsqueezy.com`) gelen standart mağaza doğrulama (KYB/KYC) e-postasına verilecek yanıt hazırlandı:
-- **Gereksinim 1:** 45-60 saniyelik ekran kaydı (Canlı sitede stüdyoyu açma, simülasyonu çalıştırma, Pro kilit ekranını gösterme).
-- **Gereksinim 2:** GitHub (`https://github.com/Hanubaki`) ve LinkedIn profil bağlantıları.
-- **Gereksinim 3:** Ürünün %100 otomatik, anında teslim edilen (`api/webhook.ts` üzerinden otomatik Pro aktivasyonlu) bir SaaS yazılım aboneliği olduğunun resmi açıklaması.
+- **Durum:** Tanıtım videosu çekildi.
+- **Son Adım:** Videonun Google Drive bağlantısı ("Bağlantıya sahip olan herkes görüntüleyebilir") ve sosyal medya profil linki hazır İngilizce şablona eklenerek `hello@lemonsqueezy.com` adresinden gelen e-postaya **Yanıtla (Reply)** olarak gönderilecek.
