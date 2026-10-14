@@ -15,7 +15,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
   const { user, isPro, planTier, refreshProfile } = useAuth();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).createLemonSqueezy) {
+    if (isOpen && typeof window !== 'undefined' && (window as any).createLemonSqueezy) {
       (window as any).createLemonSqueezy();
       (window as any).LemonSqueezy?.Setup?.({
         eventHandler: (event: { event: string }) => {
@@ -26,7 +26,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
         },
       });
     }
-  }, [refreshProfile]);
+  }, [isOpen, refreshProfile]);
 
   // Accessibility: close modal on Escape
   useEffect(() => {
