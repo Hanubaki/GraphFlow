@@ -16,6 +16,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+mcp_config.json
+.mcp.json
+.agent/mcp_config.json
 
 # Vercel deployment cache
 .vercel

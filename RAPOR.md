@@ -26,9 +26,14 @@
 4. **Lemon Squeezy Gömülü Ödeme Penceresi (CSP) Düzeltmesi (`vercel.json`, `src/components/Modals/PricingModal.tsx`):**
    - `https://graphflow.lemonsqueezy.com` alt alan adının site içi pencerede (iframe) engellenmeden açılması için `vercel.json` güvenlik başlıklarına `https://*.lemonsqueezy.com` izni eklendi ve `PricingModal` açılışında `createLemonSqueezy()` tetiklemesi sağlandı.
 
+5. **Composio MCP Kurulumu ve Entegrasyonu (`.agent/mcp_config.json`, `mcp_config.json`, `.gitignore`):**
+   - Composio MCP sunucusu (`https://connect.composio.dev/mcp`) hem bu çalışma alanına hem de global yapılandırmaya kuruldu.
+   - API anahtarının GitHub'a sızmaması için `mcp_config.json`, `.mcp.json` ve `.agent/mcp_config.json` dosyaları `.gitignore` korumasına alındı.
+   - Canlı bağlantı testi yapıldı: **GitHub (`Hanubaki`)** ve **Gmail (`berkeakdemir5855@gmail.com`)** entegrasyonları aktif ve kullanıma hazır.
+
 ---
 
 ## 2. Gelir Yolu (Lemon Squeezy Mağaza Onayı — Canlıya Geçiş Adımı)
 
-- **Durum:** Tanıtım videosu çekildi.
-- **Son Adım:** Videonun Google Drive bağlantısı ("Bağlantıya sahip olan herkes görüntüleyebilir") ve sosyal medya profil linki hazır İngilizce şablona eklenerek `hello@lemonsqueezy.com` adresinden gelen e-postaya **Yanıtla (Reply)** olarak gönderilecek.
+- **Durum:** Tanıtım videosu çekildi, Composio üzerinden Gmail (`berkeakdemir5855@gmail.com`) bağlantısı aktif.
+- **Son Adım:** Videonun Google Drive bağlantısı ("Bağlantıya sahip olan herkes görüntüleyebilir") hazır İngilizce şablona eklenerek `hello@lemonsqueezy.com` adresinden gelen e-postaya **Yanıtla (Reply)** olarak gönderilecek (veya video linkini buraya bıraktığında doğrudan Composio Gmail üzerinden yanıtlanabilir).
