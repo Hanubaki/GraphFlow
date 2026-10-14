@@ -63,8 +63,33 @@ export function useGraphStore(options?: GraphStoreOptions) {
   }, []);
 
   const moveNode = useCallback((id: string, x: number, y: number) => {
-    setNodes(prev => prev.map(n => (n.id === id ? { ...n, x, y } : n)));
+    const snappedX = Math.round(x / 10) * 10;
+    const snappedY = Math.round(y / 10) * 10;
+    setNodes(prev => prev.map(n => (n.id === id ? { ...n, x: snappedX, y: snappedY } : n)));
   }, []);
+
+  const duplicateNode = useCallback((id: string) => {
+    const source = nodes.find(n => n.id === id);
+    if (!source) return null;
+
+    const copy: GraphNode = {
+      ...source,
+      id: `node-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      title: `${source.title} (Copy)`,
+      x: source.x + 30,
+      y: source.y + 30,
+    };
+
+    setNodes(prevNodes => {
+      recordSnapshot(prevNodes, edges);
+      return [...prevNodes, copy];
+    });
+    setSelectedNodeId(copy.id);
+    setSelectedEdgeId(null);
+    options?.onSound?.('click');
+    a11yAnnouncer.announce(`Duplicated component ${source.title}`);
+    return copy;
+  }, [nodes, edges, recordSnapshot, options]);
 
   const removeNode = useCallback((id: string) => {
     setNodes(prevNodes => {
@@ -172,7 +197,7 @@ export function useGraphStore(options?: GraphStoreOptions) {
     options?.onSound?.('click');
   }, [nodes, edges, recordSnapshot, options]);
 
-  // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Delete, Esc, Tab, Arrow Navigation, Shift+Arrow Nudge)
+  // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D, Delete, Esc, Tab, Arrow Navigation, Shift+Arrow Nudge)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if typing inside input / textarea
@@ -191,6 +216,11 @@ export function useGraphStore(options?: GraphStoreOptions) {
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         redo();
         a11yAnnouncer.announce('Redo last action');
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        if (selectedNodeId) {
+          e.preventDefault();
+          duplicateNode(selectedNodeId);
+        }
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedNodeId) {
           const found = nodes.find(n => n.id === selectedNodeId);
@@ -251,7 +281,7 @@ export function useGraphStore(options?: GraphStoreOptions) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, selectedNodeId, selectedEdgeId, removeNode, removeEdge, nodes, moveNode]);
+  }, [undo, redo, selectedNodeId, selectedEdgeId, removeNode, removeEdge, nodes, moveNode, duplicateNode]);
 
   return {
     nodes,
@@ -267,6 +297,7 @@ export function useGraphStore(options?: GraphStoreOptions) {
     addNode,
     updateNode,
     moveNode,
+    duplicateNode,
     removeNode,
     addEdge,
     updateEdge,

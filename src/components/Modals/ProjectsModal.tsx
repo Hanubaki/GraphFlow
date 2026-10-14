@@ -14,6 +14,7 @@ import {
 } from '../../services/supabase';
 import { CloudProject } from '../../types/auth';
 import { useAuth } from '../../context/AuthContext';
+import { checkFeatureEntitlement } from '../../services/billing';
 import {
   FolderKanban,
   Save,
@@ -36,6 +37,7 @@ interface ProjectsModalProps {
   onClose: () => void;
   onLoadProject: (project: SavedProject | CloudProject) => void;
   onOpenAuth?: () => void;
+  onOpenPricing?: () => void;
 }
 
 export const ProjectsModal: React.FC<ProjectsModalProps> = ({
@@ -45,8 +47,9 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
   onClose,
   onLoadProject,
   onOpenAuth,
+  onOpenPricing,
 }) => {
-  const { user } = useAuth();
+  const { user, planTier } = useAuth();
   const [activeTab, setActiveTab] = useState<'local' | 'cloud'>(user ? 'cloud' : 'local');
   const [localProjects, setLocalProjects] = useState<SavedProject[]>([]);
   const [cloudProjects, setCloudProjects] = useState<CloudProject[]>([]);
@@ -55,6 +58,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
   const [newDesc, setNewDesc] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [quotaError, setQuotaError] = useState<string | null>(null);
 
   const loadCloud = useCallback(async () => {
     if (!user) return;
@@ -70,6 +74,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setLocalProjects(getSavedProjects());
+      setQuotaError(null);
       if (user) {
         loadCloud();
       }
@@ -92,6 +97,16 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
     if (!newTitle.trim()) return;
 
     if (activeTab === 'cloud' && user) {
+      const entitlement = checkFeatureEntitlement('cloud_sync_unlimited', planTier, cloudProjects.length);
+      if (!entitlement.allowed) {
+        setQuotaError(entitlement.reason || 'Cloud project limit reached on Free plan.');
+        if (onOpenPricing) {
+          onClose();
+          onOpenPricing();
+        }
+        return;
+      }
+      setQuotaError(null);
       setIsSaving(true);
       try {
         const saved = await saveCloudProject(user.id, newTitle, nodes, edges, newDesc);
@@ -241,6 +256,23 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
             </div>
           ) : (
             <>
+              {quotaError && (
+                <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-950/20 text-xs text-amber-200 flex items-center justify-between gap-2">
+                  <span>{quotaError}</span>
+                  {onOpenPricing && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenPricing();
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shrink-0 cursor-pointer"
+                    >
+                      Upgrade
+                    </button>
+                  )}
+                </div>
+              )}
               {/* Save Current Architecture Form */}
               <form onSubmit={handleSaveCurrent} className="space-y-3 p-4 rounded-xl border border-slate-800 bg-dark-950/60">
                 <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">

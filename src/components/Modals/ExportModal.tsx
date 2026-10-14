@@ -10,6 +10,8 @@ import {
   exportTerraformFile,
 } from '../../utils/export';
 import { sanitizeArchitectureImport } from '../../utils/securitySanitizer';
+import { checkFeatureEntitlement } from '../../services/billing';
+import { useAuth } from '../../context/AuthContext';
 import {
   Download,
   Upload,
@@ -21,6 +23,7 @@ import {
   Share2,
   Box,
   Cloud,
+  Lock,
 } from 'lucide-react';
 
 interface ExportModalProps {
@@ -29,6 +32,7 @@ interface ExportModalProps {
   edges: GraphEdge[];
   onClose: () => void;
   onImportGraph: (nodes: GraphNode[], edges: GraphEdge[]) => void;
+  onOpenPricing?: () => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -37,10 +41,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   edges,
   onClose,
   onImportGraph,
+  onOpenPricing,
 }) => {
+  const { planTier } = useAuth();
   const [activeTab, setActiveTab] = useState<'export' | 'markdown' | 'docker' | 'terraform'>('export');
   const [copied, setCopied] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const terraformEntitlement = checkFeatureEntitlement('terraform_export', planTier);
 
   // Accessibility: close on Escape
   useEffect(() => {
@@ -278,20 +285,52 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
           {activeTab === 'terraform' && (
             <div className="space-y-3">
+              {!terraformEntitlement.allowed && (
+                <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-xs text-amber-200">{terraformEntitlement.reason}</span>
+                  </div>
+                  {onOpenPricing && (
+                    <button
+                      onClick={() => {
+                        onClose();
+                        onOpenPricing();
+                      }}
+                      className="h-8 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                    >
+                      Upgrade to Pro
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-400">
                   AWS ECS Fargate / RDS / ElastiCache IaC <code className="text-cyan-300 font-mono">main.tf</code>
                 </span>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => exportTerraformFile(nodes, edges)}
+                    onClick={() => {
+                      if (!terraformEntitlement.allowed) {
+                        onClose();
+                        onOpenPricing?.();
+                        return;
+                      }
+                      exportTerraformFile(nodes, edges);
+                    }}
                     className="h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    {!terraformEntitlement.allowed ? <Lock className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
                     Download .tf
                   </button>
                   <button
                     onClick={() => {
+                      if (!terraformEntitlement.allowed) {
+                        onClose();
+                        onOpenPricing?.();
+                        return;
+                      }
                       navigator.clipboard.writeText(terraformContent);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);

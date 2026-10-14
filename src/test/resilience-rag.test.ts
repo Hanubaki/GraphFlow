@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { synthesizeArchitectureOffline } from '../services/aiGenerator';
-import { GraphNode, DataPacket } from '../types/graph';
+import { GraphNode, GraphEdge, DataPacket } from '../types/graph';
+import {
+  findIngressEdges,
+  findDownstreamEdges,
+  calculateEffectiveLatency,
+  evaluateCircuitBreakerTransition,
+  createHopPacket,
+} from '../utils/simulationPhysics';
 
 describe('Distributed Systems Resilience & LLM-RAG Generator Suite', () => {
   describe('1. Domain RAG & NLP Architecture Synthesizer', () => {
@@ -86,4 +93,107 @@ describe('Distributed Systems Resilience & LLM-RAG Generator Suite', () => {
       expect(pkt.label).toContain('DLQ');
     });
   });
+
+  describe('3. Causal Hop Propagation, Backpressure & Circuit Breaker State Machine', () => {
+    const sampleNodes: GraphNode[] = [
+      {
+        id: 'client-1',
+        type: 'client',
+        title: 'Web App',
+        subtitle: 'React',
+        x: 0,
+        y: 0,
+        width: 190,
+        height: 90,
+        status: 'healthy',
+        latencyMs: 10,
+        errorRate: 0,
+        throughputRps: 1000,
+        color: '#38bdf8',
+        iconName: 'Globe',
+      },
+      {
+        id: 'gw-1',
+        type: 'gateway',
+        title: 'API Gateway',
+        subtitle: 'Envoy',
+        x: 300,
+        y: 0,
+        width: 190,
+        height: 90,
+        status: 'healthy',
+        latencyMs: 10,
+        errorRate: 0,
+        throughputRps: 1000,
+        color: '#818cf8',
+        iconName: 'Network',
+      },
+      {
+        id: 'db-1',
+        type: 'database',
+        title: 'Primary DB',
+        subtitle: 'PostgreSQL',
+        x: 600,
+        y: 0,
+        width: 190,
+        height: 90,
+        status: 'healthy',
+        circuitBreaker: 'closed',
+        latencyMs: 20,
+        errorRate: 0,
+        throughputRps: 200,
+        color: '#10b981',
+        iconName: 'Database',
+      },
+    ];
+
+    const sampleEdges: GraphEdge[] = [
+      { id: 'e-ingress', fromNodeId: 'client-1', toNodeId: 'gw-1', protocol: 'HTTP/REST', latencyMs: 5, errorRate: 0 },
+      { id: 'e-downstream', fromNodeId: 'gw-1', toNodeId: 'db-1', protocol: 'SQL Query', latencyMs: 5, errorRate: 0 },
+    ];
+
+    it('identifies only root/client ingress edges and downstream hop edges', () => {
+      const ingress = findIngressEdges(sampleNodes, sampleEdges);
+      expect(ingress).toHaveLength(1);
+      expect(ingress[0].id).toBe('e-ingress');
+
+      const downstream = findDownstreamEdges('gw-1', sampleEdges);
+      expect(downstream).toHaveLength(1);
+      expect(downstream[0].id).toBe('e-downstream');
+    });
+
+    it('increases effective node latency non-linearly under queueing backpressure', () => {
+      const dbNode = sampleNodes[2]; // 20ms base, 200 RPS capacity
+      const lowLoadLat = calculateEffectiveLatency(dbNode, 0, false);
+      const highLoadLat = calculateEffectiveLatency(dbNode, 4, true); // 4 packets in spike mode
+
+      expect(lowLoadLat).toBe(20);
+      expect(highLoadLat).toBeGreaterThan(lowLoadLat * 2);
+    });
+
+    it('transitions Circuit Breaker deterministically across CLOSED -> OPEN -> HALF-OPEN -> CLOSED', () => {
+      // Below threshold stays closed
+      expect(evaluateCircuitBreakerTransition('closed', 3, 1000)).toBe('closed');
+      // At threshold (5 consecutive errors) trips to open
+      expect(evaluateCircuitBreakerTransition('closed', 5, 1000)).toBe('open');
+      // Before cooldown (6000ms) remains open
+      expect(evaluateCircuitBreakerTransition('open', 5, 3000)).toBe('open');
+      // After cooldown transitions to half-open
+      expect(evaluateCircuitBreakerTransition('open', 0, 6500)).toBe('half-open');
+      // Successful probe in half-open closes circuit
+      expect(evaluateCircuitBreakerTransition('half-open', 0, 1000)).toBe('closed');
+      // Failed probe in half-open re-opens circuit
+      expect(evaluateCircuitBreakerTransition('half-open', 1, 1000)).toBe('open');
+    });
+
+    it('fast-fails hop packets into DLQ when destination circuit breaker is OPEN', () => {
+      const openDbNode: GraphNode = { ...sampleNodes[2], circuitBreaker: 'open' };
+      const pkt = createHopPacket(sampleEdges[1], sampleNodes[1], openDbNode, 1, false, () => 0.99);
+
+      expect(pkt).not.toBeNull();
+      expect(pkt?.status).toBe('dlq');
+      expect(pkt?.label).toBe('DLQ/Trip');
+    });
+  });
 });
+

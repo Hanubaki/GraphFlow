@@ -193,7 +193,7 @@ export const App: React.FC = () => {
 
   return (
     <MultiplayerProvider>
-      <SimulationProvider nodes={nodes} edges={edges}>
+      <SimulationProvider nodes={nodes} edges={edges} onUpdateNode={updateNode}>
         <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
         {/* Top Navigation & Simulation Controller */}
         <TopBar
@@ -273,6 +273,7 @@ export const App: React.FC = () => {
             edges={edges}
             onClose={() => setActiveModal(null)}
             onImportGraph={handleImportGraph}
+            onOpenPricing={() => setActiveModal('pricing')}
           />
         )}
 
@@ -301,6 +302,7 @@ export const App: React.FC = () => {
             onClose={() => setActiveModal(null)}
             onLoadProject={handleLoadSavedProject}
             onOpenAuth={() => setActiveModal('auth')}
+            onOpenPricing={() => setActiveModal('pricing')}
           />
         )}
 
