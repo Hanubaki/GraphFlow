@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GraphNode, GraphEdge, DataPacket, SimulationMetrics } from '../types/graph';
 import { soundFx } from '../utils/sound';
+import {
+  findIngressEdges,
+  findDownstreamEdges,
+  createHopPacket,
+  calculateEffectiveLatency,
+} from '../utils/simulationPhysics';
 
 export {
   SimulationProvider,
@@ -24,12 +30,15 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     avgLatencyMs: 24,
   });
 
-  // Track animation frame & intervals
   const animFrameRef = useRef<number | null>(null);
   const rpsCounterRef = useRef<number>(0);
   const lastRpsCalcTime = useRef<number>(Date.now());
+  const nodesRef = useRef<GraphNode[]>(nodes);
+  nodesRef.current = nodes;
+  const edgesRef = useRef<GraphEdge[]>(edges);
+  edgesRef.current = edges;
+  const hasEdges = edges.length > 0;
 
-  // Toggle sound
   const toggleSound = useCallback(() => {
     setSoundEnabled(prev => {
       soundFx.enabled = !prev;
@@ -37,7 +46,6 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     });
   }, []);
 
-  // Trigger temporary traffic spike
   const triggerSpike = useCallback(() => {
     setIsSpikeMode(true);
     soundFx.playSpike();
@@ -63,53 +71,36 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     soundFx.playClick();
   }, []);
 
-  // Generate new packets along active edges
+  // Generate new packets at ingress edges
   useEffect(() => {
-    if (!isRunning || edges.length === 0) return;
+    if (!isRunning || !hasEdges) return;
 
-    const intervalTime = isSpikeMode ? 120 / speedMultiplier : 400 / speedMultiplier;
+    const intervalTime = isSpikeMode ? 140 / speedMultiplier : 420 / speedMultiplier;
 
     const spawnInterval = setInterval(() => {
-      // Pick random active edges to send traffic
-      const count = isSpikeMode ? Math.min(edges.length, 4) : 1;
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+      const ingressEdges = findIngressEdges(currentNodes, currentEdges);
+      if (ingressEdges.length === 0) return;
+
+      const count = isSpikeMode ? Math.min(ingressEdges.length * 2, 4) : 1;
       const newPackets: DataPacket[] = [];
 
       for (let i = 0; i < count; i++) {
-        const randomEdge = edges[Math.floor(Math.random() * edges.length)];
-        const fromNode = nodes.find(n => n.id === randomEdge.fromNodeId);
-        const toNode = nodes.find(n => n.id === randomEdge.toNodeId);
+        const ingressEdge = ingressEdges[Math.floor(Math.random() * ingressEdges.length)];
+        const fromNode = currentNodes.find(n => n.id === ingressEdge.fromNodeId);
+        const toNode = currentNodes.find(n => n.id === ingressEdge.toNodeId);
 
-        if (!fromNode || !toNode || fromNode.status === 'down' || toNode.status === 'down') {
-          continue;
-        }
+        const pkt = createHopPacket(ingressEdge, fromNode, toNode, isSpikeMode ? 3 : 1, isSpikeMode);
+        if (!pkt) continue;
 
-        // Check if error will occur based on node and edge error rate
-        const combinedErrorRate = Math.max(fromNode.errorRate, toNode.errorRate, randomEdge.errorRate);
-        const isError = Math.random() * 100 < combinedErrorRate;
-
-        // Base speed inverse to latency
-        const totalLatency = (fromNode.latencyMs + toNode.latencyMs + randomEdge.latencyMs);
-        const baseSpeed = Math.min(0.025, Math.max(0.006, 120 / Math.max(30, totalLatency)));
-
-        newPackets.push({
-          id: `pkt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          edgeId: randomEdge.id,
-          fromNodeId: randomEdge.fromNodeId,
-          toNodeId: randomEdge.toNodeId,
-          progress: 0,
-          speed: baseSpeed,
-          status: isError ? 'error' : (toNode.status === 'degraded' ? 'warning' : 'success'),
-          label: randomEdge.protocol,
-          createdAt: Date.now(),
-        });
-
+        newPackets.push(pkt);
         rpsCounterRef.current += 1;
       }
 
       if (newPackets.length > 0) {
         setPackets(prev => {
-          // Cap total active packets to prevent DOM clutter
-          const filtered = prev.length > 40 ? prev.slice(prev.length - 30) : prev;
+          const filtered = prev.length > 42 ? prev.slice(prev.length - 32) : prev;
           return [...filtered, ...newPackets];
         });
         setMetrics(m => ({
@@ -120,9 +111,9 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     }, intervalTime);
 
     return () => clearInterval(spawnInterval);
-  }, [isRunning, edges, nodes, speedMultiplier, isSpikeMode]);
+  }, [isRunning, hasEdges, speedMultiplier, isSpikeMode]);
 
-  // Animation frame loop for smooth 60 FPS packet advancement
+  // Animation frame loop for smooth 60 FPS packet advancement & causal downstream hops
   useEffect(() => {
     if (!isRunning) {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -132,26 +123,47 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     let lastTimestamp = performance.now();
 
     const loop = (timestamp: number) => {
-      const dt = Math.min(32, timestamp - lastTimestamp); // cap dt
+      const dt = Math.min(32, timestamp - lastTimestamp);
       lastTimestamp = timestamp;
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
 
       setPackets(prev => {
         if (prev.length === 0) return prev;
 
+        const inboundCounts = new Map<string, number>();
+        for (const p of prev) {
+          inboundCounts.set(p.toNodeId, (inboundCounts.get(p.toNodeId) ?? 0) + 1);
+        }
+
         const updated: DataPacket[] = [];
+        const spawnedDownstream: DataPacket[] = [];
         let deliveredCount = 0;
         let errorCount = 0;
 
         for (const pkt of prev) {
           const nextProgress = pkt.progress + pkt.speed * (dt / 16.66) * speedMultiplier;
           if (nextProgress >= 1) {
-            // Packet finished journey
-            if (pkt.status === 'error') {
+            const targetNode = currentNodes.find(n => n.id === pkt.toNodeId);
+            if (pkt.status === 'error' || pkt.status === 'dlq') {
               errorCount++;
               if (Math.random() < 0.2) soundFx.playError();
             } else {
               deliveredCount++;
               if (Math.random() < 0.05) soundFx.playPacketDelivered();
+
+              if (targetNode && prev.length + spawnedDownstream.length < 44) {
+                const outEdges = findDownstreamEdges(targetNode.id, currentEdges);
+                for (const outEdge of outEdges) {
+                  const nextTarget = currentNodes.find(n => n.id === outEdge.toNodeId);
+                  const activeIn = inboundCounts.get(outEdge.toNodeId) ?? 0;
+                  const childPkt = createHopPacket(outEdge, targetNode, nextTarget, activeIn, isSpikeMode);
+                  if (childPkt) {
+                    spawnedDownstream.push(childPkt);
+                    rpsCounterRef.current += 1;
+                  }
+                }
+              }
             }
           } else {
             updated.push({
@@ -161,18 +173,19 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
           }
         }
 
-        if (deliveredCount > 0 || errorCount > 0) {
+        if (deliveredCount > 0 || errorCount > 0 || spawnedDownstream.length > 0) {
           setMetrics(m => ({
             ...m,
+            totalSent: m.totalSent + spawnedDownstream.length,
             delivered: m.delivered + deliveredCount,
             errors: m.errors + errorCount,
           }));
         }
 
-        return updated;
+        const combined = [...updated, ...spawnedDownstream];
+        return combined.length > 48 ? combined.slice(combined.length - 40) : combined;
       });
 
-      // Calculate RPS every 1 second
       const now = Date.now();
       if (now - lastRpsCalcTime.current >= 1000) {
         const elapsedSec = (now - lastRpsCalcTime.current) / 1000;
@@ -180,10 +193,14 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
         rpsCounterRef.current = 0;
         lastRpsCalcTime.current = now;
 
-        // Calculate dynamic average latency from active nodes
-        const activeNodes = nodes.filter(n => n.status !== 'down');
+        const activeNodes = currentNodes.filter(n => n.status !== 'down');
         const avgLat = activeNodes.length > 0
-          ? Math.round(activeNodes.reduce((acc, n) => acc + n.latencyMs, 0) / activeNodes.length)
+          ? Math.round(
+              activeNodes.reduce(
+                (acc, n) => acc + calculateEffectiveLatency(n, isSpikeMode ? 3 : 1, isSpikeMode),
+                0
+              ) / activeNodes.length
+            )
           : 0;
 
         setMetrics(m => ({
@@ -201,7 +218,7 @@ export function useSimulation(nodes: GraphNode[], edges: GraphEdge[]) {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, speedMultiplier, nodes]);
+  }, [isRunning, speedMultiplier, isSpikeMode]);
 
   return {
     isRunning,

@@ -81,6 +81,15 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   const consecutiveErrorsRef = useRef<Map<string, number>>(new Map());
   const breakerChangedAtRef = useRef<Map<string, number>>(new Map());
 
+  // Stable refs prevent node dragging (60-120 Hz position updates) from tearing down setInterval & RAF loops
+  const nodesRef = useRef<GraphNode[]>(nodes);
+  nodesRef.current = nodes;
+  const edgesRef = useRef<GraphEdge[]>(edges);
+  edgesRef.current = edges;
+  const onUpdateNodeRef = useRef(onUpdateNode);
+  onUpdateNodeRef.current = onUpdateNode;
+  const hasEdges = edges.length > 0;
+
   const toggleSound = useCallback(() => {
     setSoundEnabled(prev => {
       soundFx.enabled = !prev;
@@ -122,12 +131,14 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
 
   // Generate new packets at ingress edges (causal entry points)
   useEffect(() => {
-    if (!isRunning || edges.length === 0) return;
+    if (!isRunning || !hasEdges) return;
 
     const intervalTime = isSpikeMode ? 140 / speedMultiplier : 420 / speedMultiplier;
 
     const spawnInterval = setInterval(() => {
-      const ingressEdges = findIngressEdges(nodes, edges);
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+      const ingressEdges = findIngressEdges(currentNodes, currentEdges);
       if (ingressEdges.length === 0) return;
 
       const count = isSpikeMode ? Math.min(ingressEdges.length * 2, 4) : 1;
@@ -135,8 +146,8 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
 
       for (let i = 0; i < count; i++) {
         const ingressEdge = ingressEdges[Math.floor(Math.random() * ingressEdges.length)];
-        const fromNode = nodes.find(n => n.id === ingressEdge.fromNodeId);
-        const toNode = nodes.find(n => n.id === ingressEdge.toNodeId);
+        const fromNode = currentNodes.find(n => n.id === ingressEdge.fromNodeId);
+        const toNode = currentNodes.find(n => n.id === ingressEdge.toNodeId);
 
         const pkt = createHopPacket(ingressEdge, fromNode, toNode, isSpikeMode ? 3 : 1, isSpikeMode);
         if (!pkt) continue;
@@ -155,7 +166,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     }, intervalTime);
 
     return () => clearInterval(spawnInterval);
-  }, [isRunning, edges, nodes, speedMultiplier, isSpikeMode]);
+  }, [isRunning, hasEdges, speedMultiplier, isSpikeMode]);
 
   // Animation frame loop for smooth 60 FPS packet advancement & causal downstream hop propagation
   useEffect(() => {
@@ -170,6 +181,9 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
       const dt = Math.min(32, timestamp - lastTimestamp);
       lastTimestamp = timestamp;
       const now = Date.now();
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+      const handleUpdateNode = onUpdateNodeRef.current;
 
       setPackets(prev => {
         if (prev.length === 0) return prev;
@@ -188,7 +202,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         for (const pkt of prev) {
           const nextProgress = pkt.progress + pkt.speed * (dt / 16.66) * speedMultiplier;
           if (nextProgress >= 1) {
-            const targetNode = nodes.find(n => n.id === pkt.toNodeId);
+            const targetNode = currentNodes.find(n => n.id === pkt.toNodeId);
 
             if (pkt.status === 'error' || pkt.status === 'dlq') {
               errorCount++;
@@ -206,9 +220,9 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
                   now - lastChange
                 );
 
-                if (nextBreaker !== currentBreaker && onUpdateNode) {
+                if (nextBreaker !== currentBreaker && handleUpdateNode) {
                   breakerChangedAtRef.current.set(targetNode.id, now);
-                  onUpdateNode(targetNode.id, { circuitBreaker: nextBreaker });
+                  handleUpdateNode(targetNode.id, { circuitBreaker: nextBreaker });
                 }
               }
             } else {
@@ -217,16 +231,16 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
 
               if (targetNode) {
                 consecutiveErrorsRef.current.set(targetNode.id, 0);
-                if (targetNode.circuitBreaker === 'half-open' && onUpdateNode) {
+                if (targetNode.circuitBreaker === 'half-open' && handleUpdateNode) {
                   breakerChangedAtRef.current.set(targetNode.id, now);
-                  onUpdateNode(targetNode.id, { circuitBreaker: 'closed' });
+                  handleUpdateNode(targetNode.id, { circuitBreaker: 'closed' });
                 }
 
                 // Causal hop propagation: forward packet to downstream edges
                 if (prev.length + spawnedDownstream.length < 44) {
-                  const outEdges = findDownstreamEdges(targetNode.id, edges);
+                  const outEdges = findDownstreamEdges(targetNode.id, currentEdges);
                   for (const outEdge of outEdges) {
-                    const nextTarget = nodes.find(n => n.id === outEdge.toNodeId);
+                    const nextTarget = currentNodes.find(n => n.id === outEdge.toNodeId);
                     const activeIn = inboundCounts.get(outEdge.toNodeId) ?? 0;
                     const childPkt = createHopPacket(
                       outEdge,
@@ -269,20 +283,20 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         lastRpsCalcTime.current = now;
 
         // Check if any OPEN circuit breakers have completed their cooldown to enter HALF-OPEN
-        if (onUpdateNode) {
-          for (const n of nodes) {
+        if (handleUpdateNode) {
+          for (const n of currentNodes) {
             if (n.circuitBreaker === 'open') {
               const openedAt = breakerChangedAtRef.current.get(n.id) ?? (now - 7000);
               const nextState = evaluateCircuitBreakerTransition('open', 0, now - openedAt);
               if (nextState === 'half-open') {
                 breakerChangedAtRef.current.set(n.id, now);
-                onUpdateNode(n.id, { circuitBreaker: 'half-open' });
+                handleUpdateNode(n.id, { circuitBreaker: 'half-open' });
               }
             }
           }
         }
 
-        const activeNodes = nodes.filter(n => n.status !== 'down');
+        const activeNodes = currentNodes.filter(n => n.status !== 'down');
         const avgLat = activeNodes.length > 0
           ? Math.round(
               activeNodes.reduce(
@@ -312,7 +326,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, speedMultiplier, nodes, edges, isSpikeMode, onUpdateNode]);
+  }, [isRunning, speedMultiplier, isSpikeMode]);
 
   const controlsValue = useMemo<SimulationControls>(() => ({
     isRunning,

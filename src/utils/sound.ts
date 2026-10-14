@@ -16,6 +16,15 @@ class SoundFX {
     return this.ctx;
   }
 
+  private bindCleanup(osc: OscillatorNode, gain: GainNode) {
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+  }
+
   public playClick() {
     const ctx = this.getContext();
     if (!ctx) return;
@@ -31,6 +40,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start();
       osc.stop(ctx.currentTime + 0.05);
     } catch {
@@ -53,6 +63,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
     } catch {}
@@ -73,6 +84,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start();
       osc.stop(ctx.currentTime + 0.04);
     } catch {}
@@ -93,6 +105,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start();
       osc.stop(ctx.currentTime + 0.15);
     } catch {}
@@ -113,6 +126,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start();
       osc.stop(ctx.currentTime + 0.2);
     } catch {}
@@ -135,6 +149,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start(now);
       osc.stop(now + 0.1);
     } catch {}
@@ -157,6 +172,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      this.bindCleanup(osc, gain);
       osc.start(now);
       osc.stop(now + 0.09);
     } catch {}
@@ -181,6 +197,7 @@ class SoundFX {
 
         osc.connect(gain);
         gain.connect(ctx.destination);
+        this.bindCleanup(osc, gain);
         osc.start(start);
         osc.stop(start + duration);
       });

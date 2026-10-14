@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { GraphNode, GraphEdge, DataPacket } from '../../types/graph';
 import { CatalogItem } from '../../constants/nodeCatalog';
 import { GridBackground } from './GridBackground';
@@ -8,6 +8,8 @@ import { PeerCursorLayer } from './PeerCursorLayer';
 import { createBezierPath } from '../../utils/geometry';
 import { useSimulationPackets } from '../../context/SimulationContext';
 import { useMultiplayer } from '../../context/MultiplayerContext';
+
+const EMPTY_PACKETS: DataPacket[] = [];
 
 interface ConnectingState {
   sourceNodeId: string;
@@ -55,6 +57,30 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const contextPackets = useSimulationPackets();
   const packets = propPackets ?? contextPackets;
   const { peers, broadcastCursor, clearCursor, updateSelection } = useMultiplayer();
+
+  // O(1) node lookup map (recomputes only when nodes array changes, not on 60 FPS packet ticks)
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, GraphNode>();
+    for (const n of nodes) {
+      map.set(n.id, n);
+    }
+    return map;
+  }, [nodes]);
+
+  // O(P) single-pass packet grouping by edgeId (replaces O(E * P) per-edge filtering)
+  const packetsByEdge = useMemo(() => {
+    const map = new Map<string, DataPacket[]>();
+    for (const pkt of packets) {
+      const list = map.get(pkt.edgeId);
+      if (list) {
+        list.push(pkt);
+      } else {
+        map.set(pkt.edgeId, [pkt]);
+      }
+    }
+    return map;
+  }, [packets]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [connectingState, setConnectingState] = useState<ConnectingState | null>(null);
@@ -107,6 +133,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     };
   };
 
+  const lastCursorBroadcastRef = useRef<number>(0);
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isPanning) {
       const dx = e.clientX - panStartRef.current.mouseX;
@@ -121,7 +149,12 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       const rect = containerRef.current.getBoundingClientRect();
       const worldX = (e.clientX - rect.left - pan.x) / zoom;
       const worldY = (e.clientY - rect.top - pan.y) / zoom;
-      broadcastCursor(worldX, worldY);
+
+      const now = performance.now();
+      if (now - lastCursorBroadcastRef.current >= 33) {
+        lastCursorBroadcastRef.current = now;
+        broadcastCursor(worldX, worldY);
+      }
 
       if (connectingState) {
         setConnectingState(prev => (prev ? { ...prev, currentPos: { x: worldX, y: worldY } } : null));
@@ -350,10 +383,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             </linearGradient>
           </defs>
 
-          {/* Render all existing edges */}
+          {/* Render all existing edges with O(1) node lookup and pre-grouped edge packets */}
           {edges.map(edge => {
-            const fromNode = nodes.find(n => n.id === edge.fromNodeId);
-            const toNode = nodes.find(n => n.id === edge.toNodeId);
+            const fromNode = nodeMap.get(edge.fromNodeId);
+            const toNode = nodeMap.get(edge.toNodeId);
             if (!fromNode || !toNode) return null;
 
             return (
@@ -363,7 +396,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
                 fromNode={fromNode}
                 toNode={toNode}
                 isSelected={selectedEdgeId === edge.id}
-                packets={packets}
+                packets={packetsByEdge.get(edge.id) ?? EMPTY_PACKETS}
                 onSelect={onSelectEdge}
                 onDelete={onDeleteEdge}
               />

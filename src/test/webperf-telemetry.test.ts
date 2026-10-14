@@ -65,5 +65,22 @@ describe('Web Performance & Telemetry Architecture Suite', () => {
       expect(content).toContain('metrics.currentRps');
       expect(content).toContain('metrics.avgLatencyMs');
     });
+
+    it('verifies ConnectionLine memoization, GraphCanvas O(1) maps, and drag-safe SimulationContext refs', () => {
+      const connPath = path.resolve(__dirname, '../components/Canvas/ConnectionLine.tsx');
+      const connContent = fs.readFileSync(connPath, 'utf-8');
+      expect(connContent).toContain('React.memo(ConnectionLineBase, areConnectionLinePropsEqual)');
+
+      const canvasPath = path.resolve(__dirname, '../components/Canvas/GraphCanvas.tsx');
+      const canvasContent = fs.readFileSync(canvasPath, 'utf-8');
+      expect(canvasContent).toContain('nodeMap');
+      expect(canvasContent).toContain('packetsByEdge');
+      expect(canvasContent).toContain('lastCursorBroadcastRef');
+
+      const simPath = path.resolve(__dirname, '../context/SimulationContext.tsx');
+      const simContent = fs.readFileSync(simPath, 'utf-8');
+      expect(simContent).toContain('nodesRef');
+      expect(simContent).toContain('edgesRef');
+    });
   });
 });

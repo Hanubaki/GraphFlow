@@ -171,7 +171,7 @@ const PacketDot = React.memo<PacketDotProps>(({ pkt, source, target }) => {
 
 PacketDot.displayName = 'PacketDot';
 
-export const ConnectionLine: React.FC<ConnectionLineProps> = ({
+const ConnectionLineBase: React.FC<ConnectionLineProps> = ({
   edge,
   fromNode,
   toNode,
@@ -198,9 +198,9 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
     [source, target]
   );
 
-  // Filter packets that belong to this specific edge
+  // Filter packets that belong to this specific edge (fast-path when already scoped)
   const edgePackets = useMemo(
-    () => packets.filter(p => p.edgeId === edge.id),
+    () => (packets.length === 0 ? packets : packets.filter(p => p.edgeId === edge.id)),
     [packets, edge.id]
   );
 
@@ -229,3 +229,23 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
     </g>
   );
 };
+
+function areConnectionLinePropsEqual(prev: ConnectionLineProps, next: ConnectionLineProps): boolean {
+  return (
+    prev.isSelected === next.isSelected &&
+    prev.packets === next.packets &&
+    prev.edge.id === next.edge.id &&
+    prev.edge.protocol === next.edge.protocol &&
+    prev.edge.label === next.edge.label &&
+    prev.fromNode.x === next.fromNode.x &&
+    prev.fromNode.y === next.fromNode.y &&
+    prev.fromNode.width === next.fromNode.width &&
+    prev.fromNode.height === next.fromNode.height &&
+    prev.toNode.x === next.toNode.x &&
+    prev.toNode.y === next.toNode.y &&
+    prev.toNode.width === next.toNode.width &&
+    prev.toNode.height === next.toNode.height
+  );
+}
+
+export const ConnectionLine = React.memo(ConnectionLineBase, areConnectionLinePropsEqual);
