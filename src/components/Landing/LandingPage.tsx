@@ -27,13 +27,17 @@ import {
   type SurgeState,
 } from './surgeModel';
 import { DEMO_CANVAS, DEMO_EDGES, DEMO_NODES, demoEdgePath } from './demoGraph';
-import { generateDockerCompose, generateMarkdownDoc, generateTerraform } from '../../utils/export';
+import { generateDockerCompose, generateKubernetesManifests, generateMarkdownDoc, generateTerraform } from '../../utils/export';
 import { generateShareUrl } from '../../services/projectStorage';
+import { TEMPLATES } from '../../constants/templates';
+import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
+import { ArchitectureTemplate } from '../../types/graph';
 
 interface LandingPageProps {
   onEnterApp: () => void;
   onOpenPricing: () => void;
   onOpenAuth?: () => void;
+  onSelectBlueprint?: (template: ArchitectureTemplate) => void;
 }
 
 const GITHUB_URL = 'https://github.com/Hanubaki/GraphFlow';
@@ -457,7 +461,7 @@ const FaultPanel: React.FC = () => (
   </div>
 );
 
-type ExportTab = 'terraform' | 'compose' | 'mermaid';
+type ExportTab = 'terraform' | 'kubernetes' | 'compose' | 'mermaid';
 
 const CodeLine: React.FC<{ text: string }> = ({ text }) => {
   const trimmed = text.trimStart();
@@ -473,6 +477,7 @@ const ExportViewer: React.FC = () => {
     return {
       compose: { name: 'docker-compose.yml', body: generateDockerCompose(DEMO_NODES, DEMO_EDGES, 'checkout') },
       terraform: { name: 'main.tf', body: generateTerraform(DEMO_NODES, DEMO_EDGES, 'checkout') },
+      kubernetes: { name: 'k8s-manifests.yaml', body: generateKubernetesManifests(DEMO_NODES, DEMO_EDGES, 'checkout') },
       mermaid: { name: 'architecture.md', body: mermaid },
     } satisfies Record<ExportTab, { name: string; body: string }>;
   }, []);
@@ -481,6 +486,7 @@ const ExportViewer: React.FC = () => {
     { id: 'compose', label: 'Docker Compose' },
     { id: 'mermaid', label: 'Mermaid' },
     { id: 'terraform', label: 'Terraform', pro: true },
+    { id: 'kubernetes', label: 'Kubernetes (K8s)', pro: true },
   ];
 
   return (
@@ -632,7 +638,7 @@ const ControlRoomBackdrop: React.FC<{ reduced: boolean }> = ({ reduced }) => (
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth, onSelectBlueprint }) => {
   const { user } = useAuth();
   const reduced = usePrefersReducedMotion();
   const shareUrl = useMemo(() => generateShareUrl(DEMO_NODES, DEMO_EDGES), []);
@@ -653,6 +659,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             </a>
             <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-400">
               <a href="#features" className="hover:text-slate-50 transition-colors">Features</a>
+              <a href="#blueprints" className="hover:text-slate-50 transition-colors">Blueprints</a>
               <a href="#export" className="hover:text-slate-50 transition-colors">Export</a>
               <a href="#pricing" className="hover:text-slate-50 transition-colors">Pricing</a>
               <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-slate-50 transition-colors">GitHub</a>
@@ -694,8 +701,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         </h1>
         <div className="mt-8 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400">
-            Draw your services, queues, and databases, then push traffic through them. See where latency builds, which
-            queue backs up, and how long recovery takes.
+            Draw your services, queues, and databases—or import <code className="font-mono text-slate-300 text-[15px]">docker-compose.yml</code>—then push traffic through them. See where latency builds, which queue backs up, and how long recovery takes.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <button onClick={onEnterApp} className={btnPrimary}>
@@ -760,14 +766,101 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         </div>
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
           <div className="grid md:grid-cols-2 gap-6 md:gap-16">
-            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Export what you drew</h2>
+            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Export & reverse-import IaC</h2>
             <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400 md:pt-2">
-              These are the real files GraphFlow generates for the checkout system above. Docker Compose and Mermaid are
-              free; Terraform for AWS comes with Pro.
+              These are the real files GraphFlow generates for the checkout system above. Docker Compose, Mermaid, and
+              SVG/PNG diagrams are free; AWS Terraform and Kubernetes HPA manifests come with Pro.
             </p>
           </div>
           <div className="mt-12 md:mt-16">
             <ExportViewer />
+          </div>
+        </div>
+      </section>
+
+      {/* Feature: Public Production Architecture Blueprints Gallery */}
+      <section id="blueprints" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
+        <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
+          <span className="absolute -top-[4px] -left-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+          <span className="absolute -top-[4px] -right-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+        </div>
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-16 mb-12 md:mb-16">
+            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Production system blueprints</h2>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400 md:pt-2">
+              Inspect battle-tested distributed architectures from FinTech, AI RAG, and global streaming. Fork any
+              blueprint directly into the live 60 FPS simulator to stress-test bottlenecks, SLA, and cloud cost.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TEMPLATES.map(template => {
+              const diag = analyzeTopologyDiagnostics(template.nodes, template.edges);
+              return (
+                <article
+                  key={template.id}
+                  className="rounded-xl border border-slate-800 bg-slate-950/90 hover:border-slate-700 transition-colors p-5 flex flex-col justify-between gap-4"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400">
+                        {template.difficulty}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-400 tabular-nums">
+                        {template.nodes.length} nodes · {template.edges.length} links
+                      </span>
+                    </div>
+                    <h3 className="text-[16px] font-semibold text-slate-50 leading-snug mb-2">
+                      {template.name}
+                    </h3>
+                    <p className="text-[13px] text-slate-400 leading-relaxed mb-4">
+                      {template.description}
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-lg bg-dark-900 border border-slate-800/80 font-mono text-[11px] mb-3">
+                      <div>
+                        <div className="text-slate-500 text-[10px]">SLA</div>
+                        <div className="text-emerald-400 font-semibold">{diag.compositeSlaPercent}%</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 text-[10px]">p99 Tail</div>
+                        <div className="text-slate-200 font-semibold">{diag.p99LatencyMs}ms</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 text-[10px]">Est. AWS</div>
+                        <div className="text-cyan-300 font-semibold">~${diag.estimatedMonthlyCostUsd}/m</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {template.tags.map(tag => (
+                        <span
+                          key={tag}
+                          className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900/80 border border-slate-800 text-slate-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSelectBlueprint) {
+                        onSelectBlueprint(template);
+                      } else {
+                        onEnterApp();
+                      }
+                    }}
+                    className={`w-full h-9 px-3 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-100 text-[13px] font-medium inline-flex items-center justify-between transition-colors ${ring}`}
+                  >
+                    <span>Simulate & fork blueprint</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
+                  </button>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
