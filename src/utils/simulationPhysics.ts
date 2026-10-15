@@ -145,3 +145,150 @@ export function createHopPacket(
     createdAt: Date.now(),
   };
 }
+
+export interface TopologyDiagnostics {
+  criticalPathLatencyMs: number;
+  criticalPathTitles: string[];
+  bottleneckNode: {
+    id: string;
+    title: string;
+    effectiveCapacityRps: number;
+    inboundFanIn: number;
+  } | null;
+  compositeSlaPercent: number;
+  spofWarnings: string[];
+}
+
+/**
+ * Computes static & dynamic engineering diagnostics for an architecture topology:
+ * - End-to-end critical path latency (longest request chain from ingress to leaf)
+ * - Primary throughput bottleneck (accounting for fan-in amplification)
+ * - Composite serial/pipeline SLA availability percentage
+ * - Single Point of Failure (SPOF) & resilience warnings
+ */
+export function analyzeTopologyDiagnostics(
+  nodes: GraphNode[],
+  edges: GraphEdge[]
+): TopologyDiagnostics {
+  if (nodes.length === 0) {
+    return {
+      criticalPathLatencyMs: 0,
+      criticalPathTitles: [],
+      bottleneckNode: null,
+      compositeSlaPercent: 100,
+      spofWarnings: [],
+    };
+  }
+
+  const nodeMap = new Map<string, GraphNode>();
+  const inboundCount = new Map<string, number>();
+  const outboundEdges = new Map<string, GraphEdge[]>();
+
+  for (const n of nodes) {
+    nodeMap.set(n.id, n);
+    inboundCount.set(n.id, 0);
+    outboundEdges.set(n.id, []);
+  }
+
+  for (const e of edges) {
+    if (!nodeMap.has(e.fromNodeId) || !nodeMap.has(e.toNodeId)) continue;
+    inboundCount.set(e.toNodeId, (inboundCount.get(e.toNodeId) ?? 0) + 1);
+    outboundEdges.get(e.fromNodeId)?.push(e);
+  }
+
+  // 1. Critical Path DFS (longest latency chain with cycle guard)
+  const roots = nodes.filter(
+    n => n.type === 'client' || (inboundCount.get(n.id) ?? 0) === 0
+  );
+  const startNodes = roots.length > 0 ? roots : [nodes[0]];
+
+  let maxLatency = 0;
+  let bestPath: string[] = [];
+
+  const dfs = (nodeId: string, visited: Set<string>, accLatency: number, pathTitles: string[]) => {
+    const node = nodeMap.get(nodeId);
+    if (!node) return;
+
+    const currentLatency = accLatency + Math.max(0, node.latencyMs);
+    const nextPath = [...pathTitles, node.title];
+    const outs = outboundEdges.get(nodeId) ?? [];
+
+    let advanced = false;
+    for (const edge of outs) {
+      if (!visited.has(edge.toNodeId) && nodeMap.has(edge.toNodeId)) {
+        advanced = true;
+        visited.add(edge.toNodeId);
+        dfs(edge.toNodeId, visited, currentLatency + Math.max(0, edge.latencyMs), nextPath);
+        visited.delete(edge.toNodeId);
+      }
+    }
+
+    if (!advanced && currentLatency >= maxLatency) {
+      maxLatency = currentLatency;
+      bestPath = nextPath;
+    }
+  };
+
+  for (const root of startNodes) {
+    dfs(root.id, new Set([root.id]), 0, []);
+  }
+
+  // 2. Primary Throughput Bottleneck (lowest effective RPS ceiling among backend/infra nodes)
+  const infraCandidates = nodes.filter(n => n.type !== 'client');
+  const candidatePool = infraCandidates.length > 0 ? infraCandidates : nodes;
+
+  let bottleneckNode: TopologyDiagnostics['bottleneckNode'] = null;
+  for (const n of candidatePool) {
+    const fanIn = Math.max(1, inboundCount.get(n.id) ?? 1);
+    const effectiveCap = Math.round(Math.max(1, n.throughputRps) / fanIn);
+    if (!bottleneckNode || effectiveCap < bottleneckNode.effectiveCapacityRps) {
+      bottleneckNode = {
+        id: n.id,
+        title: n.title,
+        effectiveCapacityRps: effectiveCap,
+        inboundFanIn: inboundCount.get(n.id) ?? 0,
+      };
+    }
+  }
+
+  // 3. Composite SLA Percentage across active nodes & edges
+  let reliabilityProduct = 1.0;
+  for (const n of nodes) {
+    if (n.status === 'down') {
+      reliabilityProduct *= 0;
+    } else {
+      const errProb = Math.min(1, Math.max(0, n.errorRate) / 100);
+      reliabilityProduct *= 1 - errProb * 0.25;
+    }
+  }
+  for (const e of edges) {
+    const edgeErrProb = Math.min(1, Math.max(0, e.errorRate) / 100);
+    reliabilityProduct *= 1 - edgeErrProb * 0.25;
+  }
+  const compositeSlaPercent = Number((reliabilityProduct * 100).toFixed(2));
+
+  // 4. SPOF & Resilience Warnings
+  const spofWarnings: string[] = [];
+  for (const n of nodes) {
+    const fanIn = inboundCount.get(n.id) ?? 0;
+    const fanOut = (outboundEdges.get(n.id) ?? []).length;
+    if (n.status === 'down') {
+      spofWarnings.push(`${n.title} is DOWN (blocks ${fanIn} inbound pipeline${fanIn === 1 ? '' : 's'})`);
+    } else if (n.type === 'external' && !n.circuitBreaker && fanIn > 0) {
+      spofWarnings.push(`${n.title}: 3rd-party dependency without Circuit Breaker protection`);
+    } else if (fanIn >= 2 && fanOut >= 1 && n.throughputRps < 600) {
+      spofWarnings.push(`${n.title}: High fan-in (${fanIn}x) with low RPS ceiling (${n.throughputRps} RPS)`);
+    } else if (n.errorRate >= 5 && (!n.circuitBreaker || n.circuitBreaker === 'closed')) {
+      spofWarnings.push(`${n.title}: Elevated error rate (${n.errorRate}%) can cascade upstream`);
+    }
+  }
+
+  return {
+    criticalPathLatencyMs: maxLatency,
+    criticalPathTitles: bestPath,
+    bottleneckNode,
+    compositeSlaPercent,
+    spofWarnings: spofWarnings.slice(0, 4),
+  };
+}
+
