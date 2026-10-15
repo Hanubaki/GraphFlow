@@ -6,7 +6,7 @@ import { NodeComponent } from './NodeComponent';
 import { ConnectionLine } from './ConnectionLine';
 import { PeerCursorLayer } from './PeerCursorLayer';
 import { createBezierPath } from '../../utils/geometry';
-import { useSimulationPackets } from '../../context/SimulationContext';
+import { useSimulationPackets, useSimulationControls } from '../../context/SimulationContext';
 import { useMultiplayer } from '../../context/MultiplayerContext';
 
 const EMPTY_PACKETS: DataPacket[] = [];
@@ -62,6 +62,16 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const packets = propPackets ?? contextPackets;
   const { peers, broadcastCursor, clearCursor, updateSelection } = useMultiplayer();
 
+  let simControls = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    simControls = useSimulationControls();
+  } catch {
+    // Standalone test outside SimulationProvider
+  }
+  const trafficLoadMultiplier = simControls?.trafficLoadMultiplier ?? 1;
+  const isSpikeMode = simControls?.isSpikeMode ?? false;
+
   // O(1) node lookup map (recomputes only when nodes array changes, not on 60 FPS packet ticks)
   const nodeMap = useMemo(() => {
     const map = new Map<string, GraphNode>();
@@ -72,17 +82,19 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   }, [nodes]);
 
   // O(P) single-pass packet grouping by edgeId (replaces O(E * P) per-edge filtering)
-  const packetsByEdge = useMemo(() => {
-    const map = new Map<string, DataPacket[]>();
+  const { packetsByEdge, inboundCountByNode } = useMemo(() => {
+    const edgeMap = new Map<string, DataPacket[]>();
+    const nodeCountMap = new Map<string, number>();
     for (const pkt of packets) {
-      const list = map.get(pkt.edgeId);
+      const list = edgeMap.get(pkt.edgeId);
       if (list) {
         list.push(pkt);
       } else {
-        map.set(pkt.edgeId, [pkt]);
+        edgeMap.set(pkt.edgeId, [pkt]);
       }
+      nodeCountMap.set(pkt.toNodeId, (nodeCountMap.get(pkt.toNodeId) ?? 0) + 1);
     }
-    return map;
+    return { packetsByEdge: edgeMap, inboundCountByNode: nodeCountMap };
   }, [packets]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -428,6 +440,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
                 node={node}
                 isSelected={selectedNodeId === node.id}
                 zoom={zoom}
+                activeInboundCount={inboundCountByNode.get(node.id) ?? 0}
+                trafficLoadMultiplier={trafficLoadMultiplier}
+                isSpikeMode={isSpikeMode}
                 onSelect={onSelectNode}
                 onMove={onMoveNode}
                 onStartConnect={handleStartConnect}

@@ -2,11 +2,18 @@ import React, { useState, useRef, useCallback } from 'react';
 import { GraphNode } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
 import { Power, Clock, ShieldCheck, Zap, Copy, Trash2 } from 'lucide-react';
+import {
+  calculateEffectiveLatency,
+  calculateNodeUtilizationPercent,
+} from '../../utils/simulationPhysics';
 
 interface NodeComponentProps {
   node: GraphNode;
   isSelected: boolean;
   zoom: number;
+  activeInboundCount?: number;
+  trafficLoadMultiplier?: number;
+  isSpikeMode?: boolean;
   onSelect: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
   onStartConnect: (nodeId: string, startPos: { x: number; y: number }) => void;
@@ -20,6 +27,9 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
   node,
   isSelected,
   zoom,
+  activeInboundCount = 0,
+  trafficLoadMultiplier = 1,
+  isSpikeMode = false,
   onSelect,
   onMove,
   onStartConnect,
@@ -317,15 +327,60 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
           </div>
         </div>
 
-        {/* Metrics Footer */}
-        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1 border-t border-slate-800/80">
-          <span className="flex items-center gap-1 text-slate-300">
-            <span className="text-[11px] text-slate-400">LAT</span> {node.latencyMs}ms
-          </span>
-          <span className="flex items-center gap-1 text-slate-300">
-            <span className="text-[11px] text-slate-400">RPS</span> {node.throughputRps}
-          </span>
-        </div>
+        {/* Metrics & Live Capacity Utilization Footer */}
+        {(() => {
+          const effectiveLat =
+            activeInboundCount > 0
+              ? calculateEffectiveLatency(node, activeInboundCount, isSpikeMode, trafficLoadMultiplier)
+              : node.latencyMs;
+          const utilPct = calculateNodeUtilizationPercent(
+            node,
+            activeInboundCount,
+            isSpikeMode,
+            trafficLoadMultiplier
+          );
+          const latColor =
+            effectiveLat >= node.latencyMs * 1.8
+              ? 'text-rose-400 font-bold'
+              : effectiveLat > node.latencyMs * 1.15
+                ? 'text-amber-300 font-semibold'
+                : 'text-slate-300';
+          const barColor =
+            utilPct >= 85
+              ? 'bg-rose-500'
+              : utilPct >= 55
+                ? 'bg-amber-400'
+                : 'bg-emerald-400';
+
+          return (
+            <div className="pt-1 border-t border-slate-800/80 space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span className={`flex items-center gap-1 ${latColor}`} title="Effective latency under current queueing load">
+                  <span className="text-[10px] text-slate-400">LAT</span> {effectiveLat}ms
+                </span>
+                {utilPct > 0 && (
+                  <span
+                    className={`text-[10px] font-bold ${
+                      utilPct >= 85 ? 'text-rose-400' : utilPct >= 55 ? 'text-amber-300' : 'text-emerald-400'
+                    }`}
+                    title={`Live Queue / CPU Utilization: ${utilPct}%`}
+                  >
+                    {utilPct}%
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-slate-300">
+                  <span className="text-[10px] text-slate-400">RPS</span> {node.throughputRps}
+                </span>
+              </div>
+              <div className="h-1 w-full rounded-full bg-slate-800/90 overflow-hidden" title={`Capacity utilization: ${utilPct}%`}>
+                <div
+                  className={`h-full transition-all duration-200 ${barColor}`}
+                  style={{ width: `${Math.min(100, Math.max(node.status === 'down' ? 0 : 6, utilPct))}%` }}
+                />
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Input Port (Left Handle) - 44px padded hit area */}
@@ -365,10 +420,13 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
   );
 };
 
-// Strict custom memo comparison: nodes only re-render if visual attributes or selection change
+// Strict custom memo comparison: nodes only re-render if visual attributes, selection, or integer inbound load change
 function areNodePropsEqual(prev: NodeComponentProps, next: NodeComponentProps): boolean {
   return (
     prev.isSelected === next.isSelected &&
+    prev.activeInboundCount === next.activeInboundCount &&
+    prev.trafficLoadMultiplier === next.trafficLoadMultiplier &&
+    prev.isSpikeMode === next.isSpikeMode &&
     prev.node.x === next.node.x &&
     prev.node.y === next.node.y &&
     prev.node.width === next.node.width &&
@@ -386,3 +444,4 @@ function areNodePropsEqual(prev: NodeComponentProps, next: NodeComponentProps): 
 }
 
 export const NodeComponent = React.memo(NodeComponentBase, areNodePropsEqual);
+

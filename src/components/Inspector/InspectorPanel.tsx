@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { GraphNode, GraphEdge, NodeStatus, ProtocolType } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
-import { analyzeTopologyDiagnostics, generateIncidentPostMortemMarkdown } from '../../utils/simulationPhysics';
+import {
+  analyzeTopologyDiagnostics,
+  generateIncidentPostMortemMarkdown,
+  compareTopologyWithBaseline,
+  evaluateChaosResilienceAudit,
+  TopologyDiagnostics,
+} from '../../utils/simulationPhysics';
 import { useSimulationControls } from '../../context/SimulationContext';
 import {
   Sliders,
@@ -15,6 +21,7 @@ import {
   ShieldCheck,
   Copy,
   Check,
+  GitCompare,
 } from 'lucide-react';
 
 interface InspectorPanelProps {
@@ -70,8 +77,17 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onAutoLayout,
 }) => {
   const diagnostics = useMemo(() => analyzeTopologyDiagnostics(nodes, edges), [nodes, edges]);
+  const chaosAudit = useMemo(() => evaluateChaosResilienceAudit(nodes, edges), [nodes, edges]);
   const [cloudProvider, setCloudProvider] = useState<'aws' | 'gcp' | 'azure'>('aws');
   const [copiedPostMortem, setCopiedPostMortem] = useState(false);
+  const [pinnedBaseline, setPinnedBaseline] = useState<TopologyDiagnostics | null>(null);
+  const [copiedProposal, setCopiedProposal] = useState(false);
+  const [showAuditFindings, setShowAuditFindings] = useState(false);
+
+  const baselineDiff = useMemo(
+    () => (pinnedBaseline ? compareTopologyWithBaseline(pinnedBaseline, diagnostics) : null),
+    [pinnedBaseline, diagnostics]
+  );
 
   let simControls = null;
   try {
@@ -102,6 +118,18 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
     navigator.clipboard?.writeText(md);
     setCopiedPostMortem(true);
     setTimeout(() => setCopiedPostMortem(false), 2000);
+  };
+
+  const handleCopyProposal = () => {
+    if (!baselineDiff) return;
+    navigator.clipboard?.writeText(baselineDiff.proposalMarkdown);
+    setCopiedProposal(true);
+    setTimeout(() => setCopiedProposal(false), 2000);
+  };
+
+  const handleRunChaosAudit = () => {
+    setShowAuditFindings(true);
+    simControls?.triggerSpike();
   };
 
   return (
@@ -531,6 +559,82 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 </div>
               </div>
 
+              {/* Baseline vs. Proposed Architecture Diff & ROI Calculator */}
+              <div className="space-y-1.5 pt-1.5 border-t border-slate-800/80">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-semibold flex items-center gap-1">
+                    <GitCompare className="w-3 h-3 text-cyan-400" />
+                    Before / After Diff
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPinnedBaseline(pinnedBaseline ? null : diagnostics)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border transition-colors ${
+                      pinnedBaseline
+                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
+                        : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/25'
+                    }`}
+                    title="Pin current architecture metrics as Baseline, then modify nodes/caches to compare ROI & latency improvements"
+                  >
+                    {pinnedBaseline ? 'Reset Baseline' : 'Pin Baseline'}
+                  </button>
+                </div>
+
+                {baselineDiff && (
+                  <div className="p-2 rounded-lg bg-slate-900/90 border border-cyan-500/30 space-y-1.5 text-[10px] font-mono">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">p99 Tail Latency:</span>
+                      <span
+                        className={`font-bold ${
+                          baselineDiff.p99LatencyDeltaMs <= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {baselineDiff.p99LatencyDeltaMs > 0 ? `+${baselineDiff.p99LatencyDeltaMs}` : baselineDiff.p99LatencyDeltaMs}ms ({baselineDiff.p99LatencyDeltaPct > 0 ? `+${baselineDiff.p99LatencyDeltaPct}` : baselineDiff.p99LatencyDeltaPct}%)
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Composite SLA:</span>
+                      <span
+                        className={`font-bold ${
+                          baselineDiff.slaDeltaPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {baselineDiff.slaDeltaPct >= 0 ? `+${baselineDiff.slaDeltaPct}` : baselineDiff.slaDeltaPct}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Max Throughput:</span>
+                      <span className="font-bold text-cyan-300">
+                        {baselineDiff.bottleneckMultiplier}x ({baselineDiff.bottleneckRpsDelta >= 0 ? `+${baselineDiff.bottleneckRpsDelta}` : baselineDiff.bottleneckRpsDelta} RPS)
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">AWS Cost Delta:</span>
+                      <span className="font-bold text-slate-200">
+                        {baselineDiff.awsCostDeltaUsd >= 0 ? `+$${baselineDiff.awsCostDeltaUsd}` : `-$${Math.abs(baselineDiff.awsCostDeltaUsd)}`}/mo
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyProposal}
+                      className="w-full mt-1 h-6 rounded bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-200 font-sans font-semibold text-[10px] flex items-center justify-center gap-1 transition-colors"
+                    >
+                      {copiedProposal ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span className="text-emerald-300">Copied ROI Proposal MD</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy Executive ROI Proposal</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {diagnostics.spofWarnings.length > 0 && (
                 <div className="space-y-1.5 pt-1.5 border-t border-slate-800/80">
                   <div className="flex items-center justify-between">
@@ -567,6 +671,56 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Automated Chaos & Load Resilience Scorecard */}
+            <div className="p-3 rounded-xl bg-dark-950 border border-slate-800 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                  Resilience Audit Grade
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded font-mono text-xs font-bold border ${
+                    chaosAudit.grade.startsWith('A')
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : chaosAudit.grade === 'B'
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                        : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  }`}
+                >
+                  Grade {chaosAudit.grade} ({chaosAudit.score}/100)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
+                <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800">
+                  <div className="text-slate-400">Max Safe Load</div>
+                  <div className="text-slate-100 font-bold">{chaosAudit.maxSafeRps} RPS</div>
+                </div>
+                <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800">
+                  <div className="text-slate-400">Breaker Coverage</div>
+                  <div className="text-emerald-400 font-bold">{chaosAudit.breakerCoveragePct}%</div>
+                </div>
+              </div>
+
+              {showAuditFindings && (
+                <div className="space-y-1 pt-1 border-t border-slate-800/80 text-[10px] font-mono text-slate-300">
+                  {chaosAudit.findings.map((finding, idx) => (
+                    <div key={idx} className="leading-snug pl-2 border-l border-cyan-500/40">
+                      {finding}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleRunChaosAudit}
+                className="w-full h-7 px-2.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                Run 3x Chaos & Stress Audit
+              </button>
             </div>
 
             {/* Live SRE Chaos & Incident Post-Mortem Log */}
@@ -632,6 +786,10 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 Keyboard Shortcuts
               </div>
               <div className="space-y-1 text-slate-400 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span>Command Palette:</span>
+                  <span className="text-cyan-300 font-bold">Ctrl+K / Cmd+K</span>
+                </div>
                 <div className="flex justify-between">
                   <span>Undo / Redo:</span>
                   <span className="text-slate-200">Ctrl+Z / Ctrl+Y</span>

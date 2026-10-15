@@ -2,8 +2,8 @@
 
 **Son Güncelleme:** 15 Ekim 2026
 **Canlı Üretim Adresi:** https://graph-flow-virid.vercel.app
-**Git Durumu:** `main` (`7e290e5` + Faz-3 UX & SRE Geliştirmeleri)
-**Test ve Derleme Durumu:** 19/19 Test Dosyası, 114/114 Birim Testi Başarılı, 0 TypeScript Hatası
+**Git Durumu:** `main` (`7628dda` + Faz-4 Staff Engineer & Pro Satın Alma Özellikleri)
+**Test ve Derleme Durumu:** 19/19 Test Dosyası, 122/122 Birim Testi Başarılı, 0 TypeScript Hatası
 **Lemon Squeezy Mağaza Durumu:** ONAYLANDI VE AKTİF (`APPROVED` - 15 Ekim 2026, 06:09 TSİ)
 
 ---
@@ -64,6 +64,16 @@
     - **Düğüm Üzerinde Yüzen Hızlı Kaos ve Ölçekleme Çubuğu (Floating Quick-Action Context Bar):** Kanvas üzerinde seçilen herhangi bir düğümün hemen üstünde beliren hızlı aksiyon çubuğu ile sağ panele gitmeden tek tıkla `Kill / Heal` (Kaos Çökertme), `+100ms` gecikme enjeksiyonu, `CB` (Circuit Breaker Aç/Kapat), `2x RPS` kapasite ölçekleme, `Duplicate` ve `Delete` işlemleri yapılabiliyor.
     - **Çoklu Bulut (`AWS | GCP | Azure`) FinOps Maliyet Karşılaştırması:** Sağ paneldeki `Engineering Diagnostics` kartına eklenen `AWS / GCP / Azure` seçici ile aynı mimarinin üç büyük bulut sağlayıcısındaki eşdeğer servis yığını (`ECS Fargate + RDS` vs `Cloud Run + Cloud SQL` vs `Container Apps + Azure DB`) ve aylık tahmini maliyeti (`~$XXX/mo`) anlık karşılaştırılabiliyor.
     - **Canlı SRE Olay Günlüğü ve Tek Tıkla Post-Mortem Raporu (`generateIncidentPostMortemMarkdown`):** Simülasyon sırasında tetiklenen `Spike`, `Circuit Breaker OPEN/CLOSED` ve `Node Down/Degraded` olayları saat damgasıyla (`HH:MM:SS`) sağ paneldeki **SRE Post-Mortem Log** kutusuna kaydediliyor ve **"Copy Report"** butonuyla tam teşekküllü Markdown olay sonrası raporu panoya kopyalanabiliyor.
+
+12. **Kıdemli Mühendis (Staff Backend / SRE) Benimseme ve Pro Satın Alma Özellikleri (`src/utils/simulationPhysics.ts`, `src/components/Canvas/NodeComponent.tsx`, `src/components/Canvas/GraphCanvas.tsx`, `src/components/Inspector/InspectorPanel.tsx`, `src/utils/export.ts`, `src/utils/importTopology.ts`, `src/components/Modals/ExportModal.tsx`, `src/components/Modals/CommandPaletteModal.tsx`, `src/App.tsx`, `src/components/Toolbar/TopBar.tsx`):**
+    - **Düğüm Üzerinde Canlı Kapasite Doluluk Çubuğu (`% Utilization Gauge Bar`) ve Dinamik Efektif Gecikme (`LAT XXms`):** Her düğümün altında anlık kuyruk ve paket yüküne göre yeşil (`<75%`), kehribar (`75-95%`) veya kırmızı (`>=95%` aşırı yük) doluluk çubuğu ve canlı hesaplanan efektif gecikme gösteriliyor (`React.memo` tam sayı karşılaştırıcısı sayesinde 60 FPS akıcılığından ödün vermeden).
+    - **"Önce / Sonra" Mimari Karşılaştırma (`Pin Baseline`) ve Yönetici ROI Teklifi Üretici (`compareTopologyWithBaseline`):** Mühendisler mevcut mimariyi **"Pin Baseline"** ile sabitleyip önbellek/kuyruk ekledikten veya `Auto-Harden` yaptıktan sonra `p99 Gecikme Farkı`, `SLA Artışı`, `Darboğaz RPS Çarpanı` ve `Aylık Bulut Maliyeti Farkını` yan yana görebiliyor ve **"Copy Executive ROI Proposal"** ile CTO/mühendislik yöneticisine sunulacak hazır Markdown ROI tablosunu kopyalayabiliyor.
+    - **Otomatik Kaos ve Dayanıklılık Denetim Karnesi (`Grade A+` – `F` & `Run 3x Chaos & Stress Audit`):** Topolojinin `3x` trafik patlaması altındaki `p99` gecikmesini, `Max Safe Load (RPS)` tavanını ve `Circuit Breaker Coverage %` oranını puanlayarak `A+` ile `F` arasında karne veriyor ve tek tıkla 3x kaos stres testini başlatıyor.
+    - **GitHub PR & RFC Yerel `Mermaid.js` Paketi, Grafana `k6` Yük Testi Script Üreticisi (Pro Kilitli) ve `package.json` / `OpenAPI 3.0` Tersine Mühendislik İçe Aktarıcı:**
+      - GitHub Pull Request ve Notion RFC belgelerine doğrudan yapıştırılabilen `flowchart LR` + `sequenceDiagram` + SLA/FinOps tablosu (`Mermaid (GitHub PR)` sekmesi).
+      - Topolojinin gerçek uç noktalarını ve `p95 / p99` SLA eşiklerini içeren çalıştırılabilir **Grafana `k6` (`load-test.k6.js`)** stres testi kodu (Pro abonelik kilitli).
+      - `docker-compose.yml` ve `main.tf` yanında **`package.json`** (`pg`, `ioredis`, `kafkajs`, `stripe`, `@aws-sdk/client-s3`, `openai` vb. bağımlılıkları otomatik tanıyan) ve **`OpenAPI 3.0 / Swagger`** şemalarını tek tıkla canlı topolojiye dönüştüren genişletilmiş içe aktarıcı.
+    - **Klavye Odaklı Mühendis Komut Paleti (`Ctrl+K` / `Cmd+K` — `CommandPaletteModal.tsx`):** Fareye dokunmadan `<1` saniyede bileşen ekleme (`Add Redis`, `Add Kafka`), mevcut düğümlere odaklanma (`Inspect: ...`), `Auto-Harden`, `Auto-Align DAG` ve `Mermaid / k6 / Terraform` dışa aktarma işlemlerini çalıştıran Raycast/Linear tarzı komut paleti.
 
 ---
 

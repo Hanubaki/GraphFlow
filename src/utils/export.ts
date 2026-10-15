@@ -121,6 +121,9 @@ export function exportMarkdownFile(nodes: GraphNode[], edges: GraphEdge[], name 
   downloadFile(`${sanitizedName}-spec.md`, content, 'text/markdown');
 }
 
+/**
+ * Generates production-grade docker-compose.yml from visual architecture nodes and edges.
+ */
 export function generateDockerCompose(nodes: GraphNode[], edges: GraphEdge[], name = 'graphflow'): string {
   const safeProject = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'graphflow';
   
@@ -216,6 +219,9 @@ export function generateDockerCompose(nodes: GraphNode[], edges: GraphEdge[], na
   return yml;
 }
 
+/**
+ * Generates Terraform infrastructure code (main.tf) for AWS ECS / RDS / ElastiCache / SQS / S3 / Lambda / API Gateway.
+ */
 export function generateTerraform(nodes: GraphNode[], edges: GraphEdge[], name = 'graphflow'): string {
   const safeProject = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'graphflow';
 
@@ -329,6 +335,10 @@ export function exportTerraformFile(nodes: GraphNode[], edges: GraphEdge[], name
   downloadFile('main.tf', content, 'text/plain');
 }
 
+/**
+ * Generates production-grade Kubernetes manifests (Deployment, Service, HorizontalPodAutoscaler)
+ * scaled according to each node's throughputRps and latency profile.
+ */
 export function generateKubernetesManifests(
   nodes: GraphNode[],
   edges: GraphEdge[],
@@ -455,6 +465,10 @@ export function exportKubernetesFile(nodes: GraphNode[], edges: GraphEdge[], nam
   downloadFile('k8s-manifests.yaml', content, 'application/x-yaml');
 }
 
+/**
+ * Generates a standalone, high-contrast CAD blueprint SVG diagram of the architecture topology.
+ * Includes a viral "Simulated with GraphFlow.dev" badge on Free tier, or clean white-label output on Pro/Team.
+ */
 export function generateArchitectureSvg(
   nodes: GraphNode[],
   edges: GraphEdge[],
@@ -493,18 +507,22 @@ export function generateArchitectureSvg(
   svg += `    </marker>\n`;
   svg += `  </defs>\n\n`;
 
+  // Background & Grid
   svg += `  <rect width="${totalW}" height="${totalH}" fill="#08090a" />\n`;
   svg += `  <rect x="0" y="${headerH}" width="${totalW}" height="${contentH}" fill="url(#gf-export-grid)" />\n`;
 
+  // Top Telemetry Header Bar
   svg += `  <rect x="0" y="0" width="${totalW}" height="${headerH}" fill="#0c0e12" />\n`;
   svg += `  <line x1="0" y1="${headerH}" x2="${totalW}" y2="${headerH}" stroke="#1e293b" stroke-width="1" />\n`;
   svg += `  <rect x="24" y="20" width="24" height="24" rx="6" fill="#06b6d4" />\n`;
   svg += `  <text x="58" y="31" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">${escapeXml(title)}</text>\n`;
   svg += `  <text x="58" y="47" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">${nodes.length} Nodes • ${edges.length} Connections • Critical Path: ${diagnostics.criticalPathLatencyMs}ms</text>\n`;
 
+  // Right-side HUD metrics in header
   const hudText = `SLA: ${diagnostics.compositeSlaPercent}%   |   p99: ${diagnostics.p99LatencyMs}ms   |   Est. Cloud: ~$${diagnostics.estimatedMonthlyCostUsd}/mo`;
   svg += `  <text x="${totalW - 24}" y="37" text-anchor="end" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600">${escapeXml(hudText)}</text>\n\n`;
 
+  // Edges (Cubic Beziers)
   edges.forEach(e => {
     const from = nodeMap.get(e.fromNodeId);
     const to = nodeMap.get(e.toNodeId);
@@ -530,6 +548,7 @@ export function generateArchitectureSvg(
     svg += `  <text x="${midX}" y="${midY + 2}" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">${escapeXml(badgeLabel)}</text>\n`;
   });
 
+  // Nodes
   nodes.forEach(n => {
     const nx = n.x + offsetX;
     const ny = n.y + offsetY;
@@ -549,6 +568,7 @@ export function generateArchitectureSvg(
     svg += `  </g>\n`;
   });
 
+  // Footer / Viral Watermark (Free tier)
   if (includeWatermark) {
     const wmY = totalH - 34;
     svg += `  <g transform="translate(${totalW - 335}, ${wmY})">\n`;
@@ -575,7 +595,7 @@ export function exportPngDiagram(nodes: GraphNode[], edges: GraphEdge[], include
   const img = new Image();
 
   img.onload = () => {
-    const scale = 2;
+    const scale = 2; // 2x Retina resolution
     const canvas = document.createElement('canvas');
     canvas.width = img.width * scale;
     canvas.height = img.height * scale;
@@ -600,3 +620,159 @@ export function exportPngDiagram(nodes: GraphNode[], edges: GraphEdge[], include
   };
   img.src = url;
 }
+
+/**
+ * Generates a GitHub Pull Request / RFC ready Mermaid.js bundle containing:
+ * 1) Styled flowchart LR with latency & RPS capacity annotations
+ * 2) Critical path sequenceDiagram
+ * 3) SLA, Tail Latency & Multi-Cloud FinOps PR summary table
+ */
+export function generateMermaidPrBundle(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  name = 'System Architecture'
+): string {
+  const safeName = sanitizeLabel(name) || 'System Architecture';
+  const diag = analyzeTopologyDiagnostics(nodes, edges);
+
+  let out = `### ${safeName} — Architecture & SLA Topology\n\n`;
+  out += `\`\`\`mermaid\nflowchart LR\n`;
+
+  nodes.forEach(n => {
+    const cleanId = n.id.replace(/[^a-zA-Z0-9_]/g, '_');
+    const title = sanitizeLabel(n.title);
+    const sub = sanitizeLabel(n.subtitle);
+    const meta = `${n.latencyMs}ms · ${n.throughputRps} RPS`;
+    if (n.type === 'database' || n.type === 'storage') {
+      out += `  ${cleanId}[("${title}<br/>${sub}<br/>${meta}")]\n`;
+    } else if (n.type === 'queue' || n.type === 'cache') {
+      out += `  ${cleanId}[["${title}<br/>${sub}<br/>${meta}"]]\n`;
+    } else {
+      out += `  ${cleanId}["${title}<br/>${sub}<br/>${meta}"]\n`;
+    }
+  });
+
+  edges.forEach(e => {
+    const cleanFrom = e.fromNodeId.replace(/[^a-zA-Z0-9_]/g, '_');
+    const cleanTo = e.toNodeId.replace(/[^a-zA-Z0-9_]/g, '_');
+    const route = e.label ? ` · ${sanitizeLabel(e.label)}` : '';
+    const edgeLabel = `${e.protocol} (${e.latencyMs}ms${route})`;
+    out += `  ${cleanFrom} -->|"${edgeLabel}"| ${cleanTo}\n`;
+  });
+
+  out += `\`\`\`\n\n`;
+
+  if (edges.length > 0) {
+    out += `#### Request Sequence Lifecycle\n\n`;
+    out += `\`\`\`mermaid\nsequenceDiagram\n  autonumber\n`;
+    edges.slice(0, 10).forEach(e => {
+      const fromTitle = sanitizeLabel(nodes.find(n => n.id === e.fromNodeId)?.title || e.fromNodeId);
+      const toTitle = sanitizeLabel(nodes.find(n => n.id === e.toNodeId)?.title || e.toNodeId);
+      const route = e.label ? `: ${sanitizeLabel(e.label)}` : '';
+      out += `  "${fromTitle}"->>"${toTitle}": ${e.protocol}${route} (${e.latencyMs}ms)\n`;
+    });
+    out += `\`\`\`\n\n`;
+  }
+
+  out += `| Metric | Value |\n`;
+  out += `| :--- | :--- |\n`;
+  out += `| **Composite SLA** | \`${diag.compositeSlaPercent}%\` |\n`;
+  out += `| **Latency Profile** | p50: \`${diag.criticalPathLatencyMs}ms\` · p95: \`${diag.p95LatencyMs}ms\` · p99: \`${diag.p99LatencyMs}ms\` |\n`;
+  out += `| **Primary Bottleneck** | \`${sanitizeLabel(diag.bottleneckNode?.title || 'None')}\` (\`${diag.bottleneckNode?.effectiveCapacityRps ?? 0} RPS\` ceiling) |\n`;
+  out += `| **Multi-Cloud FinOps** | AWS \`~$${diag.cloudCostsUsd.aws}/mo\` · GCP \`~$${diag.cloudCostsUsd.gcp}/mo\` · Azure \`~$${diag.cloudCostsUsd.azure}/mo\` |\n`;
+
+  return out;
+}
+
+/**
+ * Generates an executable Grafana k6 load & stress test script (load-test.k6.js)
+ * with SLA latency thresholds (p95, p99) and staged RPS ramp-up derived from topology diagnostics.
+ */
+export function generateK6LoadTestScript(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  name = 'graphflow'
+): string {
+  const safeName = sanitizeLabel(name) || 'graphflow';
+  const diag = analyzeTopologyDiagnostics(nodes, edges);
+  const bottleneckRps = diag.bottleneckNode?.effectiveCapacityRps ?? 500;
+  const targetVUs = Math.max(20, Math.min(1000, Math.round(bottleneckRps / 4)));
+  const spikeVUs = Math.min(2000, targetVUs * 2);
+  const p95Budget = Math.max(50, diag.p95LatencyMs);
+  const p99Budget = Math.max(100, diag.p99LatencyMs);
+
+  const routes = edges
+    .filter(e => e.protocol === 'HTTP/REST' || e.protocol === 'gRPC' || e.protocol === 'WebSocket')
+    .map(e => {
+      const targetNode = nodes.find(n => n.id === e.toNodeId);
+      const rawRoute = e.label && e.label.startsWith('/') ? e.label : `/api/v1/${(targetNode?.id || 'service').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+      return {
+        name: sanitizeLabel(targetNode?.title || e.toNodeId),
+        path: sanitizeLabel(rawRoute),
+        expectedLatencyMs: (targetNode?.latencyMs ?? 25) + e.latencyMs,
+      };
+    });
+
+  const activeRoutes =
+    routes.length > 0
+      ? routes.slice(0, 6)
+      : [{ name: 'API Gateway Ingress', path: '/api/v1/health', expectedLatencyMs: 25 }];
+
+  return [
+    `// ==========================================================================`,
+    `// Grafana k6 Distributed Load & Chaos Stress Test (${safeName})`,
+    `// Generated by GraphFlow Architecture & Resilience Engine`,
+    `// Run via CLI: k6 run load-test.k6.js`,
+    `// ==========================================================================`,
+    `import http from 'k6/http';`,
+    `import { check, group, sleep } from 'k6';`,
+    `import { Trend, Rate } from 'k6/metrics';`,
+    ``,
+    `const criticalPathLatency = new Trend('graphflow_critical_path_ms');`,
+    `const errorRate = new Rate('graphflow_pipeline_errors');`,
+    ``,
+    `export const options = {`,
+    `  stages: [`,
+    `    { duration: '30s', target: ${Math.round(targetVUs * 0.4)} }, // Warmup ramp`,
+    `    { duration: '1m', target: ${targetVUs} },  // Sustained bottleneck capacity (${bottleneckRps} RPS equiv)`,
+    `    { duration: '30s', target: ${spikeVUs} }, // 2x Chaos traffic spike surge`,
+    `    { duration: '20s', target: 0 },   // Cooldown recovery`,
+    `  ],`,
+    `  thresholds: {`,
+    `    http_req_duration: ['p(95)<${p95Budget}', 'p(99)<${p99Budget}'],`,
+    `    http_req_failed: ['rate<0.01'],`,
+    `    graphflow_pipeline_errors: ['rate<0.015'],`,
+    `  },`,
+    `};`,
+    ``,
+    `const BASE_URL = __ENV.BASE_URL || 'https://staging-api.internal';`,
+    ``,
+    `export default function () {`,
+    ...activeRoutes.map(
+      r =>
+        `  group('${r.name.replace(/'/g, '')}', () => {\n` +
+        `    const res = http.get(\`\${BASE_URL}${r.path}\`, {\n` +
+        `      tags: { service: '${r.name.replace(/'/g, '')}' },\n` +
+        `    });\n` +
+        `    criticalPathLatency.add(res.timings.duration);\n` +
+        `    const ok = check(res, {\n` +
+        `      'status is 200': (r) => r.status === 200,\n` +
+        `      'latency under SLA (${r.expectedLatencyMs * 3}ms)': (r) => r.timings.duration < ${r.expectedLatencyMs * 3},\n` +
+        `    });\n` +
+        `    errorRate.add(!ok);\n` +
+        `  });`
+    ),
+    `  sleep(0.1);`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+export function exportK6ScriptFile(nodes: GraphNode[], edges: GraphEdge[], name = 'graphflow') {
+  const safeName = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '-') || 'graphflow';
+  const script = generateK6LoadTestScript(nodes, edges, safeName);
+  downloadFile(`${safeName}-load-test.k6.js`, script, 'application/javascript');
+}
+
+
+

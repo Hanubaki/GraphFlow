@@ -16,6 +16,7 @@ const PricingModal = React.lazy(() => import('./components/Modals/PricingModal')
 const AuthModal = React.lazy(() => import('./components/Modals/AuthModal').then(m => ({ default: m.AuthModal })));
 const EmbedModal = React.lazy(() => import('./components/Modals/EmbedModal').then(m => ({ default: m.EmbedModal })));
 const AnalyticsModal = React.lazy(() => import('./components/Modals/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
+const CommandPaletteModal = React.lazy(() => import('./components/Modals/CommandPaletteModal').then(m => ({ default: m.CommandPaletteModal })));
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
@@ -30,7 +31,7 @@ import { telemetry } from './utils/telemetry';
 import { autoHardenTopology, autoLayoutTopology } from './utils/simulationPhysics';
 import { captureFirstTouchAttribution } from './services/billing';
 
-export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | null;
+export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | 'commandPalette' | null;
 
 export const App: React.FC = () => {
   const {
@@ -181,6 +182,19 @@ export const App: React.FC = () => {
     telemetry.track('Architecture Imported', { nodeCount: importedNodes.length, edgeCount: importedEdges.length });
   }, [setNodes, setEdges, setPan, setZoom]);
 
+  // Global Keyboard-First Command Palette Shortcut (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    if (viewMode !== 'studio') return;
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setActiveModal(prev => (prev === 'commandPalette' ? null : 'commandPalette'));
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [viewMode]);
+
   if (viewMode === 'embed') {
     return (
       <EmbedView
@@ -236,6 +250,7 @@ export const App: React.FC = () => {
           onOpenProjects={() => setActiveModal('projects')}
           onOpenPricing={() => setActiveModal('pricing')}
           onOpenAnalytics={() => setActiveModal('analytics')}
+          onOpenCommandPalette={() => setActiveModal('commandPalette')}
           onOpenAuth={() => setActiveModal('auth')}
           onOpenHome={() => setViewMode('landing')}
           onOpenTour={() => setIsTourOpen(true)}
@@ -374,6 +389,34 @@ export const App: React.FC = () => {
             nodes={nodes}
             edges={edges}
             onClose={() => setActiveModal(null)}
+          />
+        )}
+
+        {activeModal === 'commandPalette' && (
+          <CommandPaletteModal
+            isOpen={true}
+            nodes={nodes}
+            onClose={() => setActiveModal(null)}
+            onAddNode={handleAddNodeFromPalette}
+            onSelectNode={selectNode}
+            onAutoHarden={() => {
+              const hardened = autoHardenTopology(nodes, edges);
+              setNodes(hardened);
+              soundFx.playSuccess();
+            }}
+            onAutoLayout={() => {
+              const aligned = autoLayoutTopology(nodes);
+              setNodes(aligned);
+              handleAutoCenter(aligned);
+              soundFx.playClick();
+            }}
+            onAutoCenter={() => handleAutoCenter()}
+            onOpenExport={() => setActiveModal('export')}
+            onOpenAiGenerator={() => setActiveModal('aiGen')}
+            onOpenTemplates={() => setActiveModal('templates')}
+            onOpenProjects={() => setActiveModal('projects')}
+            onOpenTour={() => setIsTourOpen(true)}
+            onClearGraph={clearGraph}
           />
         )}
       </React.Suspense>

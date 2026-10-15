@@ -23,6 +23,7 @@ import {
   Activity,
   Users,
   HelpCircle,
+  Terminal,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSimulationControls } from '../../context/SimulationContext';
@@ -56,6 +57,7 @@ interface TopBarProps {
   onOpenProjects: () => void;
   onOpenPricing: () => void;
   onOpenAnalytics?: () => void;
+  onOpenCommandPalette?: () => void;
   onOpenAuth?: () => void;
   onOpenHome?: () => void;
   onOpenTour?: () => void;
@@ -87,6 +89,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenProjects,
   onOpenPricing,
   onOpenAnalytics,
+  onOpenCommandPalette,
   onOpenAuth,
   onOpenHome,
   onOpenTour,
@@ -400,6 +403,21 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Activity className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden 3xl:inline">Analytics</span>
           </button>
+
+          {onOpenCommandPalette && (
+            <>
+              <div className="h-3.5 w-px bg-slate-800" />
+              <button
+                onClick={onOpenCommandPalette}
+                className="flex items-center gap-1 h-7 px-2 rounded hover:bg-cyan-950/60 text-cyan-300 text-xs font-mono font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+                title="Engineer Command Palette (Ctrl+K / Cmd+K)"
+                aria-label="Open Engineer Command Palette (Ctrl+K)"
+              >
+                <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden xl:inline text-[10px]">Ctrl+K</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Real-time Multiplayer Collaborators Stack */}

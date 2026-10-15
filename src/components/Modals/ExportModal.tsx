@@ -7,13 +7,20 @@ import {
   generateDockerCompose,
   generateTerraform,
   generateKubernetesManifests,
+  generateMermaidPrBundle,
+  generateK6LoadTestScript,
   exportDockerComposeFile,
   exportTerraformFile,
   exportKubernetesFile,
+  exportK6ScriptFile,
   exportSvgDiagram,
   exportPngDiagram,
 } from '../../utils/export';
-import { parseInfrastructureToTopology, SAMPLE_DOCKER_COMPOSE_IMPORT } from '../../utils/importTopology';
+import {
+  parseInfrastructureToTopology,
+  SAMPLE_DOCKER_COMPOSE_IMPORT,
+  SAMPLE_PACKAGE_JSON_IMPORT,
+} from '../../utils/importTopology';
 import { checkFeatureEntitlement } from '../../services/billing';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -30,6 +37,8 @@ import {
   Lock,
   Layers,
   Image as ImageIcon,
+  GitBranch,
+  Gauge,
 } from 'lucide-react';
 
 interface ExportModalProps {
@@ -50,12 +59,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onOpenPricing,
 }) => {
   const { planTier, isPro } = useAuth();
-  const [activeTab, setActiveTab] = useState<'export' | 'markdown' | 'docker' | 'terraform' | 'kubernetes'>('export');
+  const [activeTab, setActiveTab] = useState<
+    'export' | 'mermaid' | 'k6' | 'markdown' | 'docker' | 'terraform' | 'kubernetes'
+  >('export');
   const [copied, setCopied] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [iacPasteText, setIacPasteText] = useState('');
   const terraformEntitlement = checkFeatureEntitlement('terraform_export', planTier);
 
+  // Accessibility: close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -67,6 +79,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   if (!isOpen) return null;
 
   const markdownContent = generateMarkdownDoc(nodes, edges, 'Distributed System');
+  const mermaidPrContent = generateMermaidPrBundle(nodes, edges, 'Distributed System');
+  const k6ScriptContent = generateK6LoadTestScript(nodes, edges, 'graphflow');
   const dockerComposeContent = generateDockerCompose(nodes, edges, 'graphflow');
   const terraformContent = generateTerraform(nodes, edges, 'graphflow');
   const kubernetesContent = generateKubernetesManifests(nodes, edges, 'graphflow');
@@ -153,6 +167,35 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           >
             <Download className="w-3.5 h-3.5" />
             Export & Reverse-Import
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'mermaid'}
+            onClick={() => setActiveTab('mermaid')}
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
+              activeTab === 'mermaid'
+                ? 'border-cyan-400 text-cyan-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <GitBranch className="w-3.5 h-3.5" />
+            Mermaid (GitHub PR)
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'k6'}
+            onClick={() => setActiveTab('k6')}
+            className={`py-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
+              activeTab === 'k6'
+                ? 'border-cyan-400 text-cyan-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Gauge className="w-3.5 h-3.5" />
+            <span>k6 Load Test</span>
+            <span className="text-[11px] font-bold px-1.5 py-px rounded bg-slate-800 text-slate-200 border border-slate-700">
+              PRO
+            </span>
           </button>
           <button
             role="tab"
@@ -298,25 +341,37 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4 text-cyan-400" />
                     <span className="text-xs font-semibold text-slate-100">
-                      Reverse-Engineer Infrastructure (<code className="text-cyan-300 font-mono">docker-compose.yml</code>, <code className="text-cyan-300 font-mono">main.tf</code>, or <code className="text-cyan-300 font-mono">.json</code>)
+                      Reverse-Engineer (<code className="text-cyan-300 font-mono">package.json</code>, <code className="text-cyan-300 font-mono">docker-compose.yml</code>, <code className="text-cyan-300 font-mono">main.tf</code>, <code className="text-cyan-300 font-mono">openapi.yaml</code>)
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIacPasteText(SAMPLE_DOCKER_COMPOSE_IMPORT);
-                      handlePasteImport(SAMPLE_DOCKER_COMPOSE_IMPORT);
-                    }}
-                    className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-                  >
-                    Try Sample docker-compose.yml
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIacPasteText(SAMPLE_PACKAGE_JSON_IMPORT);
+                        handlePasteImport(SAMPLE_PACKAGE_JSON_IMPORT);
+                      }}
+                      className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
+                    >
+                      Try Sample package.json
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIacPasteText(SAMPLE_DOCKER_COMPOSE_IMPORT);
+                        handlePasteImport(SAMPLE_DOCKER_COMPOSE_IMPORT);
+                      }}
+                      className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                    >
+                      Try Sample docker-compose.yml
+                    </button>
+                  </div>
                 </div>
 
                 <textarea
                   value={iacPasteText}
                   onChange={e => setIacPasteText(e.target.value)}
-                  placeholder="Paste your docker-compose.yml services block, Terraform main.tf resources, or GraphFlow JSON here to auto-generate a live simulation topology..."
+                  placeholder="Paste your package.json dependencies, docker-compose.yml, Terraform main.tf, OpenAPI 3.0 YAML, or GraphFlow JSON here to auto-generate a live simulation topology..."
                   rows={4}
                   className="w-full rounded-lg border border-slate-800 bg-dark-900 p-2.5 font-mono text-[11px] text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none"
                 />
@@ -331,7 +386,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     />
                     <span className="cursor-pointer h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-flex items-center gap-1.5 transition-colors">
                       <Upload className="w-3.5 h-3.5" />
-                      Upload .yml / .tf / .json File
+                      Upload package.json / .yml / .tf
                     </span>
                   </label>
 
@@ -341,7 +396,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     className="h-8 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
                   >
                     <Box className="w-3.5 h-3.5" />
-                    Convert IaC to Live Topology
+                    Convert to Live Topology
                   </button>
                 </div>
 
@@ -349,6 +404,31 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <div className="text-xs text-rose-400 font-mono mt-1">{importError}</div>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'mermaid' && (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-400">
+                  GitHub Pull Request & RFC native <code className="text-cyan-400 font-mono">Mermaid.js</code> bundle (Flowchart + Sequence + SLA Table)
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(mermaidPrContent);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? 'Copied PR Bundle!' : 'Copy for GitHub PR'}
+                </button>
+              </div>
+
+              <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-80 leading-relaxed whitespace-pre select-text">
+                {mermaidPrContent}
+              </pre>
             </div>
           )}
 
@@ -386,7 +466,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           )}
 
-          {(activeTab === 'terraform' || activeTab === 'kubernetes') && (
+          {(activeTab === 'terraform' || activeTab === 'kubernetes' || activeTab === 'k6') && (
             <div className="space-y-3">
               {!terraformEntitlement.allowed && (
                 <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3">
@@ -395,7 +475,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     <span className="text-xs text-amber-200">
                       {activeTab === 'kubernetes'
                         ? 'Kubernetes (Deployment + Service + HPA) manifest export requires a Pro or Team plan.'
-                        : terraformEntitlement.reason}
+                        : activeTab === 'k6'
+                          ? 'Grafana k6 automated SLA load-test script generation requires a Pro or Team plan.'
+                          : terraformEntitlement.reason}
                     </span>
                   </div>
                   {onOpenPricing && (
@@ -418,6 +500,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     <>
                       Production K8s Deployments & HPA <code className="text-cyan-300 font-mono">k8s-manifests.yaml</code>
                     </>
+                  ) : activeTab === 'k6' ? (
+                    <>
+                      Grafana k6 Staged Stress & SLA Test <code className="text-cyan-300 font-mono">load-test.k6.js</code>
+                    </>
                   ) : (
                     <>
                       AWS ECS Fargate / RDS / ElastiCache / SQS IaC <code className="text-cyan-300 font-mono">main.tf</code>
@@ -434,6 +520,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       }
                       if (activeTab === 'kubernetes') {
                         exportKubernetesFile(nodes, edges);
+                      } else if (activeTab === 'k6') {
+                        exportK6ScriptFile(nodes, edges);
                       } else {
                         exportTerraformFile(nodes, edges);
                       }
@@ -441,7 +529,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     className="h-8 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
                   >
                     {!terraformEntitlement.allowed ? <Lock className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
-                    {activeTab === 'kubernetes' ? 'Download .yaml' : 'Download .tf'}
+                    {activeTab === 'kubernetes' ? 'Download .yaml' : activeTab === 'k6' ? 'Download .k6.js' : 'Download .tf'}
                   </button>
                   <button
                     onClick={() => {
@@ -450,26 +538,40 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         onOpenPricing?.();
                         return;
                       }
-                      navigator.clipboard.writeText(activeTab === 'kubernetes' ? kubernetesContent : terraformContent);
+                      const targetCode =
+                        activeTab === 'kubernetes'
+                          ? kubernetesContent
+                          : activeTab === 'k6'
+                            ? k6ScriptContent
+                            : terraformContent;
+                      navigator.clipboard.writeText(targetCode);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
                     className="h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? 'Copied!' : activeTab === 'kubernetes' ? 'Copy K8s' : 'Copy Terraform'}
+                    {copied ? 'Copied!' : activeTab === 'kubernetes' ? 'Copy K8s' : activeTab === 'k6' ? 'Copy k6 Script' : 'Copy Terraform'}
                   </button>
                 </div>
               </div>
 
               {terraformEntitlement.allowed ? (
                 <pre className="p-3.5 rounded-xl bg-dark-950 border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-80 leading-relaxed whitespace-pre select-text">
-                  {activeTab === 'kubernetes' ? kubernetesContent : terraformContent}
+                  {activeTab === 'kubernetes'
+                    ? kubernetesContent
+                    : activeTab === 'k6'
+                      ? k6ScriptContent
+                      : terraformContent}
                 </pre>
               ) : (
                 <div className="relative rounded-xl bg-dark-950 border border-slate-800 overflow-hidden max-h-80">
                   <pre className="p-3.5 pb-1 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed whitespace-pre select-none">
-                    {(activeTab === 'kubernetes' ? kubernetesContent : terraformContent)
+                    {(activeTab === 'kubernetes'
+                      ? kubernetesContent
+                      : activeTab === 'k6'
+                        ? k6ScriptContent
+                        : terraformContent)
                       .split('\n')
                       .slice(0, 12)
                       .join('\n')}
@@ -478,17 +580,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     aria-hidden="true"
                     className="px-3.5 pb-3.5 font-mono text-[11px] text-slate-500 leading-relaxed whitespace-pre select-none blur-[4px] pointer-events-none"
                   >
-                    {(activeTab === 'kubernetes' ? kubernetesContent : terraformContent)
+                    {(activeTab === 'kubernetes'
+                      ? kubernetesContent
+                      : activeTab === 'k6'
+                        ? k6ScriptContent
+                        : terraformContent)
                       .split('\n')
                       .slice(12, 34)
                       .join('\n')}
                   </pre>
                   <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-dark-950 via-dark-950/90 to-transparent flex flex-col items-center justify-end pb-5 px-4 text-center">
                     <div className="text-xs font-semibold text-slate-100 mb-1">
-                      Unlock Full {activeTab === 'kubernetes' ? 'Kubernetes Manifests & HPA' : 'AWS Terraform Infrastructure Code'}
+                      Unlock Full{' '}
+                      {activeTab === 'kubernetes'
+                        ? 'Kubernetes Manifests & HPA'
+                        : activeTab === 'k6'
+                          ? 'Grafana k6 Load & SLA Test Script'
+                          : 'AWS Terraform Infrastructure Code'}
                     </div>
                     <p className="text-[11px] text-slate-400 max-w-md mb-3">
-                      Upgrade to GraphFlow Pro to copy and download complete production IaC files tailored to your topology.
+                      Upgrade to GraphFlow Pro to copy and download complete production IaC and load-test files tailored to your topology.
                     </p>
                     {onOpenPricing && (
                       <button
@@ -499,7 +610,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         className="h-8 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold inline-flex items-center gap-1.5 transition-colors shadow-lg cursor-pointer"
                       >
                         <Lock className="w-3.5 h-3.5" />
-                        Unlock Pro IaC Export
+                        Unlock Pro Export
                       </button>
                     )}
                   </div>

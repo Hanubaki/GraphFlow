@@ -63,6 +63,22 @@ export function calculateEffectiveLatency(
 }
 
 /**
+ * Calculates live node capacity utilization percentage (0% - 150%) under current inbound traffic.
+ */
+export function calculateNodeUtilizationPercent(
+  node: GraphNode,
+  activeInboundPackets: number,
+  isSpikeMode = false,
+  trafficLoadMultiplier = 1
+): number {
+  if (node.status === 'down') return 0;
+  const capacityRps = Math.max(50, node.throughputRps || 500);
+  const loadScale = Math.max(0.25, trafficLoadMultiplier);
+  const simulatedInboundRps = activeInboundPackets * (isSpikeMode ? 300 : 120) * loadScale;
+  return Math.min(150, Math.round((simulatedInboundRps / capacityRps) * 100));
+}
+
+/**
  * Evaluates deterministic Circuit Breaker state transitions:
  * - CLOSED -> OPEN: when consecutiveErrors >= failureThreshold
  * - OPEN -> HALF-OPEN: when elapsedSinceOpenMs >= cooldownMs
@@ -508,3 +524,166 @@ export function autoLayoutTopology(nodes: GraphNode[]): GraphNode[] {
     return pos ? { ...n, x: pos.x, y: pos.y } : n;
   });
 }
+
+export interface BaselineDiffReport {
+  p99LatencyDeltaMs: number;
+  p99LatencyDeltaPct: number;
+  slaDeltaPct: number;
+  bottleneckRpsDelta: number;
+  bottleneckMultiplier: number;
+  awsCostDeltaUsd: number;
+  proposalMarkdown: string;
+}
+
+/**
+ * Compares a pinned Baseline topology against the current proposed topology
+ * and generates an Executive Architecture ROI & Diff Proposal in Markdown.
+ */
+export function compareTopologyWithBaseline(
+  baseline: TopologyDiagnostics,
+  current: TopologyDiagnostics
+): BaselineDiffReport {
+  const p99LatencyDeltaMs = current.p99LatencyMs - baseline.p99LatencyMs;
+  const p99LatencyDeltaPct =
+    baseline.p99LatencyMs > 0
+      ? Math.round(((current.p99LatencyMs - baseline.p99LatencyMs) / baseline.p99LatencyMs) * 100)
+      : 0;
+  const slaDeltaPct = Number((current.compositeSlaPercent - baseline.compositeSlaPercent).toFixed(2));
+  const baseRps = baseline.bottleneckNode?.effectiveCapacityRps ?? 0;
+  const currRps = current.bottleneckNode?.effectiveCapacityRps ?? 0;
+  const bottleneckRpsDelta = currRps - baseRps;
+  const bottleneckMultiplier = Number((currRps / Math.max(1, baseRps)).toFixed(1));
+  const awsCostDeltaUsd = current.cloudCostsUsd.aws - baseline.cloudCostsUsd.aws;
+
+  const proposalMarkdown = [
+    '# Executive Architecture Diff & ROI Proposal',
+    '',
+    '| Metric | Baseline Topology | Proposed Topology | Delta / Impact |',
+    '| :--- | :--- | :--- | :--- |',
+    `| **Tail Latency (p99)** | \`${baseline.p99LatencyMs}ms\` | \`${current.p99LatencyMs}ms\` | **${p99LatencyDeltaMs >= 0 ? `+${p99LatencyDeltaMs}` : p99LatencyDeltaMs}ms (${p99LatencyDeltaPct >= 0 ? `+${p99LatencyDeltaPct}` : p99LatencyDeltaPct}%)** |`,
+    `| **Composite SLA** | \`${baseline.compositeSlaPercent}%\` | \`${current.compositeSlaPercent}%\` | **${slaDeltaPct >= 0 ? `+${slaDeltaPct}` : slaDeltaPct}%** |`,
+    `| **Bottleneck Ceiling** | \`${baseRps} RPS\` (${baseline.bottleneckNode?.title || 'N/A'}) | \`${currRps} RPS\` (${current.bottleneckNode?.title || 'N/A'}) | **${bottleneckMultiplier}x Capacity** |`,
+    `| **Monthly Cloud Cost (AWS)** | \`~$${baseline.cloudCostsUsd.aws}/mo\` | \`~$${current.cloudCostsUsd.aws}/mo\` | **${awsCostDeltaUsd >= 0 ? `+$${awsCostDeltaUsd}` : `-$${Math.abs(awsCostDeltaUsd)}`}/mo** |`,
+    `| **Open SPOF Advisories** | ${baseline.spofWarnings.length} warnings | ${current.spofWarnings.length} warnings | **${current.spofWarnings.length - baseline.spofWarnings.length} risks** |`,
+    '',
+    '> Generated via [GraphFlow Architecture & Resilience Engine](https://graph-flow-virid.vercel.app)',
+  ].join('\n');
+
+  return {
+    p99LatencyDeltaMs,
+    p99LatencyDeltaPct,
+    slaDeltaPct,
+    bottleneckRpsDelta,
+    bottleneckMultiplier,
+    awsCostDeltaUsd,
+    proposalMarkdown,
+  };
+}
+
+export interface ChaosAuditReport {
+  grade: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+  score: number;
+  maxSafeRps: number;
+  breakerCoveragePct: number;
+  p99Under3xSpikeMs: number;
+  findings: string[];
+}
+
+/**
+ * Automated Chaos & Load Resilience Scorecard:
+ * Evaluates topology survival under 3x-6x load surges, Circuit Breaker coverage, and SPOF exposure.
+ */
+export function evaluateChaosResilienceAudit(
+  nodes: GraphNode[],
+  edges: GraphEdge[]
+): ChaosAuditReport {
+  if (nodes.length === 0) {
+    return {
+      grade: 'F',
+      score: 0,
+      maxSafeRps: 0,
+      breakerCoveragePct: 0,
+      p99Under3xSpikeMs: 0,
+      findings: ['Empty topology — add components to run chaos audit.'],
+    };
+  }
+
+  const diag = analyzeTopologyDiagnostics(nodes, edges);
+  const nonClientNodes = nodes.filter(n => n.type !== 'client');
+  const protectedNodes = nonClientNodes.filter(n => Boolean(n.circuitBreaker));
+  const breakerCoveragePct =
+    nonClientNodes.length > 0
+      ? Math.round((protectedNodes.length / nonClientNodes.length) * 100)
+      : 100;
+
+  // Simulate p99 tail latency under a 3x spike load
+  const spikeLatencies = nodes.map(n => calculateEffectiveLatency(n, 2, true, 3));
+  const avgSpikeMultiplication =
+    nodes.length > 0
+      ? spikeLatencies.reduce((acc, val, i) => acc + val / Math.max(1, nodes[i].latencyMs), 0) /
+        nodes.length
+      : 1;
+  const p99Under3xSpikeMs = Math.round(diag.p99LatencyMs * Math.max(1, avgSpikeMultiplication * 0.65));
+
+  const maxSafeRps = diag.bottleneckNode ? diag.bottleneckNode.effectiveCapacityRps : 500;
+
+  let score = 100;
+  const findings: string[] = [];
+
+  if (diag.compositeSlaPercent < 99.0) {
+    const penalty = Math.min(35, Math.round((99.5 - diag.compositeSlaPercent) * 12));
+    score -= penalty;
+    findings.push(`Composite SLA (${diag.compositeSlaPercent}%) is below 99.0% enterprise threshold.`);
+  } else {
+    findings.push(`Composite SLA (${diag.compositeSlaPercent}%) meets enterprise reliability target.`);
+  }
+
+  if (breakerCoveragePct < 80) {
+    score -= Math.round((80 - breakerCoveragePct) * 0.25);
+    findings.push(`Circuit Breaker coverage is ${breakerCoveragePct}% (${nonClientNodes.length - protectedNodes.length} unprotected services).`);
+  } else {
+    findings.push(`${breakerCoveragePct}% of backend dependencies are protected by Circuit Breakers.`);
+  }
+
+  if (maxSafeRps < 600) {
+    score -= 18;
+    findings.push(
+      `Bottleneck ${diag.bottleneckNode?.title || 'Node'} saturates at ${maxSafeRps} RPS under 3x traffic surge.`
+    );
+  } else {
+    findings.push(
+      `Primary bottleneck (${diag.bottleneckNode?.title}) sustains up to ${maxSafeRps} RPS before queue saturation.`
+    );
+  }
+
+  if (diag.spofWarnings.length > 0) {
+    score -= diag.spofWarnings.length * 8;
+    findings.push(...diag.spofWarnings.slice(0, 2));
+  }
+
+  const clampedScore = Math.max(10, Math.min(100, score));
+  const grade: ChaosAuditReport['grade'] =
+    clampedScore >= 95
+      ? 'A+'
+      : clampedScore >= 85
+        ? 'A'
+        : clampedScore >= 75
+          ? 'B'
+          : clampedScore >= 62
+            ? 'C'
+            : clampedScore >= 45
+              ? 'D'
+              : 'F';
+
+  return {
+    grade,
+    score: clampedScore,
+    maxSafeRps,
+    breakerCoveragePct,
+    p99Under3xSpikeMs,
+    findings: findings.slice(0, 4),
+  };
+}
+
+
+
