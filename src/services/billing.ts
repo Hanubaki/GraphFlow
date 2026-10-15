@@ -112,12 +112,143 @@ export function checkFeatureEntitlement(
   }
 }
 
+export const FIRST_TOUCH_STORAGE_KEY = 'graphflow_first_touch_v1';
+
+export interface AcquisitionAttribution {
+  source: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  referrerHost?: string;
+  landingHash?: string;
+  capturedAt: string;
+}
+
+const INTERNAL_HOSTS = ['graph-flow-virid.vercel.app', 'graphflow.dev', 'localhost', '127.0.0.1'];
+
 /**
- * Generates official Lemon Squeezy checkout link with overlay embed and user attribution.
+ * Pure helper to classify how a visitor discovered GraphFlow from URL query, referrer, and hash.
+ */
+export function resolveAcquisitionChannel(
+  search = '',
+  referrer = '',
+  hash = ''
+): AcquisitionAttribution {
+  const params = new URLSearchParams(search.startsWith('?') ? search : `?${search}`);
+  const utmSource = (params.get('utm_source') || params.get('ref') || params.get('via') || params.get('source') || '')
+    .trim()
+    .toLowerCase();
+  const utmMedium = (params.get('utm_medium') || '').trim().toLowerCase() || undefined;
+  const utmCampaign = (params.get('utm_campaign') || '').trim().toLowerCase() || undefined;
+
+  let referrerHost: string | undefined;
+  if (referrer) {
+    try {
+      const parsed = new URL(referrer);
+      const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+      if (host && !INTERNAL_HOSTS.some(internal => host === internal || host.endsWith(`.${internal}`))) {
+        referrerHost = host;
+      }
+    } catch {
+      // ignore malformed referrer URLs
+    }
+  }
+
+  const rawSignal = utmSource || referrerHost || '';
+  let source = 'direct';
+
+  if (
+    rawSignal === 't.co' ||
+    rawSignal.includes('twitter') ||
+    rawSignal === 'x.com' ||
+    rawSignal === 'x' ||
+    rawSignal === 'tw'
+  ) {
+    source = 'twitter_x';
+  } else if (rawSignal.includes('github') || rawSignal === 'gh') {
+    source = 'github';
+  } else if (rawSignal.includes('reddit')) {
+    source = 'reddit';
+  } else if (rawSignal.includes('ycombinator') || rawSignal === 'hn' || rawSignal === 'hackernews') {
+    source = 'hackernews';
+  } else if (rawSignal.includes('linkedin') || rawSignal === 'lnkd.in') {
+    source = 'linkedin';
+  } else if (rawSignal.includes('youtube') || rawSignal === 'youtu.be') {
+    source = 'youtube';
+  } else if (rawSignal.includes('producthunt')) {
+    source = 'producthunt';
+  } else if (
+    rawSignal.includes('google.') ||
+    rawSignal.includes('bing.com') ||
+    rawSignal.includes('duckduckgo.com')
+  ) {
+    source = 'organic_search';
+  } else if (utmSource) {
+    source = utmSource.replace(/[^a-z0-9_-]/g, '_').slice(0, 40);
+  } else if (referrerHost) {
+    source = referrerHost.replace(/[^a-z0-9._-]/g, '_').slice(0, 40);
+  } else if (hash.includes('#share=') || hash.includes('#embed=')) {
+    source = 'viral_share_link';
+  }
+
+  return {
+    source,
+    utmSource: utmSource || undefined,
+    utmMedium,
+    utmCampaign,
+    referrerHost,
+    landingHash: hash ? hash.slice(0, 32) : undefined,
+    capturedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Captures and persists the visitor's first-touch acquisition channel in localStorage.
+ * If the initial stored record was 'direct' and a subsequent visit includes an explicit UTM/referrer,
+ * upgrades the stored record to preserve actionable attribution.
+ */
+export function captureFirstTouchAttribution(): AcquisitionAttribution {
+  if (typeof window === 'undefined') {
+    return resolveAcquisitionChannel();
+  }
+
+  const current = resolveAcquisitionChannel(
+    window.location.search,
+    typeof document !== 'undefined' ? document.referrer : '',
+    window.location.hash
+  );
+
+  try {
+    const existingRaw = window.localStorage.getItem(FIRST_TOUCH_STORAGE_KEY);
+    if (existingRaw) {
+      const existing = JSON.parse(existingRaw) as AcquisitionAttribution;
+      if (existing && existing.source && (existing.source !== 'direct' || current.source === 'direct')) {
+        return existing;
+      }
+    }
+    window.localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(current));
+  } catch {
+    // ignore storage quota / privacy mode errors
+  }
+
+  return current;
+}
+
+/**
+ * Reads the persisted first-touch attribution (or captures it if not yet initialized).
+ */
+export function getFirstTouchAttribution(): AcquisitionAttribution {
+  return captureFirstTouchAttribution();
+}
+
+/**
+ * Generates official Lemon Squeezy checkout link with overlay embed, user attribution,
+ * and first-touch acquisition channel metadata (`checkout[custom][acquisition_source]`).
  */
 export function buildLemonCheckoutUrl(
   user?: { id: string; email?: string | null } | null,
-  isAnnual = true
+  isAnnual = true,
+  checkoutSurface = 'pricing_modal'
 ): string {
   const baseUrl = `${LEMON_CONFIG.proMonthlyUrl}?embed=1`;
   const params = new URLSearchParams();
@@ -128,8 +259,23 @@ export function buildLemonCheckoutUrl(
   if (user?.email) {
     params.set('checkout[email]', user.email);
   }
-  if (isAnnual) {
-    params.set('checkout[custom][billing_cycle]', 'annual');
+  params.set('checkout[custom][billing_cycle]', isAnnual ? 'annual' : 'monthly');
+
+  const attribution = getFirstTouchAttribution();
+  if (attribution.source) {
+    params.set('checkout[custom][acquisition_source]', attribution.source);
+  }
+  if (checkoutSurface) {
+    params.set('checkout[custom][checkout_surface]', checkoutSurface);
+  }
+  if (attribution.utmSource) {
+    params.set('checkout[custom][utm_source]', attribution.utmSource);
+  }
+  if (attribution.utmCampaign) {
+    params.set('checkout[custom][utm_campaign]', attribution.utmCampaign);
+  }
+  if (attribution.referrerHost) {
+    params.set('checkout[custom][referrer]', attribution.referrerHost);
   }
 
   const query = params.toString();
@@ -142,3 +288,4 @@ export function buildLemonCheckoutUrl(
 export function getCustomerBillingPortalUrl(): string {
   return LEMON_CONFIG.customerPortalUrl;
 }
+

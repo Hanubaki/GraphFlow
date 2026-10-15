@@ -3,6 +3,7 @@ import {
   checkFeatureEntitlement,
   buildLemonCheckoutUrl,
   getCustomerBillingPortalUrl,
+  resolveAcquisitionChannel,
   TIER_LIMITS,
 } from '../services/billing';
 import {
@@ -48,15 +49,27 @@ describe('SaaS Monetization & Tier Gating Engine', () => {
     expect(checkFeatureEntitlement('circuit_breakers', 'free').allowed).toBe(true);
   });
 
-  it('builds official Lemon Squeezy checkout URL with custom attributes and annual cycle', () => {
+  it('builds official Lemon Squeezy checkout URL with custom attributes, annual cycle, and acquisition source', () => {
     const user = { id: 'usr-441', email: 'architect@example.com' };
-    const url = buildLemonCheckoutUrl(user, true);
+    const url = buildLemonCheckoutUrl(user, true, 'pricing_modal');
 
     expect(url).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a');
     expect(url).toContain('embed=1');
     expect(url).toContain('checkout%5Bcustom%5D%5Buser_id%5D=usr-441');
     expect(url).toContain('checkout%5Bemail%5D=architect%40example.com');
     expect(url).toContain('checkout%5Bcustom%5D%5Bbilling_cycle%5D=annual');
+    expect(url).toContain('checkout%5Bcustom%5D%5Bacquisition_source%5D=');
+    expect(url).toContain('checkout%5Bcustom%5D%5Bcheckout_surface%5D=pricing_modal');
+  });
+
+  it('classifies first-touch acquisition channels accurately across X/Twitter, GitHub, Reddit, Search, and Viral Share links', () => {
+    expect(resolveAcquisitionChannel('?utm_source=twitter&utm_campaign=launch_day1', '').source).toBe('twitter_x');
+    expect(resolveAcquisitionChannel('', 'https://t.co/xyz123').source).toBe('twitter_x');
+    expect(resolveAcquisitionChannel('', 'https://github.com/Hanubaki/GraphFlow').source).toBe('github');
+    expect(resolveAcquisitionChannel('', 'https://www.reddit.com/r/devops').source).toBe('reddit');
+    expect(resolveAcquisitionChannel('', 'https://www.google.com/search?q=system+design').source).toBe('organic_search');
+    expect(resolveAcquisitionChannel('', '', '#share=eyJub2RlcyI6W119').source).toBe('viral_share_link');
+    expect(resolveAcquisitionChannel('', '').source).toBe('direct');
   });
 
   it('returns valid customer billing portal URL', () => {

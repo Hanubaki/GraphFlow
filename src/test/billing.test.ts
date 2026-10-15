@@ -26,7 +26,7 @@ describe('SaaS Monetization & Lemon Squeezy Integration Verification', () => {
     expect(indexHtml).toContain('property="og:title"');
     expect(indexHtml).toContain('property="og:description"');
     expect(indexHtml).toContain('name="twitter:card"');
-    expect(indexHtml).toContain('GraphFlow – Interactive Architecture & Data Flow Simulator');
+    expect(indexHtml).toContain('GraphFlow – System Design Simulator');
   });
 
   it('verifies PricingModal connects directly to the Lemon Squeezy checkout URL with overlay class', () => {

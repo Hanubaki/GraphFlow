@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Check, X, ArrowRight, ShieldCheck, UserCheck, Mail } from 'lucide-react';
 import { soundFx } from '../../utils/sound';
 import { telemetry } from '../../utils/telemetry';
+import { buildLemonCheckoutUrl, getFirstTouchAttribution } from '../../services/billing';
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -42,16 +43,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
   if (!isOpen) return null;
 
   const defaultCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1';
-  const checkoutUrl = user
-    ? `${defaultCheckoutUrl}&checkout[custom][user_id]=${user.id}&checkout[email]=${encodeURIComponent(user.email || '')}`
-    : defaultCheckoutUrl;
+  const checkoutUrl = buildLemonCheckoutUrl(user, isAnnual, 'pricing_modal') || defaultCheckoutUrl;
 
   const handleProClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     soundFx.playClick();
+    const attribution = getFirstTouchAttribution();
     telemetry.track('Checkout Clicked', {
       tier: 'pro',
       billingCycle: isAnnual ? 'annual' : 'monthly',
       source: 'pricing_modal',
+      acquisitionSource: attribution.source,
     });
 
     if (!user && onOpenAuth) {

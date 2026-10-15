@@ -90,6 +90,26 @@ export function clearIdempotencyStore(): void {
   idempotencyStore.clear();
 }
 
+export interface ConversionAttributionLog {
+  acquisitionSource: string;
+  checkoutSurface: string;
+  billingCycle: string;
+  utmSource?: string;
+  utmCampaign?: string;
+  referrer?: string;
+}
+
+export function extractConversionAttribution(customData: Record<string, any> = {}): ConversionAttributionLog {
+  return {
+    acquisitionSource: String(customData.acquisition_source || 'direct'),
+    checkoutSurface: String(customData.checkout_surface || 'unknown'),
+    billingCycle: String(customData.billing_cycle || 'monthly'),
+    utmSource: customData.utm_source ? String(customData.utm_source) : undefined,
+    utmCampaign: customData.utm_campaign ? String(customData.utm_campaign) : undefined,
+    referrer: customData.referrer ? String(customData.referrer) : undefined,
+  };
+}
+
 // Read raw body helper for Vercel Serverless with max size limit
 export async function getRawBody(req: IncomingMessage, maxBytes = MAX_PAYLOAD_BYTES): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -190,6 +210,7 @@ export default async function handler(req: any, res: any) {
     const eventName = payload.meta?.event_name;
     const customData = payload.meta?.custom_data || {};
     const userId = customData.user_id;
+    const attribution = extractConversionAttribution(customData);
 
     // Strict Idempotency Check
     const eventId = String(
@@ -228,7 +249,7 @@ export default async function handler(req: any, res: any) {
 
     if (!targetUserId) {
       console.warn('Webhook received but unable to locate corresponding user_id:', payload.meta);
-      return res.status(200).json({ warning: 'User not found in payload', received: true });
+      return res.status(200).json({ warning: 'User not found in payload', received: true, attribution });
     }
 
     // Process subscription events
@@ -249,7 +270,15 @@ export default async function handler(req: any, res: any) {
         })
         .eq('id', targetUserId);
 
-      console.log(`Updated user ${targetUserId} plan_tier to ${isPaid ? 'pro' : 'free'}`);
+      console.log(
+        JSON.stringify({
+          event: 'lemon_squeezy_conversion_attribution',
+          userId: targetUserId,
+          eventName,
+          planTier: isPaid ? 'pro' : 'free',
+          ...attribution,
+        })
+      );
     } else if (
       eventName === 'subscription_cancelled' ||
       eventName === 'subscription_expired'
@@ -265,7 +294,7 @@ export default async function handler(req: any, res: any) {
       console.log(`Downgraded user ${targetUserId} to free tier upon cancellation.`);
     }
 
-    return res.status(200).json({ received: true });
+    return res.status(200).json({ received: true, attribution });
   } catch (error: any) {
     console.error('Webhook processing exception:', error);
     return res.status(500).json(

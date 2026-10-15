@@ -32,6 +32,8 @@ import { generateShareUrl } from '../../services/projectStorage';
 import { TEMPLATES } from '../../constants/templates';
 import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
 import { ArchitectureTemplate } from '../../types/graph';
+import { buildLemonCheckoutUrl, getFirstTouchAttribution } from '../../services/billing';
+import { telemetry } from '../../utils/telemetry';
 
 interface LandingPageProps {
   onEnterApp: () => void;
@@ -968,9 +970,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                 ))}
               </ul>
               <a
-                href="https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1"
+                href={
+                  buildLemonCheckoutUrl(user, false, 'landing_pricing') ||
+                  'https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1'
+                }
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  const attribution = getFirstTouchAttribution();
+                  telemetry.track('Checkout Clicked', {
+                    tier: 'pro',
+                    billingCycle: 'monthly',
+                    source: 'landing_pricing',
+                    acquisitionSource: attribution.source,
+                  });
+                }}
                 className={`lemonsqueezy-button mt-10 ${btnPrimary}`}
               >
                 <span>Upgrade to Pro</span>

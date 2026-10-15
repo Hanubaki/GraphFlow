@@ -7,6 +7,7 @@ import {
   clearRateLimitStore,
   checkAndStoreIdempotency,
   clearIdempotencyStore,
+  extractConversionAttribution,
 } from '../../api/webhook';
 
 describe('API Design & Security Contracts Suite', () => {
@@ -110,6 +111,23 @@ describe('API Design & Security Contracts Suite', () => {
       expect(nginxContent).toContain('camera=()');
       expect(nginxContent).toContain('X-Frame-Options "SAMEORIGIN"');
       expect(nginxContent).toContain('X-Content-Type-Options "nosniff"');
+    });
+
+    it('extracts customer acquisition attribution from Lemon Squeezy webhook custom_data', () => {
+      const attr = extractConversionAttribution({
+        user_id: 'usr-1',
+        acquisition_source: 'twitter_x',
+        checkout_surface: 'pricing_modal',
+        billing_cycle: 'annual',
+        utm_source: 'twitter',
+        referrer: 't.co',
+      });
+
+      expect(attr.acquisitionSource).toBe('twitter_x');
+      expect(attr.checkoutSurface).toBe('pricing_modal');
+      expect(attr.billingCycle).toBe('annual');
+      expect(attr.utmSource).toBe('twitter');
+      expect(attr.referrer).toBe('t.co');
     });
   });
 });
