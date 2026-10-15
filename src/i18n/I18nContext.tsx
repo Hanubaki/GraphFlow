@@ -29,8 +29,6 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY) as Locale;
       if (stored === 'en' || stored === 'tr') return stored;
-      const navLang = navigator.language.toLowerCase();
-      if (navLang.startsWith('tr')) return 'tr';
     }
     return 'en';
   });
