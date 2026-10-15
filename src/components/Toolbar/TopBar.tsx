@@ -22,6 +22,7 @@ import {
   User as UserIcon,
   Activity,
   Users,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSimulationControls } from '../../context/SimulationContext';
@@ -57,6 +58,7 @@ interface TopBarProps {
   onOpenAnalytics?: () => void;
   onOpenAuth?: () => void;
   onOpenHome?: () => void;
+  onOpenTour?: () => void;
   onClearGraph: () => void;
 }
 
@@ -87,6 +89,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenAnalytics,
   onOpenAuth,
   onOpenHome,
+  onOpenTour,
   onClearGraph,
 }) => {
   const { user, isPro, planTier } = useAuth();
@@ -171,58 +174,60 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right Controls Container */}
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
-        {/* Play/Pause + Speed Group */}
-        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
-          <button
-            onClick={handleTogglePlay}
-            className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-              isRunning
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-            }`}
-            title={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
-            aria-label={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
-          >
-            {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span className="hidden 3xl:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
-          </button>
+        {/* Play/Pause + Speed + Spike Group */}
+        <div data-tour="sim-controls" className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
+            <button
+              onClick={handleTogglePlay}
+              className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
+                isRunning
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+              }`}
+              title={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
+              aria-label={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
+            >
+              {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span className="hidden 3xl:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
+            </button>
 
-          <div className="h-4 w-px bg-slate-800 mx-1" />
+            <div className="h-4 w-px bg-slate-800 mx-1" />
 
-          {/* Speed toggles */}
-          <div className="flex gap-0.5" role="group" aria-label="Simulation speed">
-            {[0.5, 1, 2].map(s => (
-              <button
-                key={s}
-                onClick={() => onSetSpeed(s)}
-                className={`h-7 px-1.5 rounded text-[11px] font-mono transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-                  speedMultiplier === s
-                    ? 'bg-cyan-500/20 text-cyan-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                aria-label={`Set speed to ${s}x`}
-              >
-                {s}x
-              </button>
-            ))}
+            {/* Speed toggles */}
+            <div className="flex gap-0.5" role="group" aria-label="Simulation speed">
+              {[0.5, 1, 2].map(s => (
+                <button
+                  key={s}
+                  onClick={() => onSetSpeed(s)}
+                  className={`h-7 px-1.5 rounded text-[11px] font-mono transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
+                    speedMultiplier === s
+                      ? 'bg-cyan-500/20 text-cyan-400 font-bold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  aria-label={`Set speed to ${s}x`}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Traffic Spike Button */}
-        <button
-          onClick={handleTriggerSpike}
-          disabled={!isRunning}
-          className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
-            isSpikeMode
-              ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
-              : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
-          } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
-          title={t('topbar.spikeTitle')}
-          aria-label={t('topbar.spikeTitle')}
-        >
-          <Zap className="w-3.5 h-3.5" />
-          <span className="hidden 3xl:inline">{t('topbar.spike')}</span>
-        </button>
+          {/* Traffic Spike Button */}
+          <button
+            onClick={handleTriggerSpike}
+            disabled={!isRunning}
+            className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
+              isSpikeMode
+                ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
+                : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
+            } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
+            title={t('topbar.spikeTitle')}
+            aria-label={t('topbar.spikeTitle')}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span className="hidden 3xl:inline">{t('topbar.spike')}</span>
+          </button>
+        </div>
 
         {/* Sound toggle */}
         <button
@@ -300,6 +305,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="Studio tools">
           {/* Presets */}
           <button
+            data-tour="presets"
             onClick={onOpenTemplates}
             className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="Architecture Presets"
@@ -313,6 +319,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           {/* AI Generator */}
           <button
+            data-tour="aigen"
             onClick={onOpenAiGenerator}
             className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-cyan-950/60 text-cyan-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
             title="AI Prompt-to-Architecture"
@@ -399,6 +406,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Export Button */}
         <button
+          data-tour="export"
           onClick={handleOpenExport}
           className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
           title={t('topbar.exportTitle')}
@@ -462,6 +470,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Languages className="w-3.5 h-3.5 text-cyan-400" />
           <span>{locale.toUpperCase()}</span>
         </button>
+
+        {/* Interactive Onboarding Tour Trigger */}
+        {onOpenTour && (
+          <button
+            onClick={onOpenTour}
+            className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-cyan-400 hover:text-cyan-300 hover:border-cyan-500/50 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+            title={locale === 'tr' ? 'İnteraktif Stüdyo Rehberini Aç' : 'Launch Interactive Studio Tour'}
+            aria-label="Launch interactive studio tour"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         {/* Clear graph */}
         <button
