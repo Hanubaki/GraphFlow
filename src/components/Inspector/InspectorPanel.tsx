@@ -60,6 +60,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
 
   return (
     <div
+      data-tour="inspector"
       className={`${
         selectedNode || selectedEdge ? 'flex' : 'hidden md:flex'
       } absolute inset-x-0 bottom-0 max-h-[55vh] w-full rounded-t-2xl border-t md:relative md:inset-auto md:max-h-none md:w-80 md:h-full md:rounded-none md:border-t-0 md:border-l bg-dark-900/95 border-slate-800 backdrop-blur-xl flex-col z-30 md:z-20 overflow-y-auto shadow-2xl md:shadow-none`}
