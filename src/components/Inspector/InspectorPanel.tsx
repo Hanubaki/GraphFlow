@@ -23,6 +23,8 @@ interface InspectorPanelProps {
   onUpdateEdge: (id: string, updates: Partial<GraphEdge>) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
+  onAutoHarden?: () => void;
+  onAutoLayout?: () => void;
 }
 
 const ACCENT_COLORS = [
@@ -55,6 +57,8 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onUpdateEdge,
   onDeleteNode,
   onDeleteEdge,
+  onAutoHarden,
+  onAutoLayout,
 }) => {
   const diagnostics = useMemo(() => analyzeTopologyDiagnostics(nodes, edges), [nodes, edges]);
 
@@ -411,7 +415,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </div>
             </div>
 
-            {/* Automated Engineering Diagnostics (Critical Path, Bottleneck, SLA, SPOF) */}
+            {/* Automated Engineering Diagnostics (Critical Path, Tail Latency, FinOps Cost, Bottleneck, SLA, SPOF) */}
             <div className="p-3 rounded-xl bg-dark-950 border border-slate-800 space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
@@ -424,10 +428,14 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
 
               <div className="space-y-1 pt-1 border-t border-slate-800/80">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400">Critical Path Latency</span>
+                  <span className="text-slate-400">Critical Path (p50)</span>
                   <span className="font-mono font-bold text-cyan-400">
                     {diagnostics.criticalPathLatencyMs} ms
                   </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>p95: <strong className="text-slate-200">{diagnostics.p95LatencyMs}ms</strong></span>
+                  <span>p99: <strong className="text-amber-300">{diagnostics.p99LatencyMs}ms</strong></span>
                 </div>
                 {diagnostics.criticalPathTitles.length > 0 && (
                   <div className="text-[11px] font-mono text-slate-400 truncate" title={diagnostics.criticalPathTitles.join(' → ')}>
@@ -450,17 +458,47 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 </div>
               )}
 
+              <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-800/80">
+                <span className="text-slate-400">Est. Cloud Infra Cost</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  ~${diagnostics.estimatedMonthlyCostUsd}/mo
+                </span>
+              </div>
+
               {diagnostics.spofWarnings.length > 0 && (
-                <div className="space-y-1 pt-1.5 border-t border-slate-800/80">
-                  <div className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3 shrink-0" />
-                    Topology Risk Advisories
+                <div className="space-y-1.5 pt-1.5 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                      Topology Risk Advisories
+                    </div>
                   </div>
                   {diagnostics.spofWarnings.map((warn, idx) => (
                     <div key={idx} className="text-[11px] text-slate-300 leading-snug pl-2 border-l border-amber-500/40">
                       {warn}
                     </div>
                   ))}
+                  {onAutoHarden && (
+                    <button
+                      onClick={onAutoHarden}
+                      className="w-full mt-1 h-7 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Auto-Harden Risks & Breakers
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {onAutoLayout && nodes.length > 1 && (
+                <div className="pt-1.5 border-t border-slate-800/80">
+                  <button
+                    onClick={onAutoLayout}
+                    className="w-full h-7 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                    Auto-Align Architecture DAG
+                  </button>
                 </div>
               )}
             </div>
