@@ -108,4 +108,12 @@ describe('Export & Documentation Generator', () => {
     expect(parsed?.isEmbed).toBe(true);
     expect(parsed?.nodes.length).toBe(2);
   });
+
+  it('includes automated Critical Path, Bottleneck, and Composite SLA diagnostics in Markdown spec', () => {
+    const md = generateMarkdownDoc(nodes, edges, 'Production Cluster');
+    expect(md).toContain('## 3. Capacity, Critical Path & SLA Diagnostics');
+    expect(md).toContain('Critical Path Latency (Worst-Case Hop Chain):** `30ms`');
+    expect(md).toContain('Frontend Client -> API Gateway');
+    expect(md).toContain('Primary Throughput Bottleneck:** **API Gateway**');
+  });
 });
