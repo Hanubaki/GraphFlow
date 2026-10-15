@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { GraphNode, GraphEdge, NodeStatus, ProtocolType } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
-import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
+import { analyzeTopologyDiagnostics, generateIncidentPostMortemMarkdown } from '../../utils/simulationPhysics';
+import { useSimulationControls } from '../../context/SimulationContext';
 import {
   Sliders,
   Trash2,
@@ -12,6 +13,8 @@ import {
   AlertTriangle,
   Zap,
   ShieldCheck,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface InspectorPanelProps {
@@ -48,6 +51,12 @@ const PROTOCOLS: ProtocolType[] = [
   'SQL Query',
 ];
 
+const CLOUD_STACK_LABELS: Record<'aws' | 'gcp' | 'azure', string> = {
+  aws: 'ECS Fargate · RDS Multi-AZ · ElastiCache · MSK',
+  gcp: 'Cloud Run · Cloud SQL HA · Memorystore · Pub/Sub',
+  azure: 'Container Apps · Azure DB · Redis Cache · Event Hubs',
+};
+
 export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   selectedNode,
   selectedEdge,
@@ -61,6 +70,39 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onAutoLayout,
 }) => {
   const diagnostics = useMemo(() => analyzeTopologyDiagnostics(nodes, edges), [nodes, edges]);
+  const [cloudProvider, setCloudProvider] = useState<'aws' | 'gcp' | 'azure'>('aws');
+  const [copiedPostMortem, setCopiedPostMortem] = useState(false);
+
+  let simControls = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    simControls = useSimulationControls();
+  } catch {
+    // Mounted outside SimulationProvider in standalone unit tests
+  }
+
+  const incidents = simControls?.incidents ?? [];
+  const trafficLoadMultiplier = simControls?.trafficLoadMultiplier ?? 1;
+  const metrics = simControls?.metrics ?? {
+    totalSent: 0,
+    delivered: 0,
+    errors: 0,
+    currentRps: 0,
+    avgLatencyMs: 24,
+  };
+
+  const handleCopyPostMortem = () => {
+    const md = generateIncidentPostMortemMarkdown(
+      nodes,
+      edges,
+      incidents,
+      metrics,
+      trafficLoadMultiplier
+    );
+    navigator.clipboard?.writeText(md);
+    setCopiedPostMortem(true);
+    setTimeout(() => setCopiedPostMortem(false), 2000);
+  };
 
   return (
     <div
@@ -458,11 +500,35 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-800/80">
-                <span className="text-slate-400">Est. Cloud Infra Cost</span>
-                <span className="font-mono font-bold text-emerald-400">
-                  ~${diagnostics.estimatedMonthlyCostUsd}/mo
-                </span>
+              {/* Multi-Cloud FinOps Cost Selector (AWS / GCP / Azure) */}
+              <div className="space-y-1.5 pt-1.5 border-t border-slate-800/80">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Multi-Cloud FinOps</span>
+                  <div className="flex items-center gap-0.5 rounded bg-slate-900 p-0.5 border border-slate-800">
+                    {(['aws', 'gcp', 'azure'] as const).map(provider => (
+                      <button
+                        key={provider}
+                        type="button"
+                        onClick={() => setCloudProvider(provider)}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono uppercase transition-colors ${
+                          cloudProvider === provider
+                            ? 'bg-cyan-500/20 text-cyan-300 font-bold'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {provider}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-mono text-[10px] text-slate-400 truncate max-w-[165px]" title={CLOUD_STACK_LABELS[cloudProvider]}>
+                    {CLOUD_STACK_LABELS[cloudProvider]}
+                  </span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    ~${diagnostics.cloudCostsUsd[cloudProvider]}/mo
+                  </span>
+                </div>
               </div>
 
               {diagnostics.spofWarnings.length > 0 && (
@@ -499,6 +565,62 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <Layers className="w-3.5 h-3.5 text-cyan-400" />
                     Auto-Align Architecture DAG
                   </button>
+                </div>
+              )}
+            </div>
+
+            {/* Live SRE Chaos & Incident Post-Mortem Log */}
+            <div className="p-3 rounded-xl bg-dark-950 border border-slate-800 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                  SRE Post-Mortem Log
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopyPostMortem}
+                  className="inline-flex items-center gap-1 h-6 px-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-cyan-300 transition-colors"
+                  title="Copy full SRE Incident Post-Mortem Markdown report to clipboard"
+                >
+                  {copiedPostMortem ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span className="text-emerald-300">Copied MD</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy Report</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {incidents.length === 0 ? (
+                <div className="text-[11px] text-slate-400 font-mono py-1.5 leading-relaxed">
+                  No circuit trips or outages recorded yet. Inject a <strong className="text-slate-200">Spike</strong> or <strong className="text-slate-200">Kill</strong> a node to log chaos events.
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  {incidents.slice(0, 6).map(inc => {
+                    const badgeStyle =
+                      inc.severity === 'critical'
+                        ? 'text-rose-400 border-rose-500/40 bg-rose-950/30'
+                        : inc.severity === 'recovery'
+                          ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/30'
+                          : 'text-amber-400 border-amber-500/40 bg-amber-950/30';
+                    return (
+                      <div
+                        key={inc.id}
+                        className={`p-1.5 rounded border text-[10px] font-mono leading-snug ${badgeStyle}`}
+                      >
+                        <div className="flex items-center justify-between opacity-80 mb-0.5">
+                          <span className="font-bold truncate">{inc.nodeTitle}</span>
+                          <span>{inc.timeLabel}</span>
+                        </div>
+                        <div className="text-slate-200">{inc.message}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

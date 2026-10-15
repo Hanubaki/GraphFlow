@@ -7,19 +7,24 @@ import {
   createHopPacket,
   calculateEffectiveLatency,
   evaluateCircuitBreakerTransition,
+  IncidentEvent,
 } from '../utils/simulationPhysics';
 
 export interface SimulationControls {
   isRunning: boolean;
   speedMultiplier: number;
+  trafficLoadMultiplier: number;
   isSpikeMode: boolean;
   soundEnabled: boolean;
   metrics: SimulationMetrics;
+  incidents: IncidentEvent[];
   togglePlay: () => void;
   setSpeedMultiplier: (speed: number) => void;
+  setTrafficLoadMultiplier: (load: number) => void;
   triggerSpike: () => void;
   toggleSound: () => void;
   resetSimulation: () => void;
+  clearIncidents: () => void;
 }
 
 // Low-frequency control context (updates on user interaction or 1 Hz metrics)
@@ -47,6 +52,14 @@ interface SimulationProviderProps {
   children: React.ReactNode;
 }
 
+function formatIncidentTime(ts: number): string {
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+
 export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   nodes,
   edges,
@@ -55,9 +68,11 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
 }) => {
   const [isRunning, setIsRunning] = useState<boolean>(true);
   const [speedMultiplier, setSpeedMultiplierState] = useState<number>(1);
+  const [trafficLoadMultiplier, setTrafficLoadMultiplierState] = useState<number>(1);
   const [isSpikeMode, setIsSpikeMode] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  
+  const [incidents, setIncidents] = useState<IncidentEvent[]>([]);
+
   // High-frequency packet animation state (isolated to SimulationPacketContext)
   const [packets, setPackets] = useState<DataPacket[]>([]);
 
@@ -80,6 +95,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   });
   const consecutiveErrorsRef = useRef<Map<string, number>>(new Map());
   const breakerChangedAtRef = useRef<Map<string, number>>(new Map());
+  const prevNodeStatusRef = useRef<Map<string, GraphNode['status']>>(new Map());
 
   // Stable refs prevent node dragging (60-120 Hz position updates) from tearing down setInterval & RAF loops
   const nodesRef = useRef<GraphNode[]>(nodes);
@@ -88,7 +104,53 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   edgesRef.current = edges;
   const onUpdateNodeRef = useRef(onUpdateNode);
   onUpdateNodeRef.current = onUpdateNode;
+  const trafficLoadRef = useRef<number>(trafficLoadMultiplier);
+  trafficLoadRef.current = trafficLoadMultiplier;
   const hasEdges = edges.length > 0;
+
+  const appendIncident = useCallback(
+    (
+      severity: IncidentEvent['severity'],
+      nodeId: string,
+      nodeTitle: string,
+      type: IncidentEvent['type'],
+      message: string
+    ) => {
+      const now = Date.now();
+      setIncidents(prev => {
+        const entry: IncidentEvent = {
+          id: `inc-${now}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp: now,
+          timeLabel: formatIncidentTime(now),
+          severity,
+          nodeId,
+          nodeTitle,
+          type,
+          message,
+        };
+        return [entry, ...prev].slice(0, 20);
+      });
+    },
+    []
+  );
+
+  // Track manual node status changes (e.g. Chaos Kill / Degrade / Restore) for SRE Post-Mortem log
+  useEffect(() => {
+    const prevMap = prevNodeStatusRef.current;
+    for (const n of nodes) {
+      const prevStatus = prevMap.get(n.id);
+      if (prevStatus && prevStatus !== n.status) {
+        if (n.status === 'down') {
+          appendIncident('critical', n.id, n.title, 'NODE_DOWN', 'Service terminated (DOWN) — dropping all inbound traffic.');
+        } else if (n.status === 'degraded') {
+          appendIncident('warning', n.id, n.title, 'NODE_DEGRADED', `Service degraded (${n.latencyMs}ms latency, ${n.errorRate}% error rate).`);
+        } else if (n.status === 'healthy' && (prevStatus === 'down' || prevStatus === 'degraded')) {
+          appendIncident('recovery', n.id, n.title, 'NODE_RECOVERED', 'Service restored to HEALTHY operational status.');
+        }
+      }
+      prevMap.set(n.id, n.status);
+    }
+  }, [nodes, appendIncident]);
 
   const toggleSound = useCallback(() => {
     setSoundEnabled(prev => {
@@ -100,10 +162,17 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   const triggerSpike = useCallback(() => {
     setIsSpikeMode(true);
     soundFx.playSpike();
+    appendIncident(
+      'warning',
+      'ingress',
+      'Edge Ingress',
+      'TRAFFIC_SPIKE',
+      '3x Traffic Surge injected at edge ingress for 4.0s.'
+    );
     setTimeout(() => {
       setIsSpikeMode(false);
     }, 4000);
-  }, []);
+  }, [appendIncident]);
 
   const togglePlay = useCallback(() => {
     setIsRunning(prev => !prev);
@@ -114,8 +183,17 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     setSpeedMultiplierState(speed);
   }, []);
 
+  const setTrafficLoadMultiplier = useCallback((load: number) => {
+    setTrafficLoadMultiplierState(Math.max(0.5, Math.min(10, Number(load.toFixed(1)))));
+  }, []);
+
+  const clearIncidents = useCallback(() => {
+    setIncidents([]);
+  }, []);
+
   const resetSimulation = useCallback(() => {
     setPackets([]);
+    setIncidents([]);
     pendingMetricsRef.current = { sent: 0, delivered: 0, errors: 0 };
     consecutiveErrorsRef.current.clear();
     breakerChangedAtRef.current.clear();
@@ -133,15 +211,21 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   useEffect(() => {
     if (!isRunning || !hasEdges) return;
 
-    const intervalTime = isSpikeMode ? 140 / speedMultiplier : 420 / speedMultiplier;
+    const effectiveRateScale = Math.max(0.5, Math.min(4, Math.sqrt(trafficLoadMultiplier)));
+    const intervalTime = Math.max(
+      70,
+      (isSpikeMode ? 140 : 420) / (speedMultiplier * effectiveRateScale)
+    );
 
     const spawnInterval = setInterval(() => {
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
+      const currentLoad = trafficLoadRef.current;
       const ingressEdges = findIngressEdges(currentNodes, currentEdges);
       if (ingressEdges.length === 0) return;
 
-      const count = isSpikeMode ? Math.min(ingressEdges.length * 2, 4) : 1;
+      const baseBurst = currentLoad >= 5 ? 2 : 1;
+      const count = isSpikeMode ? Math.min(ingressEdges.length * 2, 4) : baseBurst;
       const newPackets: DataPacket[] = [];
 
       for (let i = 0; i < count; i++) {
@@ -149,11 +233,19 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         const fromNode = currentNodes.find(n => n.id === ingressEdge.fromNodeId);
         const toNode = currentNodes.find(n => n.id === ingressEdge.toNodeId);
 
-        const pkt = createHopPacket(ingressEdge, fromNode, toNode, isSpikeMode ? 3 : 1, isSpikeMode);
+        const pkt = createHopPacket(
+          ingressEdge,
+          fromNode,
+          toNode,
+          isSpikeMode ? 3 : Math.ceil(currentLoad),
+          isSpikeMode,
+          Math.random,
+          currentLoad
+        );
         if (!pkt) continue;
 
         newPackets.push(pkt);
-        rpsCounterRef.current += 1;
+        rpsCounterRef.current += Math.max(1, Math.round(currentLoad));
       }
 
       if (newPackets.length > 0) {
@@ -166,7 +258,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     }, intervalTime);
 
     return () => clearInterval(spawnInterval);
-  }, [isRunning, hasEdges, speedMultiplier, isSpikeMode]);
+  }, [isRunning, hasEdges, speedMultiplier, isSpikeMode, trafficLoadMultiplier]);
 
   // Animation frame loop for smooth 60 FPS packet advancement & causal downstream hop propagation
   useEffect(() => {
@@ -183,6 +275,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
       const now = Date.now();
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
+      const currentLoad = trafficLoadRef.current;
       const handleUpdateNode = onUpdateNodeRef.current;
 
       setPackets(prev => {
@@ -223,6 +316,15 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
                 if (nextBreaker !== currentBreaker && handleUpdateNode) {
                   breakerChangedAtRef.current.set(targetNode.id, now);
                   handleUpdateNode(targetNode.id, { circuitBreaker: nextBreaker });
+                  if (nextBreaker === 'open') {
+                    appendIncident(
+                      'critical',
+                      targetNode.id,
+                      targetNode.title,
+                      'CIRCUIT_OPEN',
+                      `Circuit Breaker tripped OPEN after ${prevErr} consecutive failures — fast-failing traffic to DLQ.`
+                    );
+                  }
                 }
               }
             } else {
@@ -234,6 +336,13 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
                 if (targetNode.circuitBreaker === 'half-open' && handleUpdateNode) {
                   breakerChangedAtRef.current.set(targetNode.id, now);
                   handleUpdateNode(targetNode.id, { circuitBreaker: 'closed' });
+                  appendIncident(
+                    'recovery',
+                    targetNode.id,
+                    targetNode.title,
+                    'CIRCUIT_RECOVERED',
+                    'Circuit Breaker probe succeeded — restored CLOSED state.'
+                  );
                 }
 
                 // Causal hop propagation: forward packet to downstream edges
@@ -247,11 +356,13 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
                       targetNode,
                       nextTarget,
                       activeIn,
-                      isSpikeMode
+                      isSpikeMode,
+                      Math.random,
+                      currentLoad
                     );
                     if (childPkt) {
                       spawnedDownstream.push(childPkt);
-                      rpsCounterRef.current += 1;
+                      rpsCounterRef.current += Math.max(1, Math.round(currentLoad));
                       pendingMetricsRef.current.sent += 1;
                     }
                   }
@@ -300,7 +411,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         const avgLat = activeNodes.length > 0
           ? Math.round(
               activeNodes.reduce(
-                (acc, n) => acc + calculateEffectiveLatency(n, isSpikeMode ? 3 : 1, isSpikeMode),
+                (acc, n) => acc + calculateEffectiveLatency(n, isSpikeMode ? 3 : 1, isSpikeMode, currentLoad),
                 0
               ) / activeNodes.length
             )
@@ -326,30 +437,38 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, speedMultiplier, isSpikeMode]);
+  }, [isRunning, speedMultiplier, isSpikeMode, appendIncident]);
 
   const controlsValue = useMemo<SimulationControls>(() => ({
     isRunning,
     speedMultiplier,
+    trafficLoadMultiplier,
     isSpikeMode,
     soundEnabled,
     metrics,
+    incidents,
     togglePlay,
     setSpeedMultiplier,
+    setTrafficLoadMultiplier,
     triggerSpike,
     toggleSound,
     resetSimulation,
+    clearIncidents,
   }), [
     isRunning,
     speedMultiplier,
+    trafficLoadMultiplier,
     isSpikeMode,
     soundEnabled,
     metrics,
+    incidents,
     togglePlay,
     setSpeedMultiplier,
+    setTrafficLoadMultiplier,
     triggerSpike,
     toggleSound,
     resetSimulation,
+    clearIncidents,
   ]);
 
   return (

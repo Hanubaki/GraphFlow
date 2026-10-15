@@ -34,6 +34,8 @@ interface GraphCanvasProps {
   onDeleteEdge: (id: string) => void;
   onAddEdge: (edge: GraphEdge) => void;
   onAddNodeAt: (typeItem: CatalogItem, x: number, y: number) => void;
+  onUpdateNode?: (id: string, updates: Partial<GraphNode>) => void;
+  onDuplicateNode?: (id: string) => void;
 }
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
@@ -53,6 +55,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   onDeleteEdge,
   onAddEdge,
   onAddNodeAt,
+  onUpdateNode,
+  onDuplicateNode,
 }) => {
   const contextPackets = useSimulationPackets();
   const packets = propPackets ?? contextPackets;
@@ -429,6 +433,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
                 onStartConnect={handleStartConnect}
                 onEndConnect={handleEndConnect}
                 onDelete={onDeleteNode}
+                onUpdate={onUpdateNode}
+                onDuplicate={onDuplicateNode}
               />
             </div>
           ))}

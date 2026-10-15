@@ -106,6 +106,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const isRunning = propIsRunning ?? contextControls?.isRunning ?? true;
   const speedMultiplier = propSpeedMultiplier ?? contextControls?.speedMultiplier ?? 1;
+  const trafficLoadMultiplier = contextControls?.trafficLoadMultiplier ?? 1;
   const isSpikeMode = propIsSpikeMode ?? contextControls?.isSpikeMode ?? false;
   const soundEnabled = propSoundEnabled ?? contextControls?.soundEnabled ?? true;
   const metrics = propMetrics ?? contextControls?.metrics ?? {
@@ -118,6 +119,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const onTogglePlay = propOnTogglePlay ?? contextControls?.togglePlay ?? (() => {});
   const onSetSpeed = propOnSetSpeed ?? contextControls?.setSpeedMultiplier ?? (() => {});
+  const onSetTrafficLoad = contextControls?.setTrafficLoadMultiplier ?? (() => {});
   const onTriggerSpike = propOnTriggerSpike ?? contextControls?.triggerSpike ?? (() => {});
   const onToggleSound = propOnToggleSound ?? contextControls?.toggleSound ?? (() => {});
 
@@ -174,7 +176,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right Controls Container */}
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
-        {/* Play/Pause + Speed + Spike Group */}
+        {/* Play/Pause + Speed + Stress Load + Spike Group */}
         <div data-tour="sim-controls" className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
             <button
@@ -210,6 +212,37 @@ export const TopBar: React.FC<TopBarProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Global Traffic Stress Load Slider (0.5x - 10x) */}
+          <div
+            className="hidden md:flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 shrink-0"
+            title="Global Ingress Traffic Load Multiplier — slide up to 10x to stress-test queue backpressure and bottlenecks"
+          >
+            <button
+              type="button"
+              onClick={() => onSetTrafficLoad(1)}
+              className={`font-mono text-[11px] font-bold tabular-nums transition-colors ${
+                trafficLoadMultiplier >= 6
+                  ? 'text-rose-400'
+                  : trafficLoadMultiplier >= 2.5
+                    ? 'text-amber-400'
+                    : 'text-cyan-400'
+              }`}
+              title="Click to reset traffic load to 1x"
+            >
+              Load {trafficLoadMultiplier}x
+            </button>
+            <input
+              type="range"
+              min="0.5"
+              max="10"
+              step="0.5"
+              value={trafficLoadMultiplier}
+              onChange={e => onSetTrafficLoad(Number(e.target.value))}
+              aria-label="Global traffic load multiplier"
+              className="w-14 lg:w-16 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            />
           </div>
 
           {/* Traffic Spike Button */}

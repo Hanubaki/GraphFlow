@@ -7,6 +7,7 @@ import { TopBar } from './components/Toolbar/TopBar';
 import { NodePalette } from './components/Sidebar/NodePalette';
 import { GraphCanvas } from './components/Canvas/GraphCanvas';
 import { InspectorPanel } from './components/Inspector/InspectorPanel';
+// Lazy-loaded on-demand modals for optimal web performance & bundle reduction
 const TemplatesModal = React.lazy(() => import('./components/Modals/TemplatesModal').then(m => ({ default: m.TemplatesModal })));
 const ExportModal = React.lazy(() => import('./components/Modals/ExportModal').then(m => ({ default: m.ExportModal })));
 const AiGeneratorModal = React.lazy(() => import('./components/Modals/AiGeneratorModal').then(m => ({ default: m.AiGeneratorModal })));
@@ -27,6 +28,7 @@ import { calculateAutoCenter } from './utils/viewportMath';
 import { createNodeFromCatalog } from './utils/nodeFactory';
 import { telemetry } from './utils/telemetry';
 import { autoHardenTopology, autoLayoutTopology } from './utils/simulationPhysics';
+import { captureFirstTouchAttribution } from './services/billing';
 
 export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | null;
 
@@ -45,6 +47,7 @@ export const App: React.FC = () => {
     addNode,
     updateNode,
     moveNode,
+    duplicateNode,
     removeNode,
     addEdge,
     updateEdge,
@@ -78,6 +81,7 @@ export const App: React.FC = () => {
     return 'landing';
   });
 
+  // Auto-open interactive onboarding tour on first studio entry
   useEffect(() => {
     if (viewMode !== 'studio' || typeof window === 'undefined') return;
     try {
@@ -91,7 +95,9 @@ export const App: React.FC = () => {
     }
   }, [viewMode]);
 
+  // Capture first-touch acquisition attribution & auto-load shared architecture on boot
   useEffect(() => {
+    captureFirstTouchAttribution();
     const shared = parseShareUrl();
     if (shared && shared.nodes.length > 0) {
       setNodes(shared.nodes);
@@ -115,6 +121,7 @@ export const App: React.FC = () => {
     }
   }, [nodes, setZoom, setPan]);
 
+  // Auto-center on initial mount
   useEffect(() => {
     handleAutoCenter();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,6 +139,7 @@ export const App: React.FC = () => {
     handleAutoCenter(proj.nodes);
   }, [setNodes, setEdges, handleAutoCenter]);
 
+  // Add node from catalog to center of screen
   const handleAddNodeFromPalette = useCallback((item: CatalogItem) => {
     const centerWorldX = Math.round((-pan.x + window.innerWidth / 2) / zoom - 95);
     const centerWorldY = Math.round((-pan.y + window.innerHeight / 2) / zoom - 45);
@@ -141,6 +149,7 @@ export const App: React.FC = () => {
     telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodes.length + 1 });
   }, [addNode, pan, zoom, nodes.length]);
 
+  // Add node at exact canvas coordinates (drop target)
   const handleAddNodeAt = useCallback((item: CatalogItem, x: number, y: number) => {
     const newNode = createNodeFromCatalog(item, { x, y });
     addNode(newNode);
@@ -148,18 +157,21 @@ export const App: React.FC = () => {
     telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodes.length + 1 });
   }, [addNode, nodes.length]);
 
+  // Delete node with audio feedback & telemetry
   const handleDeleteNode = useCallback((id: string) => {
     removeNode(id);
     soundFx.playNodeDeleted();
     telemetry.track('Node Removed', { canvasNodeCount: Math.max(0, nodes.length - 1) });
   }, [removeNode, nodes.length]);
 
+  // Load architecture template with success chime
   const handleSelectTemplate = useCallback((template: any) => {
     loadTemplate(template);
     soundFx.playSuccess();
     telemetry.track('Preset Loaded', { templateId: template.id, nodeCount: template.nodes.length });
   }, [loadTemplate]);
 
+  // Import JSON graph
   const handleImportGraph = useCallback((importedNodes: GraphNode[], importedEdges: GraphEdge[]) => {
     setNodes(importedNodes);
     setEdges(importedEdges);
@@ -207,6 +219,7 @@ export const App: React.FC = () => {
     <MultiplayerProvider>
       <SimulationProvider nodes={nodes} edges={edges} onUpdateNode={updateNode}>
         <div className="fixed inset-0 flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
+        {/* Top Navigation & Simulation Controller */}
         <TopBar
           canUndo={canUndo}
           canRedo={canRedo}
@@ -229,9 +242,12 @@ export const App: React.FC = () => {
           onClearGraph={clearGraph}
         />
 
+        {/* Main Studio Workspace */}
         <main className="flex flex-1 relative overflow-hidden">
+          {/* Left: Component Catalog Palette */}
           <NodePalette onAddNode={handleAddNodeFromPalette} />
 
+          {/* Center: Interactive Graph Canvas */}
           <div className="flex-1 relative h-full">
             <GraphCanvas
               nodes={nodes}
@@ -249,9 +265,14 @@ export const App: React.FC = () => {
               onDeleteEdge={removeEdge}
               onAddEdge={addEdge}
               onAddNodeAt={handleAddNodeAt}
+              onUpdateNode={updateNode}
+              onDuplicateNode={id => {
+                duplicateNode(id);
+              }}
             />
           </div>
 
+        {/* Right: Property Inspector & Metrics */}
         <InspectorPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
@@ -275,11 +296,13 @@ export const App: React.FC = () => {
         />
       </main>
 
+      {/* Interactive Spotlight Onboarding Tour */}
       <OnboardingTour
         isOpen={isTourOpen}
         onClose={() => setIsTourOpen(false)}
       />
 
+      {/* Code-split on-demand Modals with React.Suspense */}
       <React.Suspense fallback={null}>
         {activeModal === 'templates' && (
           <TemplatesModal

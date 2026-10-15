@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { GraphNode } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
+import { Power, Clock, ShieldCheck, Zap, Copy, Trash2 } from 'lucide-react';
 
 interface NodeComponentProps {
   node: GraphNode;
@@ -11,6 +12,8 @@ interface NodeComponentProps {
   onStartConnect: (nodeId: string, startPos: { x: number; y: number }) => void;
   onEndConnect: (nodeId: string) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (id: string, updates: Partial<GraphNode>) => void;
+  onDuplicate?: (id: string) => void;
 }
 
 const NodeComponentBase: React.FC<NodeComponentProps> = ({
@@ -22,6 +25,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
   onStartConnect,
   onEndConnect,
   onDelete,
+  onUpdate,
+  onDuplicate,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const zoomRef = useRef(zoom);
@@ -152,10 +157,124 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
       onTouchStart={handleTouchStart}
       className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border backdrop-blur-md bg-dark-900/90 touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
         isSelected
-          ? 'border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400'
+          ? 'border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400 z-20'
           : 'border-slate-800 hover:border-slate-700 shadow-lg shadow-black/40'
       } ${isDragging ? 'cursor-grabbing opacity-90 scale-[1.01]' : ''}`}
     >
+      {/* Floating Quick-Action & Chaos Bar (visible when node is selected) */}
+      {isSelected && (
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          onTouchStart={e => e.stopPropagation()}
+          role="toolbar"
+          aria-label="Node quick chaos and scaling actions"
+          className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 px-1.5 py-1 rounded-lg bg-dark-950/95 border border-slate-700 shadow-xl whitespace-nowrap z-30"
+        >
+          {onUpdate && (
+            <>
+              {/* 1-Click Kill / Restore */}
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onUpdate(node.id, { status: node.status === 'down' ? 'healthy' : 'down' });
+                }}
+                className={`h-6 px-1.5 rounded text-[10px] font-mono font-bold inline-flex items-center gap-1 transition-colors ${
+                  node.status === 'down'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                }`}
+                title={node.status === 'down' ? 'Restore service to Healthy' : 'Chaos Kill: take service DOWN'}
+              >
+                <Power className="w-2.5 h-2.5" />
+                <span>{node.status === 'down' ? 'Heal' : 'Kill'}</span>
+              </button>
+
+              {/* 1-Click Latency Spike (+100ms) */}
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onUpdate(node.id, {
+                    status: 'degraded',
+                    latencyMs: Math.min(500, node.latencyMs + 100),
+                  });
+                }}
+                className="h-6 px-1.5 rounded text-[10px] font-mono font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 inline-flex items-center gap-0.5 transition-colors"
+                title="Inject +100ms latency degradation"
+              >
+                <Clock className="w-2.5 h-2.5" />
+                <span>+100ms</span>
+              </button>
+
+              {/* 1-Click Circuit Breaker Trip / Reset */}
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onUpdate(node.id, {
+                    circuitBreaker: node.circuitBreaker === 'open' ? 'closed' : 'open',
+                  });
+                }}
+                className={`h-6 px-1.5 rounded text-[10px] font-mono font-semibold inline-flex items-center gap-0.5 border transition-colors ${
+                  node.circuitBreaker === 'open'
+                    ? 'bg-rose-500/25 text-rose-300 border-rose-500/40'
+                    : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-cyan-500/50 hover:text-cyan-300'
+                }`}
+                title="Toggle Circuit Breaker (Open / Closed)"
+              >
+                <ShieldCheck className="w-2.5 h-2.5" />
+                <span>CB</span>
+              </button>
+
+              {/* 1-Click Scale 2x RPS Capacity */}
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  onUpdate(node.id, {
+                    throughputRps: Math.min(5000, Math.max(100, node.throughputRps * 2)),
+                  });
+                }}
+                className="h-6 px-1.5 rounded text-[10px] font-mono font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 inline-flex items-center gap-0.5 transition-colors"
+                title="Scale horizontal capacity (2x RPS)"
+              >
+                <Zap className="w-2.5 h-2.5" />
+                <span>2x RPS</span>
+              </button>
+            </>
+          )}
+
+          {onDuplicate && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onDuplicate(node.id);
+              }}
+              className="h-6 w-6 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white inline-flex items-center justify-center transition-colors"
+              title="Duplicate Component (Ctrl+D)"
+              aria-label="Duplicate Component"
+            >
+              <Copy className="w-2.5 h-2.5" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              onDelete(node.id);
+            }}
+            className="h-6 w-6 rounded bg-rose-950/60 hover:bg-rose-900/80 border border-rose-500/40 text-rose-300 hover:text-white inline-flex items-center justify-center transition-colors"
+            title="Delete Component (Del)"
+            aria-label="Delete Component"
+          >
+            <Trash2 className="w-2.5 h-2.5" />
+          </button>
+        </div>
+      )}
+
       {/* Accent top stripe */}
       <div
         className="h-1.5 w-full rounded-t-xl transition-colors"
@@ -229,17 +348,19 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
       </div>
 
-      {/* Quick Delete Floating Action (visible on hover or tap) */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(node.id);
-        }}
-        className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-md z-20 after:absolute after:-inset-2 after:content-['']"
-        title="Delete Component"
-      >
-        ×
-      </button>
+      {/* Quick Delete Floating Action (visible on hover when not selected) */}
+      {!isSelected && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(node.id);
+          }}
+          className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-md z-20 after:absolute after:-inset-2 after:content-['']"
+          title="Delete Component"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 };

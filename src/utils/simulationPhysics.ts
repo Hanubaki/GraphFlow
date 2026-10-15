@@ -49,11 +49,13 @@ export function findDownstreamEdges(nodeId: string, edges: GraphEdge[]): GraphEd
 export function calculateEffectiveLatency(
   node: GraphNode,
   activeInboundPackets: number,
-  isSpikeMode = false
+  isSpikeMode = false,
+  trafficLoadMultiplier = 1
 ): number {
   const capacityRps = Math.max(50, node.throughputRps || 500);
-  // Each active visual packet represents a batch of ~120 RPS (or ~300 RPS in spike mode)
-  const simulatedInboundRps = activeInboundPackets * (isSpikeMode ? 300 : 120);
+  const loadScale = Math.max(0.25, trafficLoadMultiplier);
+  // Each active visual packet represents a batch of ~120 RPS (or ~300 RPS in spike mode) scaled by trafficLoadMultiplier
+  const simulatedInboundRps = activeInboundPackets * (isSpikeMode ? 300 : 120) * loadScale;
   const utilization = Math.min(2.5, simulatedInboundRps / capacityRps);
 
   const backpressureMultiplier = 1 + 2.5 * utilization * utilization;
@@ -105,13 +107,19 @@ export function createHopPacket(
   toNode: GraphNode | undefined,
   activeInboundPackets = 0,
   isSpikeMode = false,
-  randomFn: () => number = Math.random
+  randomFn: () => number = Math.random,
+  trafficLoadMultiplier = 1
 ): DataPacket | null {
   if (!fromNode || !toNode || fromNode.status === 'down' || toNode.status === 'down') {
     return null;
   }
 
-  const effectiveToLatency = calculateEffectiveLatency(toNode, activeInboundPackets, isSpikeMode);
+  const effectiveToLatency = calculateEffectiveLatency(
+    toNode,
+    activeInboundPackets,
+    isSpikeMode,
+    trafficLoadMultiplier
+  );
   const totalLatency = fromNode.latencyMs + effectiveToLatency + edge.latencyMs;
   const baseSpeed = Math.min(0.025, Math.max(0.005, 120 / Math.max(30, totalLatency)));
 
@@ -146,11 +154,27 @@ export function createHopPacket(
   };
 }
 
+export interface IncidentEvent {
+  id: string;
+  timestamp: number;
+  timeLabel: string;
+  severity: 'critical' | 'warning' | 'recovery';
+  nodeId: string;
+  nodeTitle: string;
+  type: 'CIRCUIT_OPEN' | 'CIRCUIT_RECOVERED' | 'NODE_DOWN' | 'NODE_DEGRADED' | 'NODE_RECOVERED' | 'TRAFFIC_SPIKE';
+  message: string;
+}
+
 export interface TopologyDiagnostics {
   criticalPathLatencyMs: number;
   p95LatencyMs: number;
   p99LatencyMs: number;
   estimatedMonthlyCostUsd: number;
+  cloudCostsUsd: {
+    aws: number;
+    gcp: number;
+    azure: number;
+  };
   criticalPathTitles: string[];
   bottleneckNode: {
     id: string;
@@ -166,7 +190,7 @@ export interface TopologyDiagnostics {
  * Computes static & dynamic engineering diagnostics for an architecture topology:
  * - End-to-end critical path latency (p50, p95, p99)
  * - Primary throughput bottleneck (accounting for fan-in amplification)
- * - Estimated monthly AWS cloud infrastructure cost ($/mo)
+ * - Estimated monthly AWS / GCP / Azure cloud infrastructure cost ($/mo)
  * - Composite serial/pipeline SLA availability percentage
  * - Single Point of Failure (SPOF) & resilience warnings
  */
@@ -180,6 +204,7 @@ export function analyzeTopologyDiagnostics(
       p95LatencyMs: 0,
       p99LatencyMs: 0,
       estimatedMonthlyCostUsd: 0,
+      cloudCostsUsd: { aws: 0, gcp: 0, azure: 0 },
       criticalPathTitles: [],
       bottleneckNode: null,
       compositeSlaPercent: 100,
@@ -290,28 +315,45 @@ export function analyzeTopologyDiagnostics(
     }
   }
 
-  // 5. Tail Latency (p95 / p99) & FinOps Monthly Cloud Cost Estimate ($/mo)
+  // 5. Tail Latency (p95 / p99) & Multi-Cloud FinOps Monthly Cost Estimate ($/mo)
   const p95LatencyMs = Math.round(maxLatency * 1.45);
   const p99LatencyMs = Math.round(maxLatency * 2.15);
 
-  let estimatedMonthlyCostUsd = 0;
+  let awsCost = 0;
+  let gcpCost = 0;
+  let azureCost = 0;
+
   for (const n of nodes) {
     const rps = Math.max(50, n.throughputRps || 500);
     if (n.type === 'database') {
-      estimatedMonthlyCostUsd += 85 + Math.round((rps / 500) * 18);
+      awsCost += 85 + Math.round((rps / 500) * 18); // RDS Multi-AZ
+      gcpCost += 78 + Math.round((rps / 500) * 16); // Cloud SQL HA
+      azureCost += 82 + Math.round((rps / 500) * 17); // Azure DB for PostgreSQL
     } else if (n.type === 'cache') {
-      estimatedMonthlyCostUsd += 45 + Math.round((rps / 1000) * 12);
+      awsCost += 45 + Math.round((rps / 1000) * 12); // ElastiCache Redis
+      gcpCost += 42 + Math.round((rps / 1000) * 11); // Memorystore
+      azureCost += 48 + Math.round((rps / 1000) * 12); // Azure Cache for Redis
     } else if (n.type === 'queue') {
-      estimatedMonthlyCostUsd += 60 + Math.round((rps / 1000) * 10);
+      awsCost += 60 + Math.round((rps / 1000) * 10); // MSK / SQS
+      gcpCost += 46 + Math.round((rps / 1000) * 8); // Cloud Pub/Sub
+      azureCost += 55 + Math.round((rps / 1000) * 9); // Event Hubs / Service Bus
     } else if (n.type === 'gateway') {
-      estimatedMonthlyCostUsd += 28 + Math.round((rps / 1000) * 6);
+      awsCost += 28 + Math.round((rps / 1000) * 6); // ALB / API Gateway
+      gcpCost += 24 + Math.round((rps / 1000) * 5); // Cloud Load Balancing
+      azureCost += 27 + Math.round((rps / 1000) * 6); // Application Gateway
     } else if (n.type === 'storage') {
-      estimatedMonthlyCostUsd += 24;
+      awsCost += 24; // Amazon S3
+      gcpCost += 21; // Cloud Storage
+      azureCost += 23; // Azure Blob Storage
     } else if (n.type === 'serverless') {
-      estimatedMonthlyCostUsd += 14 + Math.round((rps / 1000) * 5);
+      awsCost += 14 + Math.round((rps / 1000) * 5); // AWS Lambda
+      gcpCost += 12 + Math.round((rps / 1000) * 4); // Cloud Run Functions
+      azureCost += 13 + Math.round((rps / 1000) * 5); // Azure Functions
     } else if (n.type === 'service') {
       const replicas = Math.max(2, Math.min(12, Math.ceil(rps / 400)));
-      estimatedMonthlyCostUsd += replicas * 18;
+      awsCost += replicas * 18; // ECS Fargate
+      gcpCost += replicas * 15; // Cloud Run / GKE Autopilot (sustained-use)
+      azureCost += replicas * 17; // Azure Container Apps
     }
   }
 
@@ -319,12 +361,75 @@ export function analyzeTopologyDiagnostics(
     criticalPathLatencyMs: maxLatency,
     p95LatencyMs,
     p99LatencyMs,
-    estimatedMonthlyCostUsd,
+    estimatedMonthlyCostUsd: awsCost,
+    cloudCostsUsd: {
+      aws: awsCost,
+      gcp: gcpCost,
+      azure: azureCost,
+    },
     criticalPathTitles: bestPath,
     bottleneckNode,
     compositeSlaPercent,
     spofWarnings: spofWarnings.slice(0, 4),
   };
+}
+
+/**
+ * Generates an SRE Incident Post-Mortem Markdown report from live simulation metrics and incident timeline.
+ */
+export function generateIncidentPostMortemMarkdown(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  incidents: IncidentEvent[],
+  metrics: { totalSent: number; delivered: number; errors: number; currentRps: number; avgLatencyMs: number },
+  trafficLoadMultiplier = 1
+): string {
+  const diag = analyzeTopologyDiagnostics(nodes, edges);
+  const errorPct = metrics.totalSent > 0 ? ((metrics.errors / metrics.totalSent) * 100).toFixed(2) : '0.00';
+
+  const lines: string[] = [
+    '# SRE Chaos & Incident Post-Mortem Report',
+    '',
+    `**Generated:** ${new Date().toISOString()}`,
+    `**Composite SLA:** ${diag.compositeSlaPercent}% | **Traffic Load Scale:** ${trafficLoadMultiplier}x | **Observed Throughput:** ${metrics.currentRps} RPS`,
+    `**Latency Profile:** p50 \`${diag.criticalPathLatencyMs}ms\` · p95 \`${diag.p95LatencyMs}ms\` · p99 \`${diag.p99LatencyMs}ms\` (Live Avg: \`${metrics.avgLatencyMs}ms\`)`,
+    `**Packet Telemetry:** ${metrics.delivered} delivered / ${metrics.errors} dropped (${errorPct}% drop rate)`,
+    `**Multi-Cloud FinOps Estimate:** AWS \`~$${diag.cloudCostsUsd.aws}/mo\` · GCP \`~$${diag.cloudCostsUsd.gcp}/mo\` · Azure \`~$${diag.cloudCostsUsd.azure}/mo\``,
+    '',
+    '## 1. Chronological Incident & Circuit Breaker Timeline',
+  ];
+
+  if (incidents.length === 0) {
+    lines.push('- No critical outages or circuit breaker trips recorded during this window.');
+  } else {
+    for (const inc of incidents) {
+      lines.push(`- **[${inc.timeLabel}] [${inc.severity.toUpperCase()}] ${inc.nodeTitle}:** ${inc.message}`);
+    }
+  }
+
+  lines.push('', '## 2. Root-Cause Bottleneck & SPOF Analysis');
+  if (diag.bottleneckNode) {
+    lines.push(
+      `- **Primary Throughput Bottleneck:** \`${diag.bottleneckNode.title}\` saturates at **${diag.bottleneckNode.effectiveCapacityRps} RPS** (Inbound Fan-In: ${diag.bottleneckNode.inboundFanIn}x).`
+    );
+  }
+  if (diag.spofWarnings.length > 0) {
+    for (const w of diag.spofWarnings) {
+      lines.push(`- **Risk Advisory:** ${w}`);
+    }
+  } else {
+    lines.push('- All critical downstream dependencies are protected by Circuit Breakers.');
+  }
+
+  lines.push(
+    '',
+    '## 3. Recommended Remediation Actions',
+    '1. Enable automatic `Circuit Breaker` fast-fail on all third-party and database dependencies.',
+    `2. Scale \`${diag.bottleneckNode?.title || 'core compute'}\` horizontal replicas or introduce an asynchronous Kafka/Redis buffer.`,
+    '3. Verify p99 tail latency remains under SLA budget during 3x-10x load surges.'
+  );
+
+  return lines.join('\n');
 }
 
 /**
@@ -403,5 +508,3 @@ export function autoLayoutTopology(nodes: GraphNode[]): GraphNode[] {
     return pos ? { ...n, x: pos.x, y: pos.y } : n;
   });
 }
-
-
