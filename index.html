@@ -4,43 +4,97 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='18' cy='5' r='3'/><circle cx='6' cy='12' r='3'/><circle cx='18' cy='19' r='3'/><line x1='8.59' y1='13.51' x2='15.42' y2='17.49'/><line x1='15.41' y1='6.51' x2='8.59' y2='10.49'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GraphFlow – Interactive Architecture & Data Flow Simulator</title>
+    <title>GraphFlow – System Design Simulator, Cloud Architecture Diagram & Terraform Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Mona+Sans:wdth,wght@100..125,400..700&display=swap" rel="stylesheet">
     
     <meta name="theme-color" content="#08090a" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="keywords" content="system design simulator, cloud architecture diagram tool, docker compose visualizer, diagram to terraform generator, kubernetes manifest generator, distributed systems simulator, chaos engineering tool, microservices architecture diagram, finops cloud cost estimator" />
     <link rel="canonical" href="https://graph-flow-virid.vercel.app/" />
     
     <!-- OpenGraph & Social Cards -->
-    <meta name="description" content="Draw your gateways, services, queues, and databases, then push traffic through them. Watch latency climb, queues back up, and failures spread, right in the browser." />
-    <meta property="og:title" content="GraphFlow – Architecture diagrams that actually run" />
-    <meta property="og:description" content="Push traffic through your system design and watch latency, queue backlogs, and failures play out live. Free and open source." />
+    <meta name="description" content="Interactive system design simulator and cloud architecture diagram tool. Simulate live 60 FPS traffic, p99 tail latency, queue backlogs, and chaos faults—then import or export Docker Compose, AWS Terraform, Kubernetes HPA, and SVG diagrams." />
+    <meta property="og:title" content="GraphFlow – System Design Simulator & Diagram-to-Terraform Engine" />
+    <meta property="og:description" content="Draw gateways, microservices, Kafka queues, and databases or import docker-compose.yml. Simulate traffic surges, SLA bottlenecks, and AWS cloud costs live in your browser." />
     <meta property="og:url" content="https://graph-flow-virid.vercel.app/" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://graph-flow-virid.vercel.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="GraphFlow live demo: a Kafka topic backing up during a traffic surge" />
+    <meta property="og:image:alt" content="GraphFlow live demo: simulating a Kafka topic backlog, p99 tail latency, and Terraform IaC export" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="GraphFlow – Architecture diagrams that actually run" />
-    <meta name="twitter:description" content="Push traffic through your system design and watch latency, queue backlogs, and failures play out live. Free and open source." />
+    <meta name="twitter:title" content="GraphFlow – System Design Simulator & Cloud Architecture Tool" />
+    <meta name="twitter:description" content="Push live traffic through your cloud architecture diagram. Measure p99 latency, queue lag, and AWS FinOps costs—export to Docker Compose, Terraform, Kubernetes, and SVG." />
     <meta name="twitter:image" content="https://graph-flow-virid.vercel.app/og-image.png" />
 
-    <!-- Schema.org SoftwareApplication JSON-LD -->
+    <!-- Schema.org SoftwareApplication & FAQPage JSON-LD -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "GraphFlow",
-      "operatingSystem": "Web",
-      "applicationCategory": "DeveloperApplication",
-      "description": "Interactive distributed architecture and data flow simulator. Design architectures, simulate 60 FPS packet flows with Bezier mathematics, chaos engineering, and AI synthesis.",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      }
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "GraphFlow",
+          "url": "https://graph-flow-virid.vercel.app/",
+          "operatingSystem": "Web",
+          "applicationCategory": "DeveloperApplication",
+          "applicationSubCategory": "Cloud Architecture & System Design Simulator",
+          "description": "Interactive distributed systems simulator and cloud architecture diagram tool. Simulate 60 FPS network traffic, queue backpressure, chaos engineering faults, p99 tail latency, and AWS FinOps cost estimates. Import and export Docker Compose, Terraform HCL, Kubernetes HPA manifests, and vector SVG/PNG diagrams.",
+          "featureList": [
+            "60 FPS Real-Time Distributed System Traffic Simulation",
+            "Docker Compose Visualizer & Reverse-Engineering IaC Importer",
+            "Diagram to AWS Terraform (main.tf) & Kubernetes (HPA YAML) Code Generator",
+            "Chaos Engineering Fault Injection, Packet Loss & Circuit Breaker Auto-Hardening",
+            "Live FinOps Monthly Cloud Cost Estimator & p95/p99 Tail Latency Diagnostics",
+            "High-Resolution Vector SVG & Retina PNG Architecture Diagram Export"
+          ],
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Community Tier",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            {
+              "@type": "Offer",
+              "name": "Pro Architect Tier",
+              "price": "19",
+              "priceCurrency": "USD"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How can I convert a docker-compose.yml or Terraform file into an interactive architecture diagram?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Open GraphFlow Studio, click Export & Import Hub, and paste or upload your docker-compose.yml or main.tf file. GraphFlow automatically reverse-engineers services, databases, caches, queues, and dependencies into a live, auto-aligned system topology."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can GraphFlow generate AWS Terraform and Kubernetes manifests from a system design diagram?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. GraphFlow compiles visual cloud architecture diagrams directly into runnable docker-compose.yml files, AWS Terraform (RDS, ElastiCache, SQS, S3, Lambda, ALB, ECS), and Kubernetes YAML manifests complete with HorizontalPodAutoscaler (HPA) rules."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the distributed systems simulator calculate bottlenecks, SLA, and cloud costs?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "GraphFlow runs a continuous directed acyclic graph (DAG) physics engine that evaluates critical-path latency, p95/p99 tail latency, fan-in capacity ceilings, single points of failure (SPOFs), composite end-to-end SLA percentages, and estimated monthly AWS infrastructure spend."
+              }
+            }
+          ]
+        }
+      ]
     }
     </script>
 
