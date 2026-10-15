@@ -27,6 +27,7 @@ import { CloudProject } from './types/auth';
 import { calculateAutoCenter } from './utils/viewportMath';
 import { createNodeFromCatalog } from './utils/nodeFactory';
 import { telemetry } from './utils/telemetry';
+import { autoHardenTopology, autoLayoutTopology } from './utils/simulationPhysics';
 
 export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | null;
 
@@ -270,6 +271,17 @@ export const App: React.FC = () => {
           onUpdateEdge={updateEdge}
           onDeleteNode={handleDeleteNode}
           onDeleteEdge={removeEdge}
+          onAutoHarden={() => {
+            const hardened = autoHardenTopology(nodes, edges);
+            setNodes(hardened);
+            soundFx.playSuccess();
+          }}
+          onAutoLayout={() => {
+            const aligned = autoLayoutTopology(nodes);
+            setNodes(aligned);
+            handleAutoCenter(aligned);
+            soundFx.playClick();
+          }}
         />
       </main>
 
@@ -314,6 +326,7 @@ export const App: React.FC = () => {
             isOpen={true}
             onClose={() => setActiveModal(null)}
             onApplyArchitecture={handleApplyAiArchitecture}
+            onOpenPricing={() => setActiveModal('pricing')}
           />
         )}
 
