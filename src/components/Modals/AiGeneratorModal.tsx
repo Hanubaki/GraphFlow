@@ -1,12 +1,41 @@
 import React, { useState } from 'react';
 import { useEscapeToClose } from '../../hooks/useEscapeToClose';
-import { Sparkles, X, Loader2, ArrowRight, Wand2, Key } from 'lucide-react';
+import { Sparkles, X, Loader2, ArrowRight, Wand2, Key, Lock } from 'lucide-react';
 import { generateArchitectureWithGemini, synthesizeArchitectureOffline, GeneratedArchitecture } from '../../services/aiGenerator';
+import { useAuth } from '../../context/AuthContext';
+import { checkFeatureEntitlement, TIER_LIMITS } from '../../services/billing';
 
 interface AiGeneratorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyArchitecture: (arch: GeneratedArchitecture) => void;
+  onOpenPricing?: () => void;
+}
+
+const AI_QUOTA_STORAGE_KEY = 'graphflow_daily_ai_quota_v1';
+
+function getDailyAiUsageCount(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = localStorage.getItem(AI_QUOTA_STORAGE_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    const today = new Date().toISOString().slice(0, 10);
+    return parsed.date === today ? Number(parsed.count) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function incrementDailyAiUsageCount(): number {
+  const next = getDailyAiUsageCount() + 1;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(AI_QUOTA_STORAGE_KEY, JSON.stringify({ date: today, count: next }));
+  } catch {
+    // ignore storage errors
+  }
+  return next;
 }
 
 const PRESET_PROMPTS = [
@@ -21,19 +50,30 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
   isOpen,
   onClose,
   onApplyArchitecture,
+  onOpenPricing,
 }) => {
+  const { planTier, isPro } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [statusStep, setStatusStep] = useState('');
+  const [usedToday, setUsedToday] = useState<number>(() => getDailyAiUsageCount());
 
   useEscapeToClose(isOpen, onClose);
 
   if (!isOpen) return null;
 
+  const aiEntitlement = checkFeatureEntitlement('ai_generation_unlimited', planTier, usedToday);
+  const maxFreeDaily = TIER_LIMITS.free.maxDailyAiPrompts;
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    if (!aiEntitlement.allowed) {
+      onClose();
+      onOpenPricing?.();
+      return;
+    }
 
     setIsLoading(true);
     setStatusStep('Analyzing requirements & topologies...');
@@ -51,11 +91,13 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
         result = synthesizeArchitectureOffline(prompt);
       }
 
+      setUsedToday(incrementDailyAiUsageCount());
       onApplyArchitecture(result);
       onClose();
     } catch (err) {
       console.error(err);
       // Fallback
+      setUsedToday(incrementDailyAiUsageCount());
       const fallback = synthesizeArchitectureOffline(prompt);
       onApplyArchitecture(fallback);
       onClose();
@@ -83,7 +125,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 id="ai-gen-modal-title" className="text-base font-bold text-slate-100">AI Prompt-to-Architecture</h2>
                 <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                  PRO
+                  {isPro ? 'PRO UNLIMITED' : `${Math.max(0, maxFreeDaily - usedToday)}/${maxFreeDaily} FREE TODAY`}
                 </span>
               </div>
               <p className="text-xs text-slate-400">Describe your system in plain English; AI will layout and simulate it</p>
@@ -100,6 +142,25 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 
         {/* Content */}
         <div className="p-5 space-y-4">
+          {!aiEntitlement.allowed && (
+            <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="text-xs text-amber-200">{aiEntitlement.reason}</span>
+              </div>
+              {onOpenPricing && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenPricing();
+                  }}
+                  className="h-7 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shrink-0 transition-colors"
+                >
+                  Upgrade to Pro
+                </button>
+              )}
+            </div>
+          )}
           {/* Prompt Textarea */}
           <div className="space-y-1.5">
             <label htmlFor="ai-gen-prompt" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
