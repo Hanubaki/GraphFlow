@@ -520,15 +520,127 @@ const ExportViewer: React.FC = () => {
 };
 
 /* ------------------------------------------------------------------ */
+/* Control Room Blueprint Backdrop (Railway / Unkey / Linear style)    */
+/* ------------------------------------------------------------------ */
+
+const ControlRoomBackdrop: React.FC<{ reduced: boolean }> = ({ reduced }) => (
+  <div aria-hidden="true" className="pointer-events-none select-none">
+    {/* Full-page structural vertical blueprint guide rails */}
+    <div className="fixed inset-0 z-0 flex justify-center">
+      <div className="w-full max-w-[1440px] h-full border-x border-slate-800/20 hidden xl:flex justify-center">
+        <div className="w-full max-w-6xl h-full border-x border-slate-800/45" />
+      </div>
+      <div className="w-full max-w-6xl h-full border-x border-slate-800/45 xl:hidden" />
+    </div>
+
+    {/* Hero & Studio ceiling surface light + masked architectural blueprint & schematic traces */}
+    <div className="absolute top-0 inset-x-0 h-[920px] z-0 overflow-hidden [mask-image:radial-gradient(ellipse_90%_72%_at_50%_26%,#000_42%,transparent_100%)]">
+      {/* Subtle top-down control room surface light (zero blur orbs) */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 75% 42% at 50% -6%, rgba(247, 248, 248, 0.05), rgba(34, 211, 238, 0.022) 48%, transparent 82%)',
+        }}
+      />
+
+      <svg className="w-full h-full block" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          {/* 24px minor coordinate grid */}
+          <pattern id="gf-minor-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+            <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(255,255,255,0.024)" strokeWidth="1" />
+          </pattern>
+          {/* 120px major blueprint grid with precision + registration crosshairs */}
+          <pattern id="gf-major-grid" width="120" height="120" patternUnits="userSpaceOnUse">
+            <rect width="120" height="120" fill="url(#gf-minor-grid)" />
+            <path d="M 120 0 L 0 0 0 120" fill="none" stroke="rgba(255,255,255,0.055)" strokeWidth="1" />
+            <path d="M -3 0 L 3 0 M 0 -3 L 0 3" stroke="#35373c" strokeWidth="1" />
+            <path d="M 117 0 L 123 0 M 120 -3 L 120 3" stroke="#35373c" strokeWidth="1" />
+            <path d="M -3 120 L 3 120 M 0 117 L 0 123" stroke="#35373c" strokeWidth="1" />
+          </pattern>
+        </defs>
+
+        {/* Tiled Blueprint Coordinate Grid */}
+        <rect width="100%" height="100%" fill="url(#gf-major-grid)" />
+
+        {/* Ambient Schematic Topology Traces in upper-right & outer background */}
+        <g className="opacity-70">
+          {/* Trace 1: Ingress -> Gateway -> Bus */}
+          <path
+            id="gf-bg-trace-1"
+            d="M 760 120 L 960 120 C 1020 120, 1020 240, 1080 240 L 1320 240"
+            fill="none"
+            stroke="#24262a"
+            strokeWidth="1.25"
+            strokeDasharray="4 4"
+          />
+          {/* Trace 2: Secondary replica path */}
+          <path
+            id="gf-bg-trace-2"
+            d="M 960 120 C 1020 120, 1020 360, 1080 360 L 1440 360"
+            fill="none"
+            stroke="#24262a"
+            strokeWidth="1.25"
+          />
+          {/* Trace 3: Left margin ingress trace */}
+          <path
+            id="gf-bg-trace-3"
+            d="M 0 240 L 180 240 C 220 240, 220 120, 260 120 L 480 120"
+            fill="none"
+            stroke="#24262a"
+            strokeWidth="1.25"
+            strokeDasharray="3 5"
+          />
+
+          {/* Schematic junction nodes on the 120px grid */}
+          {[
+            [760, 120],
+            [960, 120],
+            [1080, 240],
+            [1320, 240],
+            [1080, 360],
+            [180, 240],
+            [260, 120],
+          ].map(([cx, cy], idx) => (
+            <g key={idx} transform={`translate(${cx}, ${cy})`}>
+              <rect x="-4" y="-4" width="8" height="8" rx="2" fill="#0f1012" stroke="#35373c" strokeWidth="1" />
+              <circle r="1.5" fill={idx === 1 ? '#22d3ee' : '#6f737b'} />
+            </g>
+          ))}
+
+          {/* Quiet animated packets along the schematic background traces */}
+          {!reduced && (
+            <>
+              <circle r="2" fill="#22d3ee" opacity="0.55">
+                <animateMotion dur="9s" repeatCount="indefinite" path="M 760 120 L 960 120 C 1020 120, 1020 240, 1080 240 L 1320 240" />
+              </circle>
+              <circle r="2" fill="#e1e3e6" opacity="0.35">
+                <animateMotion dur="11s" begin="-4s" repeatCount="indefinite" path="M 960 120 C 1020 120, 1020 360, 1080 360 L 1440 360" />
+              </circle>
+              <circle r="1.75" fill="#e1e3e6" opacity="0.3">
+                <animateMotion dur="10s" begin="-2.5s" repeatCount="indefinite" path="M 0 240 L 180 240 C 220 240, 220 120, 260 120 L 480 120" />
+              </circle>
+            </>
+          )}
+        </g>
+      </svg>
+    </div>
+  </div>
+);
+
+/* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth }) => {
   const { user } = useAuth();
+  const reduced = usePrefersReducedMotion();
   const shareUrl = useMemo(() => generateShareUrl(DEMO_NODES, DEMO_EDGES), []);
 
   return (
-    <div className="min-h-screen w-full bg-dark-950 text-slate-200 font-sans antialiased overflow-x-hidden">
+    <div className="relative min-h-screen w-full bg-dark-950 text-slate-200 font-sans antialiased overflow-x-hidden">
+      <ControlRoomBackdrop reduced={reduced} />
+
       {/* Navigation */}
       <nav className="sticky top-0 z-30 border-b border-slate-800/70 bg-dark-950/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto h-14 px-5 md:px-8 flex items-center justify-between">
@@ -576,7 +688,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </nav>
 
       {/* Hero */}
-      <header id="top" className="max-w-6xl mx-auto px-5 md:px-8 pt-20 md:pt-28">
+      <header id="top" className="relative z-10 max-w-6xl mx-auto px-5 md:px-8 pt-20 md:pt-28">
         <h1 className={`${display} max-w-[13ch] text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-[4.75rem]`}>
           Architecture diagrams that actually run.
         </h1>
@@ -599,7 +711,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </header>
 
       {/* Product */}
-      <section aria-label="Live simulation" className="relative mt-14 md:mt-20">
+      <section aria-label="Live simulation" className="relative z-10 mt-14 md:mt-20">
         <div
           aria-hidden="true"
           className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-white/[0.025] to-transparent"
@@ -613,7 +725,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Statement */}
-      <section className="max-w-6xl mx-auto px-5 md:px-8 py-28 md:py-40">
+      <section className="relative z-10 max-w-6xl mx-auto px-5 md:px-8 py-28 md:py-40">
         <p className="max-w-[36ch] text-[1.75rem] md:text-[2.5rem] leading-[1.15] tracking-[-0.025em] font-medium text-slate-500">
           <span className="text-slate-50">A diagram shows how a system should work.</span> GraphFlow shows how it
           behaves: the queue that backs up, the dependency that drags everything down, the minutes it takes to recover.
@@ -621,7 +733,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Feature: fault injection */}
-      <section id="features" className="border-t border-slate-800/70 scroll-mt-14">
+      <section id="features" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
+        <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
+          <span className="absolute -top-[4px] -left-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+          <span className="absolute -top-[4px] -right-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+        </div>
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
           <div className="grid md:grid-cols-2 gap-6 md:gap-16">
             <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Break it on purpose</h2>
@@ -637,7 +753,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Feature: export */}
-      <section id="export" className="border-t border-slate-800/70 scroll-mt-14">
+      <section id="export" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
+        <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
+          <span className="absolute -top-[4px] -left-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+          <span className="absolute -top-[4px] -right-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+        </div>
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
           <div className="grid md:grid-cols-2 gap-6 md:gap-16">
             <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Export what you drew</h2>
@@ -653,7 +773,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Feature pair */}
-      <section className="border-t border-slate-800/70">
+      <section className="relative z-10 border-t border-slate-800/70">
+        <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
+          <span className="absolute -top-[4px] -left-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+          <span className="absolute -top-[4px] -right-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+        </div>
         <div className="max-w-6xl mx-auto px-5 md:px-8 grid md:grid-cols-2 md:divide-x divide-slate-800/70">
           <div className="py-20 md:py-28 md:pr-12 space-y-4">
             <h3 className={`${display} text-2xl md:text-[1.75rem] leading-tight`}>
@@ -699,7 +823,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="border-t border-slate-800/70 scroll-mt-14">
+      <section id="pricing" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
+        <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
+          <span className="absolute -top-[4px] -left-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+          <span className="absolute -top-[4px] -right-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+        </div>
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
           <div className="grid md:grid-cols-2 gap-6 md:gap-16 mb-12 md:mb-16">
             <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>Pricing</h2>
@@ -786,8 +914,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Closing */}
-      <section className="border-t border-slate-800/70">
-        <div className="max-w-6xl mx-auto px-5 md:px-8 py-28 md:py-36">
+      <section className="relative z-10 border-t border-slate-800/70 overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
+          <span className="absolute -top-[4px] -left-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+          <span className="absolute -top-[4px] -right-[4px] w-[7px] h-[7px] text-slate-600 leading-none select-none">+</span>
+        </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_75%_80%_at_50%_100%,#000_20%,transparent_100%)]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+        <div className="relative max-w-6xl mx-auto px-5 md:px-8 py-28 md:py-36">
           <h2 className={`${display} max-w-[17ch] text-4xl md:text-6xl leading-[1.03]`}>
             Find the bottleneck before production does.
           </h2>
@@ -805,7 +946,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/70">
+      <footer className="relative z-10 border-t border-slate-800/70">
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[13px] text-slate-400">
           <div className="flex items-center gap-2.5">
             <span className="w-5 h-5 rounded bg-cyan-500 grid place-items-center">
