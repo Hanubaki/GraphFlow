@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, ArrowRight, ArrowLeft, Check, Compass } from 'lucide-react';
-import { useI18n } from '../../i18n/I18nContext';
 
 export const TOUR_STORAGE_KEY = 'graphflow_tour_completed_v1';
 
@@ -117,12 +116,12 @@ interface SpotlightRect {
 }
 
 export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose }) => {
-  const { locale } = useI18n();
   const [stepIndex, setStepIndex] = useState(0);
+  const [tourLang, setTourLang] = useState<'en' | 'tr'>('en');
   const [rect, setRect] = useState<SpotlightRect | null>(null);
 
   const currentStep = TOUR_STEPS[stepIndex] || TOUR_STEPS[0];
-  const isTr = locale === 'tr';
+  const isTr = tourLang === 'tr';
 
   const measureTarget = useCallback(() => {
     if (!isOpen || typeof document === 'undefined') return;
@@ -306,14 +305,23 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose 
               {currentStep.badge}
             </span>
           </div>
-          <button
-            onClick={handleFinish}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors"
-            title={isTr ? 'Rehberi Kapat (Esc)' : 'Close Tour (Esc)'}
-            aria-label="Close onboarding tour"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setTourLang(l => (l === 'en' ? 'tr' : 'en'))}
+              className="px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900 hover:bg-slate-800 font-mono text-[10px] font-semibold text-slate-300 transition-colors"
+              title="Switch tour language (EN / TR)"
+            >
+              {tourLang.toUpperCase()}
+            </button>
+            <button
+              onClick={handleFinish}
+              className="p-1 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors"
+              title={isTr ? 'Rehberi Kapat (Esc)' : 'Close Tour (Esc)'}
+              aria-label="Close onboarding tour"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Step Content */}
