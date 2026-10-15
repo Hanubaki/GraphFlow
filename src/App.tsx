@@ -18,6 +18,7 @@ const EmbedModal = React.lazy(() => import('./components/Modals/EmbedModal').the
 const AnalyticsModal = React.lazy(() => import('./components/Modals/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
+import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
 import { CatalogItem } from './constants/nodeCatalog';
 import { GraphNode, GraphEdge } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
@@ -69,12 +70,27 @@ export const App: React.FC = () => {
   });
 
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'landing' | 'studio' | 'embed'>(() => {
     if (typeof window === 'undefined') return 'landing';
     if (window.location.hash.includes('#embed=')) return 'embed';
     if (window.location.hash.includes('#share=') || window.location.hash.includes('#studio')) return 'studio';
     return 'landing';
   });
+
+  // Auto-open interactive onboarding tour on first studio entry
+  useEffect(() => {
+    if (viewMode !== 'studio' || typeof window === 'undefined') return;
+    try {
+      const completed = localStorage.getItem(TOUR_STORAGE_KEY);
+      if (!completed) {
+        const timer = setTimeout(() => setIsTourOpen(true), 120);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [viewMode]);
 
   // Auto-load shared or embedded architecture from URL hash on boot
   useEffect(() => {
@@ -214,6 +230,7 @@ export const App: React.FC = () => {
           onOpenAnalytics={() => setActiveModal('analytics')}
           onOpenAuth={() => setActiveModal('auth')}
           onOpenHome={() => setViewMode('landing')}
+          onOpenTour={() => setIsTourOpen(true)}
           onClearGraph={clearGraph}
         />
 
@@ -255,6 +272,12 @@ export const App: React.FC = () => {
           onDeleteEdge={removeEdge}
         />
       </main>
+
+      {/* Interactive Spotlight Onboarding Tour */}
+      <OnboardingTour
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+      />
 
       {/* Code-split on-demand Modals with React.Suspense */}
       <React.Suspense fallback={null}>
