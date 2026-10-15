@@ -31,7 +31,7 @@ describe('Auth & Supabase Database Schema Verification', () => {
   });
 
   it('validates dynamic Lemon Squeezy checkout query parameters formatting', () => {
-    const baseCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1';
+    const baseCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1';
     const mockUserId = 'usr_1029384756';
     const mockEmail = 'founder@graphflow.app';
 

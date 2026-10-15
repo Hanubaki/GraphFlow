@@ -52,7 +52,7 @@ describe('SaaS Monetization & Tier Gating Engine', () => {
     const user = { id: 'usr-441', email: 'architect@example.com' };
     const url = buildLemonCheckoutUrl(user, true);
 
-    expect(url).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242');
+    expect(url).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a');
     expect(url).toContain('embed=1');
     expect(url).toContain('checkout%5Bcustom%5D%5Buser_id%5D=usr-441');
     expect(url).toContain('checkout%5Bemail%5D=architect%40example.com');

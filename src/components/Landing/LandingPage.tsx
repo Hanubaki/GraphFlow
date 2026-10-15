@@ -747,7 +747,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                 ))}
               </ul>
               <a
-                href="https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1"
+                href="https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`lemonsqueezy-button mt-10 ${btnPrimary}`}

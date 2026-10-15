@@ -41,7 +41,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
 
   if (!isOpen) return null;
 
-  const defaultCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1';
+  const defaultCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1';
   const checkoutUrl = user
     ? `${defaultCheckoutUrl}&checkout[custom][user_id]=${user.id}&checkout[email]=${encodeURIComponent(user.email || '')}`
     : defaultCheckoutUrl;

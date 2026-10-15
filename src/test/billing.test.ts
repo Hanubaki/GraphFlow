@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 describe('SaaS Monetization & Lemon Squeezy Integration Verification', () => {
-  const CHECKOUT_URL_REGEX = /^https:\/\/graphflow\.lemonsqueezy\.com\/checkout\/buy\/3022e88b-f961-4b6d-8e5d-2840d312a242(\?embed=1)?$/;
+  const CHECKOUT_URL_REGEX = /^https:\/\/graphflow\.lemonsqueezy\.com\/checkout\/buy\/171c3132-5464-46eb-a519-b95c1e4bca8a(\?embed=1)?$/;
 
   it('validates the official Lemon Squeezy checkout link contract', () => {
-    const rawUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242';
+    const rawUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a';
     const embeddedUrl = `${rawUrl}?embed=1`;
 
     expect(rawUrl).toMatch(CHECKOUT_URL_REGEX);
@@ -33,7 +33,7 @@ describe('SaaS Monetization & Lemon Squeezy Integration Verification', () => {
     const pricingModalPath = path.resolve(__dirname, '../components/Modals/PricingModal.tsx');
     const content = fs.readFileSync(pricingModalPath, 'utf-8');
 
-    expect(content).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1');
+    expect(content).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1');
     expect(content).toContain('lemonsqueezy-button');
     expect(content).toContain('rel="noopener noreferrer"');
   });
@@ -42,7 +42,7 @@ describe('SaaS Monetization & Lemon Squeezy Integration Verification', () => {
     const landingPagePath = path.resolve(__dirname, '../components/Landing/LandingPage.tsx');
     const content = fs.readFileSync(landingPagePath, 'utf-8');
 
-    expect(content).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/3022e88b-f961-4b6d-8e5d-2840d312a242?embed=1');
+    expect(content).toContain('https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1');
     expect(content).toContain('lemonsqueezy-button');
   });
 
