@@ -148,6 +148,9 @@ export function createHopPacket(
 
 export interface TopologyDiagnostics {
   criticalPathLatencyMs: number;
+  p95LatencyMs: number;
+  p99LatencyMs: number;
+  estimatedMonthlyCostUsd: number;
   criticalPathTitles: string[];
   bottleneckNode: {
     id: string;
@@ -161,8 +164,9 @@ export interface TopologyDiagnostics {
 
 /**
  * Computes static & dynamic engineering diagnostics for an architecture topology:
- * - End-to-end critical path latency (longest request chain from ingress to leaf)
+ * - End-to-end critical path latency (p50, p95, p99)
  * - Primary throughput bottleneck (accounting for fan-in amplification)
+ * - Estimated monthly AWS cloud infrastructure cost ($/mo)
  * - Composite serial/pipeline SLA availability percentage
  * - Single Point of Failure (SPOF) & resilience warnings
  */
@@ -173,6 +177,9 @@ export function analyzeTopologyDiagnostics(
   if (nodes.length === 0) {
     return {
       criticalPathLatencyMs: 0,
+      p95LatencyMs: 0,
+      p99LatencyMs: 0,
+      estimatedMonthlyCostUsd: 0,
       criticalPathTitles: [],
       bottleneckNode: null,
       compositeSlaPercent: 100,
@@ -283,12 +290,118 @@ export function analyzeTopologyDiagnostics(
     }
   }
 
+  // 5. Tail Latency (p95 / p99) & FinOps Monthly Cloud Cost Estimate ($/mo)
+  const p95LatencyMs = Math.round(maxLatency * 1.45);
+  const p99LatencyMs = Math.round(maxLatency * 2.15);
+
+  let estimatedMonthlyCostUsd = 0;
+  for (const n of nodes) {
+    const rps = Math.max(50, n.throughputRps || 500);
+    if (n.type === 'database') {
+      estimatedMonthlyCostUsd += 85 + Math.round((rps / 500) * 18);
+    } else if (n.type === 'cache') {
+      estimatedMonthlyCostUsd += 45 + Math.round((rps / 1000) * 12);
+    } else if (n.type === 'queue') {
+      estimatedMonthlyCostUsd += 60 + Math.round((rps / 1000) * 10);
+    } else if (n.type === 'gateway') {
+      estimatedMonthlyCostUsd += 28 + Math.round((rps / 1000) * 6);
+    } else if (n.type === 'storage') {
+      estimatedMonthlyCostUsd += 24;
+    } else if (n.type === 'serverless') {
+      estimatedMonthlyCostUsd += 14 + Math.round((rps / 1000) * 5);
+    } else if (n.type === 'service') {
+      const replicas = Math.max(2, Math.min(12, Math.ceil(rps / 400)));
+      estimatedMonthlyCostUsd += replicas * 18;
+    }
+  }
+
   return {
     criticalPathLatencyMs: maxLatency,
+    p95LatencyMs,
+    p99LatencyMs,
+    estimatedMonthlyCostUsd,
     criticalPathTitles: bestPath,
     bottleneckNode,
     compositeSlaPercent,
     spofWarnings: spofWarnings.slice(0, 4),
   };
 }
+
+/**
+ * One-click Auto-Harden remediation: resolves SPOF warnings, enables Circuit Breakers
+ * on vulnerable downstream nodes, restores degraded/down nodes, and scales bottleneck RPS.
+ */
+export function autoHardenTopology(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
+  const inboundCount = new Map<string, number>();
+  for (const e of edges) {
+    inboundCount.set(e.toNodeId, (inboundCount.get(e.toNodeId) ?? 0) + 1);
+  }
+
+  return nodes.map(n => {
+    const fanIn = inboundCount.get(n.id) ?? 0;
+    const minRecommendedRps = n.type === 'client' ? n.throughputRps : Math.max(n.throughputRps, Math.max(800, fanIn * 450));
+    const needsBreaker = n.type !== 'client';
+    return {
+      ...n,
+      status: 'healthy',
+      circuitBreaker: needsBreaker ? 'closed' : n.circuitBreaker,
+      throughputRps: minRecommendedRps,
+      errorRate: n.errorRate > 1 ? 0.2 : n.errorRate,
+    };
+  });
+}
+
+/**
+ * One-click Architectural DAG Auto-Layout: organizes nodes left-to-right by architectural tier
+ * with clean 10px grid snapping and non-overlapping vertical distribution.
+ */
+export function autoLayoutTopology(nodes: GraphNode[]): GraphNode[] {
+  const tierOrder: Record<GraphNode['type'], number> = {
+    client: 0,
+    gateway: 1,
+    service: 2,
+    serverless: 2,
+    cache: 3,
+    queue: 3,
+    database: 4,
+    storage: 4,
+    external: 4,
+  };
+
+  const columns = new Map<number, GraphNode[]>();
+  for (const n of nodes) {
+    const col = tierOrder[n.type] ?? 2;
+    if (!columns.has(col)) columns.set(col, []);
+    columns.get(col)!.push(n);
+  }
+
+  const sortedCols = Array.from(columns.keys()).sort((a, b) => a - b);
+  const startX = 80;
+  const colSpacing = 270;
+  const rowSpacing = 140;
+  const centerY = 300;
+
+  const updatedPositions = new Map<string, { x: number; y: number }>();
+
+  sortedCols.forEach((colKey, colIndex) => {
+    const group = columns.get(colKey)!;
+    const totalHeight = (group.length - 1) * rowSpacing;
+    const topY = centerY - totalHeight / 2;
+
+    group.forEach((node, rowIndex) => {
+      const rawX = startX + colIndex * colSpacing;
+      const rawY = Math.max(60, topY + rowIndex * rowSpacing);
+      updatedPositions.set(node.id, {
+        x: Math.round(rawX / 10) * 10,
+        y: Math.round(rawY / 10) * 10,
+      });
+    });
+  });
+
+  return nodes.map(n => {
+    const pos = updatedPositions.get(n.id);
+    return pos ? { ...n, x: pos.x, y: pos.y } : n;
+  });
+}
+
 
