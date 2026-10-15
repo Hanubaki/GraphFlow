@@ -1,4 +1,5 @@
 import { GraphNode, GraphEdge } from '../types/graph';
+import { analyzeTopologyDiagnostics } from './simulationPhysics';
 
 /**
  * Sanitizes input text by replacing quotes, stripping HTML/script tags,
@@ -53,6 +54,7 @@ export function exportArchitectureJson(nodes: GraphNode[], edges: GraphEdge[], n
 export function generateMarkdownDoc(nodes: GraphNode[], edges: GraphEdge[], name = 'System Architecture'): string {
   const date = new Date().toLocaleDateString();
   const safeName = sanitizeLabel(name) || 'System Architecture';
+  const diagnostics = analyzeTopologyDiagnostics(nodes, edges);
   
   let md = `# ${safeName} Architecture\n\n`;
   md += `*Generated automatically by [GraphFlow](https://github.com/Hanubaki/GraphFlow) on ${date}*\n\n`;
@@ -94,6 +96,19 @@ export function generateMarkdownDoc(nodes: GraphNode[], edges: GraphEdge[], name
     md += `  ${cleanFrom} -->${label} ${cleanTo}\n`;
   });
   md += `\`\`\`\n`;
+
+  md += `\n## 3. Capacity, Critical Path & SLA Diagnostics\n\n`;
+  md += `- **Composite End-to-End SLA:** \`${diagnostics.compositeSlaPercent}%\`\n`;
+  md += `- **Critical Path Latency (Worst-Case Hop Chain):** \`${diagnostics.criticalPathLatencyMs}ms\` (${diagnostics.criticalPathTitles.map(sanitizeLabel).join(' -> ') || 'N/A'})\n`;
+  if (diagnostics.bottleneckNode) {
+    md += `- **Primary Throughput Bottleneck:** **${sanitizeLabel(diagnostics.bottleneckNode.title)}** (Effective Ceiling: \`${diagnostics.bottleneckNode.effectiveCapacityRps} RPS\` at fan-in \`${diagnostics.bottleneckNode.inboundFanIn}\`)\n`;
+  }
+  if (diagnostics.spofWarnings.length > 0) {
+    md += `\n### Topology Risk Advisories\n`;
+    diagnostics.spofWarnings.forEach(w => {
+      md += `- ${sanitizeLabel(w)}\n`;
+    });
+  }
 
   return md;
 }
@@ -156,6 +171,13 @@ export function generateDockerCompose(nodes: GraphNode[], edges: GraphEdge[], na
       yml += `      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1\n`;
       yml += `    ports:\n`;
       yml += `      - "9092:9092"\n`;
+    } else if (n.type === 'storage') {
+      yml += `    image: minio/minio:latest\n`;
+      yml += `    restart: always\n`;
+      yml += `    command: server /data --console-address ":9001"\n`;
+      yml += `    ports:\n`;
+      yml += `      - "9000:9000"\n`;
+      yml += `      - "9001:9001"\n`;
     } else if (n.type === 'gateway') {
       yml += `    image: nginx:alpine\n`;
       yml += `    restart: always\n`;
@@ -196,7 +218,7 @@ export function generateDockerCompose(nodes: GraphNode[], edges: GraphEdge[], na
 }
 
 /**
- * Generates Terraform infrastructure code (main.tf) for AWS ECS / RDS / ElastiCache.
+ * Generates Terraform infrastructure code (main.tf) for AWS ECS / RDS / ElastiCache / SQS / S3 / Lambda / API Gateway.
  */
 export function generateTerraform(nodes: GraphNode[], edges: GraphEdge[], name = 'graphflow'): string {
   const safeProject = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'graphflow';
@@ -250,12 +272,30 @@ export function generateTerraform(nodes: GraphNode[], edges: GraphEdge[], name =
       tf += `  num_cache_nodes      = 1\n`;
       tf += `  parameter_group_name = "default.redis7"\n`;
       tf += `}\n\n`;
+    } else if (n.type === 'queue') {
+      tf += `resource "aws_sqs_queue" "${sName}" {\n`;
+      tf += `  name                      = "${safeProject}-${sName}"\n`;
+      tf += `  message_retention_seconds = 86400\n`;
+      tf += `  visibility_timeout_seconds = ${Math.max(30, Math.round(n.latencyMs / 10))}\n`;
+      tf += `}\n\n`;
+    } else if (n.type === 'storage') {
+      tf += `resource "aws_s3_bucket" "${sName}" {\n`;
+      tf += `  bucket = "${safeProject}-${sName.replace(/_/g, '-')}"\n`;
+      tf += `}\n\n`;
+    } else if (n.type === 'serverless') {
+      tf += `resource "aws_lambda_function" "${sName}" {\n`;
+      tf += `  function_name = "${safeProject}-${sName}"\n`;
+      tf += `  runtime       = "nodejs20.x"\n`;
+      tf += `  handler       = "index.handler"\n`;
+      tf += `  timeout       = ${Math.max(5, Math.ceil(n.latencyMs / 100))}\n`;
+      tf += `}\n\n`;
     } else {
+      const replicas = Math.max(2, Math.min(12, Math.ceil((n.throughputRps || 500) / 400)));
       tf += `resource "aws_ecs_service" "${sName}_svc" {\n`;
       tf += `  name            = "${sName}"\n`;
       tf += `  cluster         = aws_ecs_cluster.${safeProject}_cluster.id\n`;
       tf += `  launch_type     = "FARGATE"\n`;
-      tf += `  desired_count   = 2\n`;
+      tf += `  desired_count   = ${replicas}\n`;
       tf += `  task_definition = "${sName}-task"\n`;
       tf += `}\n\n`;
     }
