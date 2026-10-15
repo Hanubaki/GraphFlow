@@ -29,6 +29,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
 
   return (
     <div
+      data-tour="palette"
       className={`relative z-20 flex flex-col h-full bg-dark-900/95 border-r border-slate-800 backdrop-blur-xl transition-all duration-300 ${
         isCollapsed ? 'w-14' : 'w-72'
       }`}
