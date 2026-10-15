@@ -10,8 +10,10 @@ import {
   exportDockerComposeFile,
   exportTerraformFile,
   exportKubernetesFile,
+  exportSvgDiagram,
+  exportPngDiagram,
 } from '../../utils/export';
-import { sanitizeArchitectureImport } from '../../utils/securitySanitizer';
+import { parseInfrastructureToTopology, SAMPLE_DOCKER_COMPOSE_IMPORT } from '../../utils/importTopology';
 import { checkFeatureEntitlement } from '../../services/billing';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -27,6 +29,7 @@ import {
   Cloud,
   Lock,
   Layers,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface ExportModalProps {
@@ -46,13 +49,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onImportGraph,
   onOpenPricing,
 }) => {
-  const { planTier } = useAuth();
+  const { planTier, isPro } = useAuth();
   const [activeTab, setActiveTab] = useState<'export' | 'markdown' | 'docker' | 'terraform' | 'kubernetes'>('export');
   const [copied, setCopied] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [iacPasteText, setIacPasteText] = useState('');
   const terraformEntitlement = checkFeatureEntitlement('terraform_export', planTier);
 
-  // Accessibility: close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -82,19 +85,30 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     const reader = new FileReader();
     reader.onload = event => {
       try {
-        const parsed = JSON.parse(event.target?.result as string);
-        const { nodes: sanitizedNodes, edges: sanitizedEdges } = sanitizeArchitectureImport(parsed);
-        if (sanitizedNodes.length > 0) {
-          onImportGraph(sanitizedNodes, sanitizedEdges);
-          onClose();
-        } else {
-          setImportError('Invalid GraphFlow architecture JSON: no valid components found.');
-        }
-      } catch {
-        setImportError('Failed to parse JSON file.');
+        const raw = (event.target?.result as string) || '';
+        const { nodes: importedNodes, edges: importedEdges } = parseInfrastructureToTopology(raw, file.name);
+        onImportGraph(importedNodes, importedEdges);
+        onClose();
+      } catch (err) {
+        setImportError(err instanceof Error ? err.message : 'Failed to parse infrastructure file.');
       }
     };
     reader.readAsText(file);
+  };
+
+  const handlePasteImport = (rawInput = iacPasteText) => {
+    setImportError(null);
+    if (!rawInput.trim()) {
+      setImportError('Paste a docker-compose.yml, main.tf, or GraphFlow JSON payload first.');
+      return;
+    }
+    try {
+      const { nodes: importedNodes, edges: importedEdges } = parseInfrastructureToTopology(rawInput);
+      onImportGraph(importedNodes, importedEdges);
+      onClose();
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to parse infrastructure definition.');
+    }
   };
 
   return (
@@ -113,7 +127,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
             <div>
               <h2 id="export-modal-title" className="text-base font-bold text-slate-100">Export & Import Hub</h2>
-              <p className="text-xs text-slate-400">Save architecture, generate specs, or import files</p>
+              <p className="text-xs text-slate-400">Export SVG/PNG diagrams, generate IaC, or reverse-engineer Docker Compose & Terraform</p>
             </div>
           </div>
           <button
@@ -138,7 +152,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             }`}
           >
             <Download className="w-3.5 h-3.5" />
-            File Export & Import
+            Export & Reverse-Import
           </button>
           <button
             role="tab"
@@ -204,6 +218,38 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div role="tabpanel" aria-label={activeTab} className="p-5 overflow-y-auto flex-1">
           {activeTab === 'export' && (
             <div className="space-y-4">
+              {/* High-Res Vector SVG & Retina PNG Architecture Snapshot Card */}
+              <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/15 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-slate-100 font-semibold text-xs">
+                    <ImageIcon className="w-4 h-4 text-cyan-400" />
+                    <span>High-Resolution Architecture Blueprint Image (SVG / 2x PNG)</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300">
+                    {isPro ? 'WHITE-LABEL PRO' : 'FREE (WITH GRAPHFLOW BADGE)'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Export a dark-mode CAD blueprint snapshot complete with SLA, p99 tail latency, and FinOps cloud cost HUD for GitHub PRs, Notion, and slide decks.
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => exportSvgDiagram(nodes, edges, !isPro)}
+                    className="h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download Vector .SVG
+                  </button>
+                  <button
+                    onClick={() => exportPngDiagram(nodes, edges, !isPro)}
+                    className="h-9 px-3 rounded-lg border border-cyan-500/40 bg-dark-950 hover:bg-slate-900 text-cyan-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    Download 2x Retina .PNG
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Export JSON Card */}
                 <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between gap-3">
@@ -218,7 +264,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   </div>
                   <button
                     onClick={() => exportArchitectureJson(nodes, edges)}
-                    className="w-full h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                    className="w-full h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download JSON
@@ -238,7 +284,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   </div>
                   <button
                     onClick={() => exportMarkdownFile(nodes, edges)}
-                    className="w-full h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                    className="w-full h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Download .md Spec
@@ -246,24 +292,61 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </div>
               </div>
 
-              {/* Import Section */}
-              <div className="p-4 rounded-xl border border-dashed border-slate-800 bg-dark-950/40 text-center space-y-2 mt-4">
-                <Upload className="w-6 h-6 text-slate-400 mx-auto" />
-                <div className="text-xs font-semibold text-slate-200">Import GraphFlow JSON File</div>
-                <div className="text-[11px] text-slate-400">Restore or load another architecture layout</div>
-                <label className="inline-block mt-2">
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <span className="cursor-pointer h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-flex items-center justify-center transition-colors">
-                    Choose File to Load
-                  </span>
-                </label>
+              {/* Reverse-Engineering Infrastructure Importer Section */}
+              <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/70 space-y-3 mt-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-semibold text-slate-100">
+                      Reverse-Engineer Infrastructure (<code className="text-cyan-300 font-mono">docker-compose.yml</code>, <code className="text-cyan-300 font-mono">main.tf</code>, or <code className="text-cyan-300 font-mono">.json</code>)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIacPasteText(SAMPLE_DOCKER_COMPOSE_IMPORT);
+                      handlePasteImport(SAMPLE_DOCKER_COMPOSE_IMPORT);
+                    }}
+                    className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                  >
+                    Try Sample docker-compose.yml
+                  </button>
+                </div>
+
+                <textarea
+                  value={iacPasteText}
+                  onChange={e => setIacPasteText(e.target.value)}
+                  placeholder="Paste your docker-compose.yml services block, Terraform main.tf resources, or GraphFlow JSON here to auto-generate a live simulation topology..."
+                  rows={4}
+                  className="w-full rounded-lg border border-slate-800 bg-dark-900 p-2.5 font-mono text-[11px] text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none"
+                />
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="inline-block">
+                    <input
+                      type="file"
+                      accept=".json,.yml,.yaml,.tf"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <span className="cursor-pointer h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-flex items-center gap-1.5 transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload .yml / .tf / .json File
+                    </span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePasteImport()}
+                    className="h-8 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                  >
+                    <Box className="w-3.5 h-3.5" />
+                    Convert IaC to Live Topology
+                  </button>
+                </div>
+
                 {importError && (
-                  <div className="text-xs text-rose-400 font-mono mt-2">{importError}</div>
+                  <div className="text-xs text-rose-400 font-mono mt-1">{importError}</div>
                 )}
               </div>
             </div>

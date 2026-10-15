@@ -121,9 +121,6 @@ export function exportMarkdownFile(nodes: GraphNode[], edges: GraphEdge[], name 
   downloadFile(`${sanitizedName}-spec.md`, content, 'text/markdown');
 }
 
-/**
- * Generates production-grade docker-compose.yml from visual architecture nodes and edges.
- */
 export function generateDockerCompose(nodes: GraphNode[], edges: GraphEdge[], name = 'graphflow'): string {
   const safeProject = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'graphflow';
   
@@ -219,9 +216,6 @@ export function generateDockerCompose(nodes: GraphNode[], edges: GraphEdge[], na
   return yml;
 }
 
-/**
- * Generates Terraform infrastructure code (main.tf) for AWS ECS / RDS / ElastiCache / SQS / S3 / Lambda / API Gateway.
- */
 export function generateTerraform(nodes: GraphNode[], edges: GraphEdge[], name = 'graphflow'): string {
   const safeProject = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '_') || 'graphflow';
 
@@ -335,10 +329,6 @@ export function exportTerraformFile(nodes: GraphNode[], edges: GraphEdge[], name
   downloadFile('main.tf', content, 'text/plain');
 }
 
-/**
- * Generates production-grade Kubernetes manifests (Deployment, Service, HorizontalPodAutoscaler)
- * scaled according to each node's throughputRps and latency profile.
- */
 export function generateKubernetesManifests(
   nodes: GraphNode[],
   edges: GraphEdge[],
@@ -465,3 +455,148 @@ export function exportKubernetesFile(nodes: GraphNode[], edges: GraphEdge[], nam
   downloadFile('k8s-manifests.yaml', content, 'application/x-yaml');
 }
 
+export function generateArchitectureSvg(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  options: { title?: string; includeWatermark?: boolean } = {}
+): string {
+  const { title = 'Distributed System Topology', includeWatermark = true } = options;
+  const diagnostics = analyzeTopologyDiagnostics(nodes, edges);
+
+  const minX = nodes.length > 0 ? Math.min(...nodes.map(n => n.x)) : 0;
+  const minY = nodes.length > 0 ? Math.min(...nodes.map(n => n.y)) : 0;
+  const maxX = nodes.length > 0 ? Math.max(...nodes.map(n => n.x + (n.width || 190))) : 800;
+  const maxY = nodes.length > 0 ? Math.max(...nodes.map(n => n.y + (n.height || 90))) : 450;
+
+  const padX = 72;
+  const headerH = 64;
+  const footerH = includeWatermark ? 48 : 28;
+  const padY = 56;
+
+  const contentW = Math.max(820, maxX - minX + padX * 2);
+  const contentH = Math.max(420, maxY - minY + padY * 2);
+  const totalW = contentW;
+  const totalH = headerH + contentH + footerH;
+
+  const offsetX = padX - minX;
+  const offsetY = headerH + padY - minY;
+
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}" fill="none">\n`;
+  svg += `  <defs>\n`;
+  svg += `    <pattern id="gf-export-grid" width="24" height="24" patternUnits="userSpaceOnUse">\n`;
+  svg += `      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#181b20" stroke-width="1" />\n`;
+  svg += `    </pattern>\n`;
+  svg += `    <marker id="gf-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n`;
+  svg += `      <path d="M 0 1 L 8 5 L 0 9 z" fill="#22d3ee" />\n`;
+  svg += `    </marker>\n`;
+  svg += `  </defs>\n\n`;
+
+  svg += `  <rect width="${totalW}" height="${totalH}" fill="#08090a" />\n`;
+  svg += `  <rect x="0" y="${headerH}" width="${totalW}" height="${contentH}" fill="url(#gf-export-grid)" />\n`;
+
+  svg += `  <rect x="0" y="0" width="${totalW}" height="${headerH}" fill="#0c0e12" />\n`;
+  svg += `  <line x1="0" y1="${headerH}" x2="${totalW}" y2="${headerH}" stroke="#1e293b" stroke-width="1" />\n`;
+  svg += `  <rect x="24" y="20" width="24" height="24" rx="6" fill="#06b6d4" />\n`;
+  svg += `  <text x="58" y="31" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">${escapeXml(title)}</text>\n`;
+  svg += `  <text x="58" y="47" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">${nodes.length} Nodes • ${edges.length} Connections • Critical Path: ${diagnostics.criticalPathLatencyMs}ms</text>\n`;
+
+  const hudText = `SLA: ${diagnostics.compositeSlaPercent}%   |   p99: ${diagnostics.p99LatencyMs}ms   |   Est. Cloud: ~$${diagnostics.estimatedMonthlyCostUsd}/mo`;
+  svg += `  <text x="${totalW - 24}" y="37" text-anchor="end" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600">${escapeXml(hudText)}</text>\n\n`;
+
+  edges.forEach(e => {
+    const from = nodeMap.get(e.fromNodeId);
+    const to = nodeMap.get(e.toNodeId);
+    if (!from || !to) return;
+
+    const x1 = from.x + (from.width || 190) + offsetX;
+    const y1 = from.y + (from.height || 90) / 2 + offsetY;
+    const x2 = to.x + offsetX;
+    const y2 = to.y + (to.height || 90) / 2 + offsetY;
+
+    const dx = Math.max(60, Math.abs(x2 - x1) * 0.45);
+    const pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+    const strokeColor = e.errorRate > 2 ? '#f43f5e' : '#334155';
+
+    svg += `  <path d="${pathD}" fill="none" stroke="${strokeColor}" stroke-width="2" marker-end="url(#gf-arrow)" />\n`;
+
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2 - 8;
+    const badgeLabel = `${e.protocol} (${e.latencyMs}ms)`;
+    const badgeW = Math.max(76, badgeLabel.length * 6.2 + 14);
+
+    svg += `  <rect x="${midX - badgeW / 2}" y="${midY - 10}" width="${badgeW}" height="18" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1" />\n`;
+    svg += `  <text x="${midX}" y="${midY + 2}" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">${escapeXml(badgeLabel)}</text>\n`;
+  });
+
+  nodes.forEach(n => {
+    const nx = n.x + offsetX;
+    const ny = n.y + offsetY;
+    const nw = n.width || 190;
+    const nh = n.height || 90;
+    const statusColor = n.status === 'down' ? '#ef4444' : n.status === 'degraded' ? '#f59e0b' : '#10b981';
+
+    svg += `  <g transform="translate(${nx}, ${ny})">\n`;
+    svg += `    <rect width="${nw}" height="${nh}" rx="10" fill="#0f1319" stroke="#1e293b" stroke-width="1.5" />\n`;
+    svg += `    <rect x="1" y="1" width="${nw - 2}" height="4" rx="2" fill="${escapeXml(n.color || '#22d3ee')}" />\n`;
+    svg += `    <circle cx="${nw - 14}" cy="18" r="4" fill="${statusColor}" />\n`;
+    svg += `    <text x="14" y="26" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700">${escapeXml(n.title.slice(0, 22))}</text>\n`;
+    svg += `    <text x="14" y="43" fill="#64748b" font-family="system-ui, -apple-system, sans-serif" font-size="10.5">${escapeXml(n.subtitle.slice(0, 26))}</text>\n`;
+    svg += `    <line x1="12" y1="58" x2="${nw - 12}" y2="58" stroke="#1e293b" stroke-width="1" />\n`;
+    svg += `    <text x="14" y="75" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10">${n.latencyMs}ms • ${n.errorRate}% err</text>\n`;
+    svg += `    <text x="${nw - 14}" y="75" text-anchor="end" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600">${n.throughputRps} RPS</text>\n`;
+    svg += `  </g>\n`;
+  });
+
+  if (includeWatermark) {
+    const wmY = totalH - 34;
+    svg += `  <g transform="translate(${totalW - 335}, ${wmY})">\n`;
+    svg += `    <rect width="315" height="24" rx="6" fill="#0c1218" stroke="#155e75" stroke-width="1" />\n`;
+    svg += `    <text x="157" y="15.5" text-anchor="middle" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600">Simulated with GraphFlow.dev • System Design</text>\n`;
+    svg += `  </g>\n`;
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+export function exportSvgDiagram(nodes: GraphNode[], edges: GraphEdge[], includeWatermark = true, name = 'graphflow-topology') {
+  const safeName = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '-') || 'graphflow-topology';
+  const svg = generateArchitectureSvg(nodes, edges, { includeWatermark });
+  downloadFile(`${safeName}.svg`, svg, 'image/svg+xml;charset=utf-8');
+}
+
+export function exportPngDiagram(nodes: GraphNode[], edges: GraphEdge[], includeWatermark = true, name = 'graphflow-topology') {
+  const safeName = sanitizeLabel(name).toLowerCase().replace(/[^a-z0-9_-]/g, '-') || 'graphflow-topology';
+  const svg = generateArchitectureSvg(nodes, edges, { includeWatermark });
+  const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+
+  img.onload = () => {
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (blob) {
+          const pngUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = pngUrl;
+          link.download = `${safeName}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(pngUrl);
+        }
+      }, 'image/png');
+    }
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}

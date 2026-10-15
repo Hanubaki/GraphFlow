@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { generateMarkdownDoc } from '../utils/export';
+import { generateMarkdownDoc, generateArchitectureSvg, generateTerraform } from '../utils/export';
+import { parseInfrastructureToTopology, SAMPLE_DOCKER_COMPOSE_IMPORT } from '../utils/importTopology';
 import { generateShareUrl, parseShareUrl, generateEmbedUrl, generateIframeSnippet } from '../services/projectStorage';
 import { GraphNode, GraphEdge } from '../types/graph';
 
@@ -71,7 +72,6 @@ describe('Export & Documentation Generator', () => {
     const shareUrl = generateShareUrl(nodes, edges);
     expect(shareUrl).toContain('#share=');
 
-    // Simulate window.location.hash
     window.location.hash = shareUrl.split('#')[1];
     const parsed = parseShareUrl();
     expect(parsed).not.toBeNull();
@@ -101,7 +101,6 @@ describe('Export & Documentation Generator', () => {
     expect(iframe).toContain('height="500"');
     expect(iframe).toContain('allow="autoplay"');
 
-    // Test that parseShareUrl recognizes embed mode
     window.location.hash = embedUrl.split('#')[1];
     const parsed = parseShareUrl();
     expect(parsed).not.toBeNull();
@@ -115,5 +114,27 @@ describe('Export & Documentation Generator', () => {
     expect(md).toContain('Critical Path Latency (Worst-Case Hop Chain):** `30ms`');
     expect(md).toContain('Frontend Client -> API Gateway');
     expect(md).toContain('Primary Throughput Bottleneck:** **API Gateway**');
+  });
+
+  it('generates standalone SVG architecture diagram with Free watermark and clean Pro white-label option', () => {
+    const freeSvg = generateArchitectureSvg(nodes, edges, { includeWatermark: true });
+    expect(freeSvg).toContain('<svg');
+    expect(freeSvg).toContain('Frontend Client');
+    expect(freeSvg).toContain('Simulated with GraphFlow.dev');
+
+    const proSvg = generateArchitectureSvg(nodes, edges, { includeWatermark: false });
+    expect(proSvg).not.toContain('Simulated with GraphFlow.dev');
+  });
+
+  it('reverse-engineers docker-compose.yml and Terraform main.tf into live GraphFlow topologies', () => {
+    const dcResult = parseInfrastructureToTopology(SAMPLE_DOCKER_COMPOSE_IMPORT, 'docker-compose.yml');
+    expect(dcResult.format).toBe('docker-compose');
+    expect(dcResult.nodes.length).toBeGreaterThanOrEqual(7);
+    expect(dcResult.edges.length).toBeGreaterThanOrEqual(6);
+
+    const tfHcl = generateTerraform(dcResult.nodes, dcResult.edges, 'checkout');
+    const tfResult = parseInfrastructureToTopology(tfHcl, 'main.tf');
+    expect(tfResult.format).toBe('terraform');
+    expect(tfResult.nodes.length).toBeGreaterThanOrEqual(3);
   });
 });
