@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GraphNode, GraphEdge, NodeStatus, ProtocolType } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
+import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
 import {
   Sliders,
   Trash2,
@@ -55,6 +56,8 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onDeleteNode,
   onDeleteEdge,
 }) => {
+  const diagnostics = useMemo(() => analyzeTopologyDiagnostics(nodes, edges), [nodes, edges]);
+
   return (
     <div
       className={`${
@@ -334,6 +337,26 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               />
             </div>
 
+            {/* Edge Packet Loss / Error Rate */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                  Packet Loss Rate
+                </span>
+                <span className="font-mono text-rose-400 font-semibold">{selectedEdge.errorRate}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="50"
+                step="0.5"
+                value={selectedEdge.errorRate}
+                onChange={e => onUpdateEdge(selectedEdge.id, { errorRate: Number(e.target.value) })}
+                className="w-full accent-rose-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+
             {/* Delete Connection */}
             <div className="pt-2 border-t border-slate-800">
               <button
@@ -387,6 +410,60 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </div>
             </div>
 
+            {/* Automated Engineering Diagnostics (Critical Path, Bottleneck, SLA, SPOF) */}
+            <div className="p-3 rounded-xl bg-dark-950 border border-slate-800 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                  Engineering Diagnostics
+                </span>
+                <span className="font-mono text-[11px] text-emerald-400 font-semibold">
+                  SLA {diagnostics.compositeSlaPercent}%
+                </span>
+              </div>
+
+              <div className="space-y-1 pt-1 border-t border-slate-800/80">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Critical Path Latency</span>
+                  <span className="font-mono font-bold text-cyan-400">
+                    {diagnostics.criticalPathLatencyMs} ms
+                  </span>
+                </div>
+                {diagnostics.criticalPathTitles.length > 0 && (
+                  <div className="text-[11px] font-mono text-slate-400 truncate" title={diagnostics.criticalPathTitles.join(' → ')}>
+                    {diagnostics.criticalPathTitles.join(' → ')}
+                  </div>
+                )}
+              </div>
+
+              {diagnostics.bottleneckNode && (
+                <div className="space-y-0.5 pt-1.5 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400">Primary Bottleneck</span>
+                    <span className="font-mono font-bold text-amber-400">
+                      {diagnostics.bottleneckNode.effectiveCapacityRps} RPS cap
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-300 truncate">
+                    {diagnostics.bottleneckNode.title} (fan-in: {diagnostics.bottleneckNode.inboundFanIn})
+                  </div>
+                </div>
+              )}
+
+              {diagnostics.spofWarnings.length > 0 && (
+                <div className="space-y-1 pt-1.5 border-t border-slate-800/80">
+                  <div className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                    Topology Risk Advisories
+                  </div>
+                  {diagnostics.spofWarnings.map((warn, idx) => (
+                    <div key={idx} className="text-[11px] text-slate-300 leading-snug pl-2 border-l border-amber-500/40">
+                      {warn}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Quick Keyboard Shortcuts Reference */}
             <div className="p-3 rounded-xl bg-dark-950/60 border border-slate-800/80 space-y-2 text-[11px]">
               <div className="flex items-center gap-1.5 font-semibold text-slate-300">
@@ -397,6 +474,10 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 <div className="flex justify-between">
                   <span>Undo / Redo:</span>
                   <span className="text-slate-200">Ctrl+Z / Ctrl+Y</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Duplicate Node:</span>
+                  <span className="text-slate-200">Ctrl+D</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delete Selected:</span>
