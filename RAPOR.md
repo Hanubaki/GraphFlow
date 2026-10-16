@@ -75,6 +75,10 @@
       - `docker-compose.yml` ve `main.tf` yanında **`package.json`** (`pg`, `ioredis`, `kafkajs`, `stripe`, `@aws-sdk/client-s3`, `openai` vb. bağımlılıkları otomatik tanıyan) ve **`OpenAPI 3.0 / Swagger`** şemalarını tek tıkla canlı topolojiye dönüştüren genişletilmiş içe aktarıcı.
     - **Klavye Odaklı Mühendis Komut Paleti (`Ctrl+K` / `Cmd+K` — `CommandPaletteModal.tsx`):** Fareye dokunmadan `<1` saniyede bileşen ekleme (`Add Redis`, `Add Kafka`), mevcut düğümlere odaklanma (`Inspect: ...`), `Auto-Harden`, `Auto-Align DAG` ve `Mermaid / k6 / Terraform` dışa aktarma işlemlerini çalıştıran Raycast/Linear tarzı komut paleti.
 
+13. **Mühendis Toplulukları İçin Doğrudan Derin Link (`?template=...`) ve Viral Büyüme Rehberi (`src/App.tsx`, `ENGINEER_GROWTH_PLAYBOOK.md`):**
+    - Hacker News (`Show HN`), Reddit (`r/softwarearchitecture`, `r/sre`, `r/devops`, `r/backend`), X ve Dev.to paylaşımlarında mühendislerin Landing Page'i atlayıp **tek tıkla doğrudan seçili mimarinin 60 FPS canlı simülasyonuna** düşmesini sağlayan `?template=<id>` ve `?blueprint=<id>` URL sorgu parametresi desteği (`?template=stripe-webhook-ledger`, `?template=netflix-chaos-streaming` vb.) eklendi.
+    - Tüm mühendis kanalları için kopyala-yapıştır hazır teknik inceleme (teardown) metinlerini, `Show HN` şablonunu, Reddit mimari kriz senaryolarını ve GitHub `Awesome` listesi PR bağlantılarını içeren **`ENGINEER_GROWTH_PLAYBOOK.md`** oluşturuldu.
+
 ---
 
 ## 2. Gelir Yolu ve Canlı Trafik Analitiği (`vercel_mcp` & `lemonsqueezy`)
@@ -86,3 +90,4 @@
   - Lemon Squeezy Canlı Webhook'u (`ID: 142796`) Composio API üzerinden otomatik olarak `https://graph-flow-virid.vercel.app/api/webhook` adresine bağlandı.
 - **Canlı Vercel Web Analytics Özeti (`VERCEL_MCP_GET_WEB_ANALYTICS`):**
   - Son 7 günde **16 tekil ziyaretçi** ve **43 sayfa görüntülemesi** kaydedildi (ABD `US`, Hindistan `IN`, Fas `MA` (`t.co` X/Twitter yönlendirmesi) ve Türkiye `TR`).
+

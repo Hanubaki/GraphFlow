@@ -21,6 +21,7 @@ import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
 import { CatalogItem } from './constants/nodeCatalog';
+import { TEMPLATES } from './constants/templates';
 import { GraphNode, GraphEdge } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
 import { SavedProject, parseShareUrl } from './services/projectStorage';
@@ -78,7 +79,16 @@ export const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'landing' | 'studio' | 'embed'>(() => {
     if (typeof window === 'undefined') return 'landing';
     if (window.location.hash.includes('#embed=')) return 'embed';
-    if (window.location.hash.includes('#share=') || window.location.hash.includes('#studio')) return 'studio';
+    const params = new URLSearchParams(window.location.search);
+    if (
+      window.location.hash.includes('#share=') ||
+      window.location.hash.includes('#studio') ||
+      params.has('template') ||
+      params.has('blueprint') ||
+      params.get('studio') === '1'
+    ) {
+      return 'studio';
+    }
     return 'landing';
   });
 
@@ -96,7 +106,7 @@ export const App: React.FC = () => {
     }
   }, [viewMode]);
 
-  // Capture first-touch acquisition attribution & auto-load shared architecture on boot
+  // Capture first-touch acquisition attribution & auto-load shared architecture or URL template deep-link on boot
   useEffect(() => {
     captureFirstTouchAttribution();
     const shared = parseShareUrl();
@@ -110,8 +120,33 @@ export const App: React.FC = () => {
       } else {
         setViewMode('studio');
       }
+      return;
     }
-  }, [setNodes, setEdges, setPan, setZoom]);
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const requestedTemplateId = params.get('template') || params.get('blueprint');
+      if (requestedTemplateId) {
+        const matchedTemplate = TEMPLATES.find(
+          (t) => t.id.toLowerCase() === requestedTemplateId.toLowerCase()
+        );
+        if (matchedTemplate) {
+          loadTemplate(matchedTemplate);
+          const centered = calculateAutoCenter(matchedTemplate.nodes, window.innerWidth, window.innerHeight);
+          if (centered) {
+            setZoom(centered.zoom);
+            setPan(centered.pan);
+          }
+          setViewMode('studio');
+          telemetry.track('Preset Loaded', {
+            templateId: matchedTemplate.id,
+            nodeCount: matchedTemplate.nodes.length,
+            source: 'url_deeplink',
+          });
+        }
+      }
+    }
+  }, [setNodes, setEdges, setPan, setZoom, loadTemplate]);
 
   const handleAutoCenter = useCallback((targetNodes = nodes) => {
     if (typeof window === 'undefined' || targetNodes.length === 0) return;
