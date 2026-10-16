@@ -75,8 +75,12 @@
       - `docker-compose.yml` ve `main.tf` yanında **`package.json`** (`pg`, `ioredis`, `kafkajs`, `stripe`, `@aws-sdk/client-s3`, `openai` vb. bağımlılıkları otomatik tanıyan) ve **`OpenAPI 3.0 / Swagger`** şemalarını tek tıkla canlı topolojiye dönüştüren genişletilmiş içe aktarıcı.
     - **Klavye Odaklı Mühendis Komut Paleti (`Ctrl+K` / `Cmd+K` — `CommandPaletteModal.tsx`):** Fareye dokunmadan `<1` saniyede bileşen ekleme (`Add Redis`, `Add Kafka`), mevcut düğümlere odaklanma (`Inspect: ...`), `Auto-Harden`, `Auto-Align DAG` ve `Mermaid / k6 / Terraform` dışa aktarma işlemlerini çalıştıran Raycast/Linear tarzı komut paleti.
 
-13. **Mühendis Toplulukları İçin Doğrudan Derin Link (`?template=...`) ve Viral Büyüme Rehberi (`src/App.tsx`, `ENGINEER_GROWTH_PLAYBOOK.md`):**
+13. **Mühendis Toplulukları İçin Doğrudan Derin Link (`?template=...`), Otomatik Çekilen 5 Sahneli Demo Videosu (`.mp4` / `.gif` / `.webm`) ve Viral Büyüme Rehberi (`src/App.tsx`, `ENGINEER_GROWTH_PLAYBOOK.md`, `public/graphflow-stripe-demo.mp4`, `public/graphflow-stripe-demo.gif`):**
     - Hacker News (`Show HN`), Reddit (`r/softwarearchitecture`, `r/sre`, `r/devops`, `r/backend`), X ve Dev.to paylaşımlarında mühendislerin Landing Page'i atlayıp **tek tıkla doğrudan seçili mimarinin 60 FPS canlı simülasyonuna** düşmesini sağlayan `?template=<id>` ve `?blueprint=<id>` URL sorgu parametresi desteği (`?template=stripe-webhook-ledger`, `?template=netflix-chaos-streaming` vb.) eklendi.
+    - Playwright Headless Chrome (`1280x720`) ve Composio Remote Sandbox (`FFmpeg libx264 + Lanczos Palettegen`) kullanılarak 5 sahneli (`01: 1x Canlı Topoloji` -> `02: 4.5x Burst Load & Darboğaz` -> `03: Pin Baseline & Auto-Harden ROI Diff` -> `04: AWS/GCP/Azure FinOps` -> `05: Mermaid / k6 Load Test / Kubernetes Export`) tanıtım videosu otomatik kaydedildi:
+      - **MP4 (X, LinkedIn, Reddit için):** `public/graphflow-stripe-demo.mp4` (`747 KB`, H.264 30 FPS)
+      - **GIF (GitHub README, Dev.to, HN için):** `public/graphflow-stripe-demo.gif` (`3.9 MB`, 800x450 Lanczos) — `README.md` en üstüne gömüldü.
+      - **WebM (Ham 1280x720 Kayıt):** `public/graphflow-stripe-demo.webm`
     - Tüm mühendis kanalları için kopyala-yapıştır hazır teknik inceleme (teardown) metinlerini, `Show HN` şablonunu, Reddit mimari kriz senaryolarını ve GitHub `Awesome` listesi PR bağlantılarını içeren **`ENGINEER_GROWTH_PLAYBOOK.md`** oluşturuldu.
 
 ---

@@ -23,6 +23,20 @@
   <a href="#license">License</a>
 </p>
 
+<br />
+
+<a href="https://graph-flow-virid.vercel.app/?template=stripe-webhook-ledger">
+  <img src="public/graphflow-stripe-demo.gif" alt="GraphFlow 60 FPS Distributed Systems Simulator Demo" width="100%" />
+</a>
+
+<p align="center">
+  <a href="https://graph-flow-virid.vercel.app/?template=stripe-webhook-ledger"><strong>Launch Live Stripe Ledger Simulation →</strong></a>
+  &nbsp;•&nbsp;
+  <a href="https://graph-flow-virid.vercel.app/?template=netflix-chaos-streaming"><strong>Netflix Chaos Edge Stream →</strong></a>
+  &nbsp;•&nbsp;
+  <a href="https://graph-flow-virid.vercel.app/?template=resilient-cqrs-outbox"><strong>CQRS + Kafka Outbox →</strong></a>
+</p>
+
 </div>
 
 ---
