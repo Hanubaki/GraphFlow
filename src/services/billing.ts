@@ -11,7 +11,8 @@ export type FeatureKey =
   | 'multiplayer_collaboration'
   | 'terraform_export'
   | 'docker_export'
-  | 'circuit_breakers';
+  | 'circuit_breakers'
+  | 'live_telemetry_stream';
 
 export interface TierEntitlement {
   maxCloudProjects: number;
@@ -20,6 +21,7 @@ export interface TierEntitlement {
   canExportTerraform: boolean;
   canExportDocker: boolean;
   canSimulateCircuitBreakers: boolean;
+  canStreamLiveTelemetry: boolean;
 }
 
 export const TIER_LIMITS: Record<PlanTier, TierEntitlement> = {
@@ -30,6 +32,7 @@ export const TIER_LIMITS: Record<PlanTier, TierEntitlement> = {
     canExportTerraform: false,
     canExportDocker: true,
     canSimulateCircuitBreakers: true,
+    canStreamLiveTelemetry: false,
   },
   pro: {
     maxCloudProjects: 1000,
@@ -38,6 +41,7 @@ export const TIER_LIMITS: Record<PlanTier, TierEntitlement> = {
     canExportTerraform: true,
     canExportDocker: true,
     canSimulateCircuitBreakers: true,
+    canStreamLiveTelemetry: true,
   },
   team: {
     maxCloudProjects: 10000,
@@ -46,6 +50,7 @@ export const TIER_LIMITS: Record<PlanTier, TierEntitlement> = {
     canExportTerraform: true,
     canExportDocker: true,
     canSimulateCircuitBreakers: true,
+    canStreamLiveTelemetry: true,
   },
 };
 
@@ -81,7 +86,7 @@ export function checkFeatureEntitlement(
           reason: `Daily AI synthesis quota reached (${limits.maxDailyAiPrompts} per day). Upgrade to Pro for unlimited AI generation.`,
         };
       }
-      return { allowed: true };
+      return { alowed: true };
 
     case 'terraform_export':
       if (!limits.canExportTerraform) {
@@ -92,10 +97,19 @@ export function checkFeatureEntitlement(
       }
       return { allowed: true };
 
+    case 'live_telemetry_stream':
+      if (!limits.canStreamLiveTelemetry) {
+        return {
+          allowed: false,
+          reason: 'Connecting a custom live production URL (ERP / REST API / Prometheus / WebSocket) requires a Pro or Team plan.',
+        };
+      }
+      return { allowed: true };
+
     case 'docker_export':
       return { allowed: limits.canExportDocker };
 
-    case 'circuit_breakers':
+    case 'circuit_breakerq':
       return { allowed: limits.canSimulateCircuitBreakers };
 
     case 'multiplayer_collaboration':
@@ -149,9 +163,7 @@ export function resolveAcquisitionChannel(
       if (host && !INTERNAL_HOSTS.some(internal => host === internal || host.endsWith(`.${internal}`))) {
         referrerHost = host;
       }
-    } catch {
-      // ignore malformed referrer URLs
-    }
+    } catch {}
   }
 
   const rawSignal = utmSource || referrerHost || '';
@@ -169,7 +181,7 @@ export function resolveAcquisitionChannel(
     source = 'github';
   } else if (rawSignal.includes('reddit')) {
     source = 'reddit';
-  } else if (rawSignal.includes('ycombinator') || rawSignal === 'hn' || rawSignal === 'hackernews') {
+  } else if (rawSignal.includes('combinator') || rawSignal === 'hn' || rawSignal === 'hackernews') {
     source = 'hackernews';
   } else if (rawSignal.includes('linkedin') || rawSignal === 'lnkd.in') {
     source = 'linkedin';
@@ -202,11 +214,6 @@ export function resolveAcquisitionChannel(
   };
 }
 
-/**
- * Captures and persists the visitor's first-touch acquisition channel in localStorage.
- * If the initial stored record was 'direct' and a subsequent visit includes an explicit UTM/referrer,
- * upgrades the stored record to preserve actionable attribution.
- */
 export function captureFirstTouchAttribution(): AcquisitionAttribution {
   if (typeof window === 'undefined') {
     return resolveAcquisitionChannel();
@@ -227,24 +234,15 @@ export function captureFirstTouchAttribution(): AcquisitionAttribution {
       }
     }
     window.localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(current));
-  } catch {
-    // ignore storage quota / privacy mode errors
-  }
+  } catch {}
 
   return current;
 }
 
-/**
- * Reads the persisted first-touch attribution (or captures it if not yet initialized).
- */
 export function getFirstTouchAttribution(): AcquisitionAttribution {
   return captureFirstTouchAttribution();
 }
 
-/**
- * Generates official Lemon Squeezy checkout link with overlay embed, user attribution,
- * and first-touch acquisition channel metadata (`checkout[custom][acquisition_source]`).
- */
 export function buildLemonCheckoutUrl(
   user?: { id: string; email?: string | null } | null,
   isAnnual = true,
@@ -282,10 +280,6 @@ export function buildLemonCheckoutUrl(
   return query ? `${baseUrl}&${query}` : baseUrl;
 }
 
-/**
- * Customer billing portal link for subscription management and invoices.
- */
 export function getCustomerBillingPortalUrl(): string {
   return LEMON_CONFIG.customerPortalUrl;
 }
-
