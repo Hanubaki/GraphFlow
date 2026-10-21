@@ -187,6 +187,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span><strong>Live ERP / API Telemetry Stream</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <span>Terraform (IaC) Export</span>
                 </div>
                 <div className="flex items-center gap-2">

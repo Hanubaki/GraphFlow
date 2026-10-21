@@ -24,6 +24,7 @@ import {
   Users,
   HelpCircle,
   Terminal,
+  Radio,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSimulationControls } from '../../context/SimulationContext';
@@ -57,6 +58,8 @@ interface TopBarProps {
   onOpenProjects: () => void;
   onOpenPricing: () => void;
   onOpenAnalytics?: () => void;
+  onOpenLiveTelemetry?: () => void;
+  isLiveStreaming?: boolean;
   onOpenCommandPalette?: () => void;
   onOpenAuth?: () => void;
   onOpenHome?: () => void;
@@ -89,6 +92,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenProjects,
   onOpenPricing,
   onOpenAnalytics,
+  onOpenLiveTelemetry,
+  isLiveStreaming = false,
   onOpenCommandPalette,
   onOpenAuth,
   onOpenHome,
@@ -160,390 +165,101 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="hidden sm:block">
           <div className="flex items-center gap-1.5 leading-none">
             <span className="font-bold text-sm text-slate-100 tracking-tight">GraphFlow</span>
-            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 font-semibold">
-              SIM
-            </span>
-          </div>
-          <div className="text-[11px] text-slate-400 leading-tight mt-0.5">Architecture & Flow Engine</div>
-        </div>
-      </button>
-
-      {/* Center: Sleek Unified Live Telemetry Pill (Memoized) */}
-      <div className="hidden 2xl:flex items-center gap-2 font-mono text-xs shrink-0">
-        <TelemetryPill
-          metrics={metrics}
-          isRunning={isRunning}
-          onOpenAnalytics={onOpenAnalytics}
-        />
-      </div>
-
-      {/* Right Controls Container */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
-        {/* Play/Pause + Speed + Stress Load + Spike Group */}
-        <div data-tour="sim-controls" className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
-            <button
-              onClick={handleTogglePlay}
-              className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-                isRunning
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-              }`}
-              title={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
-              aria-label={isRunning ? t('topbar.pauseTraffic') : t('topbar.startTraffic')}
-            >
-              {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              <span className="hidden 3xl:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
-            </button>
-
-            <div className="h-4 w-px bg-slate-800 mx-1" />
-
-            {/* Speed toggles */}
-            <div className="flex gap-0.5" role="group" aria-label="Simulation speed">
-              {[0.5, 1, 2].map(s => (
-                <button
-                  key={s}
-                  onClick={() => onSetSpeed(s)}
-                  className={`h-7 px-1.5 rounded text-[11px] font-mono transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-                    speedMultiplier === s
-                      ? 'bg-cyan-500/20 text-cyan-400 font-bold'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                  aria-label={`Set speed to ${s}x`}
-                >
-                  {s}x
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Global Traffic Stress Load Slider (0.5x - 10x) */}
-          <div
-            className="hidden md:flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 shrink-0"
-            title="Global Ingress Traffic Load Multiplier â€” slide up to 10x to stress-test queue backpressure and bottlenecks"
-          >
-            <button
-              type="button"
-              onClick={() => onSetTrafficLoad(1)}
-              className={`font-mono text-[11px] font-bold tabular-nums transition-colors ${
-                trafficLoadMultiplier >= 6
-                  ? 'text-rose-400'
-                  : trafficLoadMultiplier >= 2.5
-                    ? 'text-amber-400'
-                    : 'text-cyan-400'
-              }`}
-              title="Click to reset traffic load to 1x"
-            >
-              Load {trafficLoadMultiplier}x
-            </button>
-            <input
-              type="range"
-              min="0.5"
-              max="10"
-              step="0.5"
-              value={trafficLoadMultiplier}
-              onChange={e => onSetTrafficLoad(Number(e.target.value))}
-              aria-label="Global traffic load multiplier"
-              className="w-14 lg:w-16 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-            />
-          </div>
-
-          {/* Traffic Spike Button */}
-          <button
-            onClick={handleTriggerSpike}
-            disabled={!isRunning}
-            className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
-              isSpikeMode
-                ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
-                : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'
-            } ${!isRunning ? 'opacity-40 cursor-not-allowed' : ''}`}
-            title={t('topbar.spikeTitle')}
-            aria-label={t('topbar.spikeTitle')}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            <span className="hidden 3xl:inline">{t('topbar.spike')}</span>
-          </button>
-        </div>
-
-        {/* Sound toggle */}
-        <button
-          onClick={onToggleSound}
-          className={`w-8 h-8 rounded-lg border border-slate-800 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-            soundEnabled
-              ? 'bg-dark-950 text-slate-300 hover:text-white'
-              : 'bg-dark-950 text-slate-600'
-          }`}
-          title={soundEnabled ? 'Mute Sound Effects' : 'Enable Sound Effects'}
-          aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
-        >
-          {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-        </button>
-
-        <div className="hidden lg:block h-5 w-px bg-slate-800 mx-0.5" />
-
-        {/* Undo / Redo Group */}
-        <div className="hidden lg:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="History controls">
-          <button
-            onClick={onUndo}
-            disabled={!canUndo}
-            className={`w-7 h-7 rounded flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-              canUndo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'opacity-30 cursor-not-allowed text-slate-600'
-            }`}
-            title="Undo (Ctrl+Z)"
-            aria-label="Undo last change"
-          >
-            <Undo2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={onRedo}
-            disabled={!canRedo}
-            className={`w-7 h-7 rounded flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
-              canRedo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'opacity-30 cursor-not-allowed text-slate-600'
-            }`}
-            title="Redo (Ctrl+Y)"
-            aria-label="Redo last change"
-          >
-            <Redo2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Zoom Group */}
-        <div className="hidden xl:flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="Zoom controls">
-          <button
-            onClick={onZoomOut}
-            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Zoom Out"
-            aria-label="Zoom out canvas"
-          >
-            <ZoomOut className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={onResetZoom}
-            className="h-7 px-1.5 text-[11px] font-mono text-slate-300 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Reset Zoom (Auto-Center)"
-            aria-label="Reset zoom and auto-center architecture"
-          >
-            {Math.round(zoom * 100)}%
-          </button>
-          <button
-            onClick={onZoomIn}
-            className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Zoom In"
-            aria-label="Zoom in canvas"
-          >
-            <ZoomIn className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="h-5 w-px bg-slate-800 mx-0.5" />
-
-        {/* Studio Tools Segmented Group (Presets, AI Gen, Projects, Embed) */}
-        <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0" role="group" aria-label="Studio tools">
-          {/* Presets */}
-          <button
-            data-tour="presets"
-            onClick={onOpenTemplates}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Architecture Presets"
-            aria-label="Open architecture presets modal"
-          >
-            <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden 3xl:inline">Presets</span>
-          </button>
-
-          <div className="h-3.5 w-px bg-slate-800" />
-
-          {/* AI Generator */}
-          <button
-            data-tour="aigen"
-            onClick={onOpenAiGenerator}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-cyan-950/60 text-cyan-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="AI Prompt-to-Architecture"
-            aria-label="Open AI prompt-to-architecture generator"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-            <span className="hidden 3xl:inline">AI Gen</span>
-          </button>
-
-          <div className="h-3.5 w-px bg-slate-800" />
-
-          {/* Projects */}
-          <button
-            onClick={onOpenProjects}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Saved Projects & Cloud Links"
-            aria-label="Open saved projects and cloud links modal"
-          >
-            <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden 3xl:inline">Projects</span>
-          </button>
-
-          <div className="h-3.5 w-px bg-slate-800" />
-
-          {/* Embed */}
-          <button
-            onClick={onOpenEmbed}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Embed Interactive Simulator in Notion / Blogs"
-            aria-label="Open embed simulator modal"
-          >
-            <Code2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden 3xl:inline">Embed</span>
-          </button>
-
-          <div className="h-3.5 w-px bg-slate-800" />
-
-          {/* Analytics & WebPerf */}
-          <button
-            onClick={onOpenAnalytics}
-            className="flex items-center gap-1.5 h-7 px-2 rounded hover:bg-slate-800/80 text-slate-200 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title="Live WebPerf & Telemetry Scorecard"
-            aria-label="Open live performance analytics modal"
-          >
-            <Activity className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden 3xl:inline">Analytics</span>
-          </button>
-
-          {onOpenCommandPalette && (
-            <>
-              <div className="h-3.5 w-px bg-slate-800" />
-              <button
-                onClick={onOpenCommandPalette}
-                className="flex items-center gap-1 h-7 px-2 rounded hover:bg-cyan-950/60 text-cyan-300 text-xs font-mono font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-                title="Engineer Command Palette (Ctrl+K / Cmd+K)"
-                aria-label="Open Engineer Command Palette (Ctrl+K)"
-              >
-                <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden xl:inline text-[10px]">Ctrl+K</span>
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Real-time Multiplayer Collaborators Stack */}
-        <div
-          className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 shrink-0 text-xs font-mono"
-          title={`Active Collaborators (${totalCollaborators}): You (${myPresence.name})${peers.map(p => `, ${p.name}`).join('')}`}
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <Users className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="text-[11px] font-semibold text-slate-200">
-            {totalCollaborators} <span className="hidden 3xl:inline text-slate-400">Live</span>
-          </span>
-          {/* Mini avatar stack */}
-          <div className="hidden 3xl:flex items-center -space-x-1.5 ml-0.5">
-            <div
-              style={{ backgroundColor: myPresence.color }}
-              className="w-5 h-5 rounded-full border border-dark-950 flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm"
-              title={`You: ${myPresence.name}`}
-            >
-              {myPresence.name[0]}
-            </div>
-            {peers.slice(0, 3).map(p => (
-              <div
-                key={p.id}
-                style={{ backgroundColor: p.color }}
-                className="w-5 h-5 rounded-full border border-dark-950 flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm"
-                title={p.name}
-              >
-                {p.name[0]}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Export Button */}
-        <button
-          data-tour="export"
-          onClick={handleOpenExport}
-          className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-md shadow-cyan-950/50 shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-          title={t('topbar.exportTitle')}
-          aria-label="Export architecture as JSON, Markdown, Docker Compose, or Terraform"
-        >
-          <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden 3xl:inline">{t('topbar.export')}</span>
-        </button>
-
-        {/* Pro Upgrade Pill */}
-        <button
-          onClick={handleOpenPricing}
-          className={`flex items-center gap-1 h-8 px-2.5 rounded-lg font-bold text-xs shadow-md shadow-black/30 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:outline-none ${
-            isPro
-              ? 'bg-cyan-950/60 border border-cyan-800/70 text-cyan-200 hover:bg-cyan-900/50'
-              : 'bg-slate-100 hover:bg-white text-slate-950'
-          }`}
-          title={t('topbar.upgradeTitle')}
-          aria-label="View Pro and Team subscription plans"
-        >
-          <Crown className={`w-3.5 h-3.5 shrink-0 ${isPro ? 'text-amber-400' : 'text-slate-950'}`} />
-          <span>{isPro ? t('topbar.pro') : t('topbar.upgrade')}</span>
-        </button>
-
-        {/* User Account / Sign In */}
-        {user ? (
-          <button
-            onClick={onOpenAuth}
-            className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title={`Account: ${user.email} (${planTier.toUpperCase()} tier)`}
-            aria-label={`User account: ${user.email}`}
-          >
-            <div className="w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 flex items-center justify-center text-[11px] font-bold shrink-0">
-              {user.email?.[0]?.toUpperCase() || <UserIcon className="w-3 h-3" />}
-            </div>
-            <span className="hidden 3xl:inline max-w-[75px] truncate text-[11px]">{user.email?.split('@')[0]}</span>
-          </button>
-        ) : (
-          <button
-            onClick={onOpenAuth}
-            className="flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title={t('topbar.signInTitle')}
-            aria-label="Sign in to sync cloud architectures"
-          >
-            <UserIcon className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden 3xl:inline">{t('topbar.signIn')}</span>
-          </button>
-        )}
-
-        {/* Language Switcher */}
-        <button
-          onClick={() => {
-            const nextLocale = locale === 'en' ? 'tr' : 'en';
-            setLocale(nextLocale);
-            telemetry.track('Locale Changed' as any, { locale: nextLocale });
-          }}
-          className="flex items-center gap-1 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-mono font-semibold transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-          title={locale === 'en' ? 'TÃ¼rkÃ§e diline geÃ§' : 'Switch to English'}
-          aria-label={`Current language: ${locale.toUpperCase()}. Click to switch language.`}
-        >
-          <Languages className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{locale.toUpperCase()}</span>
-        </button>
-
-        {/* Interactive Onboarding Tour Trigger */}
-        {onOpenTour && (
-          <button
-            onClick={onOpenTour}
-            className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-cyan-400 hover:text-cyan-300 hover:border-cyan-500/50 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-            title={locale === 'tr' ? 'Ä°nteraktif StÃ¼dyo Rehberini AÃ§' : 'Launch Interactive Studio Tour'}
-            aria-label="Launch interactive studio tour"
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-          </button>
-        )}
-
-        {/* Clear graph */}
-        <button
-          onClick={onClearGraph}
-          className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-400 hover:text-rose-400 hover:border-rose-900 flex items-center justify-center transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
-          title={t('topbar.clear')}
-          aria-label="Clear all nodes and edges from architecture"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </header>
-  );
-};
+            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 _¢{lzh›¢WH‚ˆÒSBˆÜÜ[‚ˆÙ]‚ˆ]ˆÛ\ÜÓ˜[YOH^VÌL\H^\Û]KMXY[™Ë]YÚ]LH\˜Ú]XÝ\™H	ˆ›ÝÈ[™Ú[™OÙ]‚ˆÙ]‚ˆØ]Û‚‚ˆËÊˆÙ[\ŽˆÛYZÈ[šYšYY]™H[[Y]žH[
+Y[[Ú^™Y
+H
+‹ßBˆ]ˆÛ\ÜÓ˜[YOHšY[ˆž™›^][\ËXÙ[\ˆØ\Lˆ›Û[[Û›È^^ÈÚš[šËL‚ˆ[[Y]žT[ˆY]šXÜÏ^ÛY]šXÜßBˆ\Ô[›š[™Ï^Ú\Ô[›š[™ßBˆÛ“Ü[[˜[]XÜÏ^ÛÛ“Ü[[˜[]XÜßBˆÏ‚ˆÙ]‚‚ˆËÊˆšYÚÛÛ›ÛÈÛÛZ[™\ˆ
+‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LHÛN™Ø\LKHÚš[šËLZ[‹]ËL‚ˆËÊˆ^KÔ]\ÙH
+ÈÜYY
+ÈÝ™\ÜÈØY
+ÈÜZÙHÜ›Ý\
+‹ßBˆ]ˆ]K]Ý\HœÚ[KXÛÛ›ÛÈˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LHÛN™Ø\LKHÚš[šËL‚ˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLLHNÚš[šËL‚ˆ]Û‚ˆÛÛXÚÏ^Ú[™UÙÙÛT^_BˆÛ\ÜÓ˜[YO^Ø›^][\ËXÙ[\ˆØ\LHMÈLˆÛNœL‹H›Ý[™Y[Y^^È›Û\Ù[ZX›Û˜[œÚ][Û‹X[›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	Âˆ\Ô[›š[™ÂˆÈ	Ø™ËX[X™\‹MLÌŒ^X[X™\‹LÌ›Ü™\ˆ›Ü™\‹X[X™\‹MLÍÝ™\Ž˜™ËX[X™\‹MLÌÌ	Âˆˆ	Ø™ËY[Y\˜[MLÌŒ^Y[Y\˜[LÌ›Ü™\ˆ›Ü™\‹Y[Y\˜[MLÍÝ™\Ž˜™ËY[Y\˜[MLÌÌ	ÂˆXBˆ]O^Ú\Ô[›š[™ÈÈ
+	ÝÜ˜\‹œ]\ÙU˜Y™šXÉÊHˆ
+	ÝÜ˜\‹œÝ\˜Y™šXÉÊ_Bˆ\šXK[X™[^Ú\Ô[›š[™ÈÈ
+	ÝÜ˜\‹œ]\ÙU˜Y™šXÉÊHˆ
+	ÝÜ˜\‹œÝ\˜Y™šXÉÊ_Bˆ‚ˆÚ\Ô[›š[™ÈÈ]\ÙHÛ\ÜÓ˜[YOHËLËHLËHˆÏˆˆ^HÛ\ÜÓ˜[YOHËLËHLËHˆÏŸBˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™HžÚ\Ô[›š[™ÈÈ
+	ÝÜ˜\‹œ]\ÙIÊHˆ
+	ÝÜ˜\‹œÝ\	Ê_OÜÜ[‚ˆØ]Û‚‚ˆ]ˆÛ\ÜÓ˜[YOHšMË\™Ë\Û]KN^LHˆÏ‚‚ˆËÊˆÜYYÙÙÛ\È
+‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^Ø\LHˆ›ÛOH™Ü›Ý\ˆ\šXK[X™[H”Ú[][][ÛˆÜYY‚ˆÖÌKK—K›X\
+ÈOˆ
+ˆ]Û‚ˆÙ^O^ÜßBˆÛÛXÚÏ^Ê
+HOˆÛ”Ù]ÜYY
+Ê_BˆÛ\ÜÓ˜[YO^ØMÈLKH›Ý[™Y^VÌL\H›Û[[Û›È˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	ÂˆÜYY][\Y\ˆOOHÂˆÈ	Ø™ËXÞX[‹MLÌŒ^XÞX[‹M›ÛX›Û	Âˆˆ	Ý^\Û]KMÝ™\Ž^\Û]KLŒ	ÂˆXBˆ\šXK[X™[^ØÙ]ÜYYÈ	Üß^Bˆ‚ˆÜß^ˆØ]Û‚ˆ
+J_BˆÙ]‚ˆÙ]‚‚ˆËÊˆÛØ˜[˜Y™šXÈÝ™\ÜÈØYÛY\ˆ
+^HL
+H
+‹ßBˆ]‚ˆÛ\ÜÓ˜[YOHšY[ˆY™›^][\ËXÙ[\ˆØ\LKHNLˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLÚš[šËL‚ˆ]OH‘ÛØ˜[[™Ü™\ÜÈ˜Y™šXÈØY][\Y\ˆ8 %ÛYH\ÈLÈÝ™\ÜË]\Ý]Y]YH˜XÚÜ™\ÜÝ\™H[™›Ý[™XÚÜÈ‚ˆ‚ˆ]Û‚ˆ\OH˜]Ûˆ‚ˆÛÛXÚÏ^Ê
+HOˆÛ”Ù]˜Y™šXÓØY
+J_BˆÛ\ÜÓ˜[YO^Ø›Û[[Û›È^VÌL\H›ÛX›ÛX[\‹[[\È˜[œÚ][Û‹XÛÛÜœÈ	Âˆ˜Y™šXÓØY][\Y\ˆH‚ˆÈ	Ý^\›ÜÙKM	Âˆˆ˜Y™šXÓØY][\Y\ˆH‹BˆÈ	Ý^X[X™\‹M	Âˆˆ	Ý^XÞX[‹M	ÂˆXBˆ]OHÛXÚÈÈ™\Ù]˜Y™šXÈØYÈ^‚ˆ‚ˆØYÝ˜Y™šXÓØY][\Y\Ÿ^ˆØ]Û‚ˆ[œ]ˆ\OHœ˜[™ÙH‚ˆZ[HŒH‚ˆX^HŒL‚ˆÝ\HŒH‚ˆ˜[YO^Ý˜Y™šXÓØY][\Y\ŸBˆÛÚ[™ÙO^ÙHOˆÛ”Ù]˜Y™šXÓØY
+[X™\ŠK\™Ù]˜[YJJ_Bˆ\šXK[X™[H‘ÛØ˜[˜Y™šXÈØY][\Y\ˆ‚ˆÛ\ÜÓ˜[YOHËLMÎËLMˆLKH™Ë\Û]KN›Ý[™Y[È\X\˜[˜ÙK[›Û™HÝ\œÛÜ‹\Ú[\ˆXØÙ[XÞX[‹M‚ˆÏ‚ˆÙ]‚‚ˆËÊˆ˜Y™šXÈÜZÙH]Ûˆ
+‹ßBˆ]Û‚ˆÛÛXÚÏ^Ú[™UšYÙÙ\”ÜZÙ_Bˆ\ØX›Y^ÈZ\Ô[›š[™ßBˆÛ\ÜÓ˜[YO^Ø›^][\ËXÙ[\ˆØ\LHNLˆÛNœL‹H›Ý[™Y[È^^È›Û\Ù[ZX›Û›Ü™\ˆ˜[œÚ][Û‹X[Úš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™Ë\›ÜÙKM›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	Âˆ\ÔÜZÙS[ÙBˆÈ	Ø™Ë\›ÜÙKML^]Ú]H›Ü™\‹\›ÜÙKM[š[X]K\[ÙIÂˆˆ	Ø›Ü™\‹\Û]KN™ËY\šËNML^\Û]KLÌÝ™\Ž˜›Ü™\‹X[X™\‹MLÍLÝ™\Ž^X[X™\‹M	ÂˆH	ÈZ\Ô[›š[™ÈÈ	ÛÜXÚ]KMÝ\œÛÜ‹[›ÝX[ÝÙY	Èˆ	ÉßXBˆ]O^Ý
+	ÝÜ˜\‹œÜZÙU]IÊ_Bˆ\šXK[X™[^Ý
+	ÝÜ˜\‹œÜZÙU]IÊ_Bˆ‚ˆ˜\Û\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™HžÝ
+	ÝÜ˜\‹œÜZÙIÊ_OÜÜ[‚ˆØ]Û‚ˆÙ]‚‚ˆËÊˆÛÝ[™ÙÙÛH
+‹ßBˆ]Û‚ˆÛÛXÚÏ^ÛÛ•ÙÙÛTÛÝ[™BˆÛ\ÜÓ˜[YO^ØËNN›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	ÂˆÛÝ[™[˜X›YˆÈ	Ø™ËY\šËNML^\Û]KLÌÝ™\Ž^]Ú]IÂˆˆ	Ø™ËY\šËNML^\Û]KMŒ	ÂˆXBˆ]O^ÜÛÝ[™[˜X›YÈ	Ó]]HÛÝ[™Y™™XÝÉÈˆ	Ñ[˜X›HÛÝ[™Y™™XÝÉßBˆ\šXK[X™[^ÜÛÝ[™[˜X›YÈ	Ó]]HÛÝ[™Y™™XÝÉÈˆ	Ñ[˜X›HÛÝ[™Y™™XÝÉßBˆ‚ˆÜÛÝ[™[˜X›YÈ›Û[YLˆÛ\ÜÓ˜[YOHËLËHLËHˆÏˆˆ›Û[YVÛ\ÜÓ˜[YOHËLËHLËHˆÏŸBˆØ]Û‚‚ˆ]ˆÛ\ÜÓ˜[YOHšY[ˆÎ˜›ØÚÈMHË\™Ë\Û]KN^LHˆÏ‚‚ˆËÊˆ[™ÈÈ™YÈÜ›Ý\
+‹ßBˆ]ˆÛ\ÜÓ˜[YOHšY[ˆÎ™›^][\ËXÙ[\ˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLLHNÚš[šËLˆ›ÛOH™Ü›Ý\ˆ\šXK[X™[H’\ÝÜžHÛÛ›ÛÈ‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ•[™ßBˆ\ØX›Y^ÈXØ[•[™ßBˆÛ\ÜÓ˜[YO^ØËMÈMÈ›Ý[™Y›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	ÂˆØ[•[™ÈÈ	Ý^\Û]KLÌÝ™\Ž^]Ú]HÝ™\Ž˜™Ë\Û]KN	Èˆ	ÛÜXÚ]KLÌÝ\œÛÜ‹[›ÝX[ÝÙY^\Û]KMŒ	ÂˆXBˆ]OH•[™È
+Ý›
+ÖŠH‚ˆ\šXK[X™[H•[™È\ÝÚ[™ÙH‚ˆ‚ˆ[™ÌˆÛ\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆØ]Û‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ”™YßBˆ\ØX›Y^ÈXØ[”™YßBˆÛ\ÜÓ˜[YO^ØËMÈMÈ›Ý[™Y›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	ÂˆØ[”™YÈÈ	Ý^\Û]KLÌÝ™\Ž^]Ú]HÝ™\Ž˜™Ë\Û]KN	Èˆ	ÛÜXÚ]KLÌÝ\œÛÜ‹[›ÝX[ÝÙY^\Û]KMŒ	ÂˆXBˆ]OH”™YÈ
+Ý›
+ÖJH‚ˆ\šXK[X™[H”™YÈ\ÝÚ[™ÙH‚ˆ‚ˆ™YÌˆÛ\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆØ]Û‚ˆÙ]‚‚ˆËÊˆ›ÛÛHÜ›Ý\
+‹ßBˆ]ˆÛ\ÜÓ˜[YOHšY[ˆ™›^][\ËXÙ[\ˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLLHNÚš[šËLˆ›ÛOH™Ü›Ý\ˆ\šXK[X™[H–›ÛÛHÛÛ›ÛÈ‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ–›ÛÛSÝ]BˆÛ\ÜÓ˜[YOHËMÈMÈ›Ý[™Y›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ^\Û]KLÌÝ™\Ž^]Ú]HÝ™\Ž˜™Ë\Û]KN˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH–›ÛÛHÝ]‚ˆ\šXK[X™[H–›ÛÛHÝ]Ø[˜\È‚ˆ‚ˆ›ÛÛSÝ]Û\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆØ]Û‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ”™\Ù]›ÛÛ_BˆÛ\ÜÓ˜[YOHšMÈLKH^VÌL\H›Û[[Û›È^\Û]KLÌÝ™\Ž^]Ú]H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH”™\Ù]›ÛÛH
+]]ËPÙ[\ŠH‚ˆ\šXK[X™[H”™\Ù]›ÛÛH[™]]ËXÙ[\ˆ\˜Ú]XÝ\™H‚ˆ‚ˆÓX]œ›Ý[™
+›ÛÛH
+ˆL
+_IBˆØ]Û‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ–›ÛÛR[ŸBˆÛ\ÜÓ˜[YOHËMÈMÈ›Ý[™Y›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ^\Û]KLÌÝ™\Ž^]Ú]HÝ™\Ž˜™Ë\Û]KN˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH–›ÛÛH[ˆ‚ˆ\šXK[X™[H–›ÛÛH[ˆØ[˜\È‚ˆ‚ˆ›ÛÛR[ˆÛ\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆØ]Û‚ˆÙ]‚‚ˆ]ˆÛ\ÜÓ˜[YOHšMHË\™Ë\Û]KN^LHˆÏ‚‚ˆËÊˆÝY[ÈÛÛÈÙYÛY[YÜ›Ý\
+™\Ù]ËRHÙ[‹›Ú™XÝË[X™Y
+H
+‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLLHNÚš[šËLˆ›ÛOH™Ü›Ý\ˆ\šXK[X™[H”ÝY[ÈÛÛÈ‚ˆËÊˆ™\Ù]È
+‹ßBˆ]Û‚ˆ]K]Ý\Hœ™\Ù]È‚ˆÛÛXÚÏ^ÛÛ“Ü[•[\]\ßBˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHMÈLˆ›Ý[™YÝ™\Ž˜™Ë\Û]KNÎ^\Û]KLŒ^^È›Û[YY][H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH\˜Ú]XÝ\™H™\Ù]È‚ˆ\šXK[X™[H“Ü[ˆ\˜Ú]XÝ\™H™\Ù]È[Ù[‚ˆ‚ˆ^[Ý][\]HÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™H”™\Ù]ÏÜÜ[‚ˆØ]Û‚‚ˆ]ˆÛ\ÜÓ˜[YOHšLËHË\™Ë\Û]KNˆÏ‚‚ˆËÊˆRHÙ[™\˜]Üˆ
+‹ßBˆ]Û‚ˆ]K]Ý\H˜ZYÙ[ˆ‚ˆÛÛXÚÏ^ÛÛ“Ü[ZQÙ[™\˜]ÜŸBˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHMÈLˆ›Ý[™YÝ™\Ž˜™ËXÞX[‹NMLÍŒ^XÞX[‹LŒ^^È›Û[YY][H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OHRH›Û\]ËP\˜Ú]XÝ\™H‚ˆ\šXK[X™[H“Ü[ˆRH›Û\]ËX\˜Ú]XÝ\™HÙ[™\˜]Üˆ‚ˆ‚ˆÜ\šÛ\ÈÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹LÌˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™HRHÙ[ÜÜ[‚ˆØ]Û‚‚ˆ]ˆÛ\ÜÓ˜[YOHšLËHË\™Ë\Û]KNˆÏ‚‚ˆËÊˆ›Ú™XÝÈ
+‹ßBˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[”›Ú™XÝßBˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHMÈLˆ›Ý[™YÝ™\Ž˜™Ë\Û]KNÎ^\Û]KLŒ^^È›Û[YY][H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH”Ø]™Y›Ú™XÝÈ	ˆÛÝY[šÜÈ‚ˆ\šXK[X™[H“Ü[ˆØ]™Y›Ú™XÝÈ[™ÛÝY[šÜÈ[Ù[‚ˆ‚ˆ›Û\’Ø[˜˜[ˆÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™H”›Ú™XÝÏÜÜ[‚ˆØ]Û‚‚ˆ]ˆÛ\ÜÓ˜[YOHšLËHË\™Ë\Û]KNˆÏ‚‚ˆËÊˆ[X™Y
+‹ßBˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[‘[X™YBˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHMÈLˆ›Ý[™YÝ™\Ž˜™Ë\Û]KNÎ^\Û]KLŒ^^È›Û[YY][H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH‘[X™Y[\˜XÝ]™HÚ[][]Üˆ[ˆ›Ý[ÛˆÈ›ÙÜÈ‚ˆ\šXK[X™[H“Ü[ˆ[X™YÚ[][]Üˆ[Ù[‚ˆ‚ˆÛÙLˆÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™H‘[X™YÜÜ[‚ˆØ]Û‚‚ˆ]ˆÛ\ÜÓ˜[YOHšLËHË\™Ë\Û]KNˆÏ‚‚ˆËÊˆ[˜[]XÜÈ	ˆÙX”\™ˆ
+‹ßBˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[[˜[]XÜßBˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHMÈLˆ›Ý[™YÝ™\Ž˜™Ë\Û]KNÎ^\Û]KLŒ^^È›Û[YY][H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH“]™HÙX”\™ˆ	ˆ[[Y]žHØÛÜ™XØ\™‚ˆ\šXK[X™[H“Ü[ˆ]™H\™›Ü›X[˜ÙH[˜[]XÜÈ[Ù[‚ˆ‚ˆXÝ]š]HÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™H[˜[]XÜÏÜÜ[‚ˆØ]Û‚‚ˆÛÛ“Ü[“]™U[[Y]žH	‰ˆ
+ˆ‚ˆ]ˆÛ\ÜÓ˜[YOHšLËHË\™Ë\Û]KNˆÏ‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[“]™U[[Y]ž_BˆÛ\ÜÓ˜[YO^Ø›^][\ËXÙ[\ˆØ\LKHMÈLˆ›Ý[™Y^^È›Û[YY][H˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËY[Y\˜[M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	Âˆ\Ó]™TÝ™X[Z[™ÂˆÈ	Ø™ËY[Y\˜[NMLÍÌ^Y[Y\˜[LÌ›Ü™\ˆ›Ü™\‹Y[Y\˜[MLÍ	Âˆˆ	ÚÝ™\Ž˜™ËY[Y\˜[NMLÍL^Y[Y\˜[LÌ	ÂˆXBˆ]OH“]™H[[Y]žH	ˆT”YÚ][Ú[ˆÝ™X[H
+‘TÕ”ÓÓˆÈÙÛÈT”È›ÛY]]\ÊH‚ˆ\šXK[X™[H“Ü[ˆ]™H[[Y]žH[™T”YÚ][Ú[ˆÛÛ›™XÝÜˆ‚ˆ‚ˆ˜Y[ÈÛ\ÜÓ˜[YO^ØËLËHLËH^Y[Y\˜[M	Ú\Ó]™TÝ™X[Z[™ÈÈ	Ø[š[X]K\[ÙIÈˆ	ÉßXHÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆš[›[™H^VÌL\H›Û\Ù[ZX›Û‚ˆÚ\Ó]™TÝ™X[Z[™ÈÈ	Ó]™NˆÓ‰Èˆ	Ó]™HT”ÐTIßBˆÜÜ[‚ˆØ]Û‚ˆÏ‚ˆ
+_B‚ˆÛÛ“Ü[ÛÛ[X[™[]H	‰ˆ
+ˆ‚ˆ]ˆÛ\ÜÓ˜[YOHšLËHË\™Ë\Û]KNˆÏ‚ˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[ÛÛ[X[™[]_BˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LHMÈLˆ›Ý[™YÝ™\Ž˜™ËXÞX[‹NMLÍŒ^XÞX[‹LÌ^^È›Û[[Û›È›Û\Ù[ZX›Û˜[œÚ][Û‹XÛÛÜœÈ›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]OH‘[™Ú[™Y\ˆÛÛ[X[™[]H
+Ý›
+ÒÈÈÛY
+ÒÊH‚ˆ\šXK[X™[H“Ü[ˆ[™Ú[™Y\ˆÛÛ[X[™[]H
+Ý›
+ÒÊH‚ˆ‚ˆ\›Z[˜[Û\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆš[›[™H^VÌLHÝ›
+ÒÏÜÜ[‚ˆØ]Û‚ˆÏ‚ˆ
+_BˆÙ]‚‚ˆËÊˆ™X[][YH][\^Y\ˆÛÛX›Ü˜]ÜœÈÝXÚÈ
+‹ßBˆ]‚ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHNLˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNML^\Û]KLÌÚš[šËL^^È›Û[[Û›È‚ˆ]O^ØXÝ]™HÛÛX›Ü˜]ÜœÈ
+	ÝÝ[ÛÛX›Ü˜]ÜœßJNˆ[ÝH
+	Û^T™\Ù[˜ÙK›˜[Y_JIÜY\œË›X\
+Oˆ	Ü›˜[Y_X
+Kš›Ú[Š	ÉÊ_XBˆ‚ˆÜ[ˆÛ\ÜÓ˜[YOHœ™[]]™H›^LˆËLˆ‚ˆÜ[ˆÛ\ÜÓ˜[YOH˜[š[X]K\[™ÈXœÛÛ]H[›[™KY›^Y[ËY[›Ý[™YY[™ËY[Y\˜[MÜXÚ]KMÍHÜÜ[‚ˆÜ[ˆÛ\ÜÓ˜[YOHœ™[]]™H[›[™KY›^›Ý[™YY[LˆËLˆ™ËY[Y\˜[MLÜÜ[‚ˆÜÜ[‚ˆ\Ù\œÈÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOH^VÌL\H›Û\Ù[ZX›Û^\Û]KLŒ‚ˆÝÝ[ÛÛX›Ü˜]ÜœßHÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™H^\Û]KM“]™OÜÜ[‚ˆÜÜ[‚ˆËÊˆZ[šH]˜]\ˆÝXÚÈ
+‹ßBˆ]ˆÛ\ÜÓ˜[YOHšY[ˆÞ™›^][\ËXÙ[\ˆ\ÜXÙK^LKH[LH‚ˆ]‚ˆÝ[O^ÞÈ˜XÚÙÜ›Ý[™ÛÛÜŽˆ^T™\Ù[˜ÙK˜ÛÛÜˆ_BˆÛ\ÜÓ˜[YOHËMHMH›Ý[™YY[›Ü™\ˆ›Ü™\‹Y\šËNML›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ^VÌL\H›ÛX›Û^\Û]KNMLÚYÝË\ÛH‚ˆ]O^Ø[ÝNˆ	Û^T™\Ù[˜ÙK›˜[Y_XBˆ‚ˆÛ^T™\Ù[˜ÙK›˜[YVÌ_BˆÙ]‚ˆÜY\œËœÛXÙJÊK›X\
+Oˆ
+ˆ]‚ˆÙ^O^ÜšYBˆÝ[O^ÞÈ˜XÚÙÜ›Ý[™ÛÛÜŽˆ˜ÛÛÜˆ_BˆÛ\ÜÓ˜[YOHËMHMH›Ý[™YY[›Ü™\ˆ›Ü™\‹Y\šËNML›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ^VÌL\H›ÛX›Û^\Û]KNMLÚYÝË\ÛH‚ˆ]O^Ü›˜[Y_Bˆ‚ˆÜ›˜[YVÌ_BˆÙ]‚ˆ
+J_BˆÙ]‚ˆÙ]‚‚ˆËÊˆ^Ü]Ûˆ
+‹ßBˆ]Û‚ˆ]K]Ý\H™^Ü‚ˆÛÛXÚÏ^Ú[™SÜ[‘^ÜBˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHNL‹HÛNœLÈ›Ý[™Y[È™ËXÞX[‹MŒÝ™\Ž˜™ËXÞX[‹ML^]Ú]H^^È›Û\Ù[ZX›Û˜[œÚ][Û‹XÛÛÜœÈÚYÝË[YÚYÝËXÞX[‹NMLÍLÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]O^Ý
+	ÝÜ˜\‹™^Ü]IÊ_Bˆ\šXK[X™[H‘^Ü\˜Ú]XÝ\™H\È”ÓÓ‹X\šÙÝÛ‹ØÚÙ\ˆÛÛ\ÜÙKÜˆ\œ˜Y›Ü›H‚ˆ‚ˆÚ\™LˆÛ\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™HžÝ
+	ÝÜ˜\‹™^Ü	Ê_OÜÜ[‚ˆØ]Û‚‚ˆËÊˆ›È\Ü˜YH[
+‹ßBˆ]Û‚ˆÛÛXÚÏ^Ú[™SÜ[”šXÚ[™ßBˆÛ\ÜÓ˜[YO^Ø›^][\ËXÙ[\ˆØ\LHNL‹H›Ý[™Y[È›ÛX›Û^^ÈÚYÝË[YÚYÝËX›XÚËÌÌ˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹LÌ›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H	Âˆ\Ô›ÂˆÈ	Ø™ËXÞX[‹NMLÍŒ›Ü™\ˆ›Ü™\‹XÞX[‹NÍÌ^XÞX[‹LŒÝ™\Ž˜™ËXÞX[‹NLÍL	Âˆˆ	Ø™Ë\Û]KLLÝ™\Ž˜™Ë]Ú]H^\Û]KNML	ÂˆXBˆ]O^Ý
+	ÝÜ˜\‹\Ü˜YU]IÊ_Bˆ\šXK[X™[H•šY]È›È[™X[HÝXœØÜš\[Ûˆ[œÈ‚ˆ‚ˆÜ›ÝÛˆÛ\ÜÓ˜[YO^ØËLËHLËHÚš[šËL	Ú\Ô›ÈÈ	Ý^X[X™\‹M	Èˆ	Ý^\Û]KNML	ßXHÏ‚ˆÜ[žÚ\Ô›ÈÈ
+	ÝÜ˜\‹œ›ÉÊHˆ
+	ÝÜ˜\‹\Ü˜YIÊ_OÜÜ[‚ˆØ]Û‚‚ˆËÊˆ\Ù\ˆXØÛÝ[ÈÚYÛˆ[ˆ
+‹ßBˆÝ\Ù\ˆÈ
+ˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[]]BˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LKHNLˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLÝ™\Ž˜™Ë\Û]KN^\Û]KLŒ^^È›Û\Ù[ZX›Û˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]O^ØXØÛÝ[ˆ	Ý\Ù\‹™[XZ[H
+	Ü[•Y\‹Õ\\Ø\ÙJ
+_HY\ŠXBˆ\šXK[X™[^Ø\Ù\ˆXØÛÝ[ˆ	Ý\Ù\‹™[XZ[XBˆ‚ˆ]ˆÛ\ÜÓ˜[YOHËMHMH›Ý[™YY[™ËXÞX[‹MŒÌÌ^XÞX[‹LÌ›Ü™\ˆ›Ü™\‹XÞX[‹MLÍL›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ^VÌL\H›ÛX›ÛÚš[šËL‚ˆÝ\Ù\‹™[XZ[Ë–ÌOËÕ\\Ø\ÙJ
+H\Ù\’XÛÛˆÛ\ÜÓ˜[YOHËLÈLÈˆÏŸBˆÙ]‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™HX^]ËVÍÍ\H[˜Ø]H^VÌL\HžÝ\Ù\‹™[XZ[ËœÜ]
+	Ð	ÊVÌ_OÜÜ[‚ˆØ]Û‚ˆ
+Hˆ
+ˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[]]BˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LHNLˆÛNœL‹H›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLÝ™\Ž˜™Ë\Û]KN^\Û]KLÌÝ™\Ž^]Ú]H^^È›Û\Ù[ZX›Û˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]O^Ý
+	ÝÜ˜\‹œÚYÛ’[•]IÊ_Bˆ\šXK[X™[H”ÚYÛˆ[ˆÈÞ[˜ÈÛÝY\˜Ú]XÝ\™\È‚ˆ‚ˆ\Ù\’XÛÛˆÛ\ÜÓ˜[YOHËLËHLËHÚš[šËLˆÏ‚ˆÜ[ˆÛ\ÜÓ˜[YOHšY[ˆÞš[›[™HžÝ
+	ÝÜ˜\‹œÚYÛ’[‰Ê_OÜÜ[‚ˆØ]Û‚ˆ
+_B‚ˆËÊˆ[™ÝXYÙHÝÚ]Ú\ˆ
+‹ßBˆ]Û‚ˆÛÛXÚÏ^Ê
+HOˆÂˆÛÛœÝ™^ØØ[HHØØ[HOOH	Ù[‰ÈÈ	Ý‰Èˆ	Ù[‰ÎÂˆÙ]ØØ[J™^ØØ[JNÂˆ[[Y]žK˜XÚÊ	ÓØØ[HÚ[™ÙY	È\È[žKÈØØ[Nˆ™^ØØ[HJNÂˆ_BˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\LHNLˆ›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNMLÝ™\Ž˜™Ë\Û]KN^\Û]KLÌÝ™\Ž^]Ú]H^^È›Û[[Û›È›Û\Ù[ZX›Û˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]O^ÛØØ[HOOH	Ù[‰ÈÈ	Õ0ïšðéÙH[[™HÙpéÉÈˆ	ÔÝÚ]ÚÈ[™Û\Ú	ßBˆ\šXK[X™[^ØÝ\œ™[[™ÝXYÙNˆ	ÛØØ[KÕ\\Ø\ÙJ
+_KˆÛXÚÈÈÝÚ]Ú[™ÝXYÙK˜Bˆ‚ˆ[™ÝXYÙ\ÈÛ\ÜÓ˜[YOHËLËHLËH^XÞX[‹MˆÏ‚ˆÜ[žÛØØ[KÕ\\Ø\ÙJ
+_OÜÜ[‚ˆØ]Û‚‚ˆËÊˆ[\˜XÝ]™HÛ˜›Ø\™[™ÈÝ\ˆšYÙÙ\ˆ
+‹ßBˆÛÛ“Ü[•Ý\ˆ	‰ˆ
+ˆ]Û‚ˆÛÛXÚÏ^ÛÛ“Ü[•Ý\ŸBˆÛ\ÜÓ˜[YOHËNN›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNML^XÞX[‹MÝ™\Ž^XÞX[‹LÌÝ™\Ž˜›Ü™\‹XÞX[‹MLÍL›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™ËXÞX[‹M›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]O^ÛØØ[HOOH	Ý‰ÈÈ	ñ,\˜ZÝYˆÝ0ï[È™Z™\š[šHpéÉÈˆ	Ó][˜Ú[\˜XÝ]™HÝY[ÈÝ\‰ßBˆ\šXK[X™[H“][˜Ú[\˜XÝ]™HÝY[ÈÝ\ˆ‚ˆ‚ˆ[Ú\˜ÛHÛ\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆØ]Û‚ˆ
+_B‚ˆËÊˆÛX\ˆÜ˜\
+‹ßBˆ]Û‚ˆÛÛXÚÏ^ÛÛÛX\‘Ü˜\BˆÛ\ÜÓ˜[YOHËNN›Ý[™Y[È›Ü™\ˆ›Ü™\‹\Û]KN™ËY\šËNML^\Û]KMÝ™\Ž^\›ÜÙKMÝ™\Ž˜›Ü™\‹\›ÜÙKNL›^][\ËXÙ[\ˆ\ÝYžKXÙ[\ˆ˜[œÚ][Û‹XÛÛÜœÈÚš[šËL›ØÝ\Ë]š\ÚX›Nœš[™ËLˆ›ØÝ\Ë]š\ÚX›Nœš[™Ë\›ÜÙKM›ØÝ\Ë]š\ÚX›N›Ý][™K[›Û™H‚ˆ]O^Ý
+	ÝÜ˜\‹˜ÛX\‰Ê_Bˆ\šXK[X™[HÛX\ˆ[›Ù\È[™YÙ\Èœ›ÛH\˜Ú]XÝ\™H‚ˆ‚ˆ˜\ÚˆÛ\ÜÓ˜[YOHËLËHLËHˆÏ‚ˆØ]Û‚ˆÙ]‚ˆÚXY\‚ˆ
+NÂŸNÂ
