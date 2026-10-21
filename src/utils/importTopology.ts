@@ -1,12 +1,29 @@
 import { GraphNode, GraphEdge, NodeType, ProtocolType } from '../types/graph';
 import { sanitizeArchitectureImport } from './securitySanitizer';
 import { autoLayoutTopology } from './simulationPhysics';
+import { synthesizeArchitectureOffline } from '../services/aiGenerator';
 
 export interface ImportTopologyResult {
-  format: 'json' | 'docker-compose' | 'terraform' | 'package-json' | 'openapi';
+  format: 'json' | 'docker-compose' | 'terraform' | 'package-json' | 'openapi' | 'erp-csv' | 'erp-process';
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
+
+export const SAMPLE_ERP_CSV_IMPORT = `Departman;Hedef_Departman;Süreç_Açıklaması;İşlem_Süresi_ms;Kapasite_RPS
+Satın Alma & Tedarikçi (PO);Depo Giriş (Inbound);Purchase Order & İrsaliye;14;500
+El Terminali & Barkod;Depo Giriş (Inbound);Barkod / RFID Okutma (WMS);10;650
+Depo Giriş (Inbound);Ar-Ge Departmanı (R&D);BOM / Ürün Ağacı & Numune;15;1100
+Depo Giriş (Inbound);Kalite Kontrol (IQC / QA);Girdi Kalite & Karantina Testi;18;1100
+Depo Giriş (Inbound);Üretim Departmanı (MES);İş Emri Hammadde Besleme;16;1100
+Depo Giriş (Inbound);Bakım Departmanı (MRO);Yedek Parça & Makine Bakım;14;1100
+Ar-Ge Departmanı (R&D);ERP Merkezi Stok DB;Reçete & Yeni Stok Kodu;22;550
+Kalite Kontrol (IQC / QA);ERP Merkezi Stok DB;Serbest Stok Onayı;26;650
+Kalite Kontrol (IQC / QA);Toplama Listesi (Pick List);Onaylı Parti Sevk Emri;18;650
+Üretim Departmanı (MES);Toplama Listesi (Pick List);Mamul Giriş & Sevkiyat Talebi;34;750
+Bakım Departmanı (MRO);ERP Merkezi Stok DB;MRO Yedek Parça Düşümü;20;450
+ERP Merkezi Stok DB;Depo Çıkış (Outbound);FIFO / LIFO Stok Düşümü;16;1000
+Toplama Listesi (Pick List);Depo Çıkış (Outbound);Pick List Hazırlama;9;1400
+Depo Çıkış (Outbound);Sevkiyat & e-İrsaliye (ERP);Hatasız Teslimat & ERP Kaydı;20;850`;
 
 export const SAMPLE_PACKAGE_JSON_IMPORT = `{
   "name": "fintech-checkout-platform",
@@ -87,17 +104,17 @@ interface ClassifiedComponent {
 function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
   const token = `${name} ${image}`.toLowerCase();
 
-  if (/(postgres|mysql|mariadb|mongodb|mongo|cassandra|cockroach|dynamodb|rds|aurora|db|database|supabase)/.test(token)) {
+  if (/(postgres|mysql|mariadb|mongodb|mongo|cassandra|cockroach|dynamodb|rds|aurora|db|database|supabase|stok db|merkezi stok|fifo|lifo|veritaban)/.test(token)) {
     return {
       type: 'database',
       color: '#3b82f6',
       iconName: 'Database',
       latencyMs: 22,
-      throughputRps: 450,
-      defaultSubtitle: image || 'PostgreSQL Primary',
+      throughputRps: 650,
+      defaultSubtitle: image || 'PostgreSQL / ERP Stok DB',
     };
   }
-  if (/(redis|memcached|elasticache|valkey|dragonfly|cache)/.test(token)) {
+  if (/(redis|memcached|elasticache|valkey|dragonfly|cache|izlenebilirlik|visibility)/.test(token)) {
     return {
       type: 'cache',
       color: '#f43f5e',
@@ -107,64 +124,74 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Redis Cluster',
     };
   }
-  if (/(kafka|rabbitmq|ActiveMQ|nats|pulsar|sqs|msk|queue|broker|event|pubsub)/.test(token)) {
+  if (/(kafka|rabbitmq|activemq|nats|pulsar|sqs|msk|queue|broker|event|pubsub|pick list|toplama listesi|kuyruk|konveyör|konveyor)/.test(token)) {
     return {
       type: 'queue',
       color: '#f59e0b',
       iconName: 'Shuffle',
       latencyMs: 8,
-      throughputRps: 1100,
-      defaultSubtitle: image || 'Message Broker',
+      throughputRps: 1200,
+      defaultSubtitle: image || 'Message / Pick Queue',
     };
   }
-  if (/(minio|s3|bucket|blob|storage|ceph)/.test(token)) {
+  if (/(minio|s3|bucket|blob|storage|ceph|depo çıkış|depo cikis|outbound|goods issue|ambar)/.test(token)) {
     return {
       type: 'storage',
       color: '#14b8a6',
       iconName: 'HardDrive',
-      latencyMs: 48,
-      throughputRps: 320,
-      defaultSubtitle: image || 'Object Storage (S3)',
+      latencyMs: 32,
+      throughputRps: 600,
+      defaultSubtitle: image || 'Object / Outbound Storage',
     };
   }
-  if (/(lambda|serverless|faas|edge-fn|cloud-function)/.test(token)) {
+  if (/(lambda|serverless|faas|edge-fn|cloud-function|bakım|bakim|mro|maintenance)/.test(token)) {
     return {
       type: 'serverless',
       color: '#eab308',
       iconName: 'Zap',
-      latencyMs: 35,
+      latencyMs: 28,
       throughputRps: 600,
-      defaultSubtitle: image || 'Serverless Function',
+      defaultSubtitle: image || 'Serverless / MRO Unit',
     };
   }
-  if (/(kong|envoy|traefik|haproxy|gateway|ingress|alb|loadbalancer|lb|apigateway)/.test(token)) {
+  if (/(kong|envoy|traefik|haproxy|gateway|ingress|alb|loadbalancer|lb|apigateway|depo giriş|depo giris|inbound|mal kabul|goods receipt)/.test(token)) {
     return {
       type: 'gateway',
       color: '#818cf8',
       iconName: 'Network',
-      latencyMs: 7,
+      latencyMs: 9,
       throughputRps: 1200,
-      defaultSubtitle: image || 'API Gateway / LB',
+      defaultSubtitle: image || 'API Gateway / Inbound',
     };
   }
-  if (/(client|frontend|web|storefront|nextjs|react|browser|mobile|cdn|cloudfront)/.test(token)) {
+  if (/(client|frontend|web|storefront|nextjs|react|browser|mobile|cdn|cloudfront|satın alma|satin alma|tedarikçi|tedarikci|el terminali|barkod|rfid)/.test(token)) {
     return {
       type: 'client',
       color: '#38bdf8',
-      iconName: 'Globe',
+      iconName: token.includes('terminal') || token.includes('barkod') || token.includes('mobile') ? 'Smartphone' : 'Globe',
       latencyMs: 14,
       throughputRps: 650,
       defaultSubtitle: image || 'Web / Edge Client',
     };
   }
-  if (/(stripe|openai|twilio|sendgrid|webhook|external|thirdparty)/.test(token)) {
+  if (/(stripe|openai|twilio|sendgrid|webhook|external|thirdparty|e-irsaliye|irsaliye|sevkiyat|teslimat)/.test(token)) {
     return {
       type: 'external',
       color: '#10b981',
       iconName: 'ExternalLink',
-      latencyMs: 120,
-      throughputRps: 250,
-      defaultSubtitle: image || 'External API',
+      latencyMs: 65,
+      throughputRps: 450,
+      defaultSubtitle: image || 'External API / Sevkiyat',
+    };
+  }
+  if (/(kalite|quality|iqc|oqc|karantina)/.test(token)) {
+    return {
+      type: 'service',
+      color: '#10b981',
+      iconName: 'ShieldCheck',
+      latencyMs: 26,
+      throughputRps: 620,
+      defaultSubtitle: image || 'Kalite Kontrol (QA)',
     };
   }
   return {
@@ -172,8 +199,8 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
     color: '#a855f7',
     iconName: 'Server',
     latencyMs: 28,
-    throughputRps: 520,
-    defaultSubtitle: image || 'Microservice Container',
+    throughputRps: 560,
+    defaultSubtitle: image || 'Microservice / Departman',
   };
 }
 
@@ -188,10 +215,10 @@ function inferProtocol(fromType: NodeType, toType: NodeType): { protocol: Protoc
     return { protocol: 'Kafka', latencyMs: 6, label: fromType === 'queue' ? 'consume' : 'publish' };
   }
   if (toType === 'storage') {
-    return { protocol: 'HTTP/REST', latencyMs: 28, label: 'PUT / GET Object' };
+    return { protocol: 'HTTP/REST', latencyMs: 20, label: 'PUT / GET Object' };
   }
   if (fromType === 'client') {
-    return { protocol: 'HTTP/REST', latencyMs: 20, label: 'HTTPS /api' };
+    return { protocol: 'HTTP/REST', latencyMs: 16, label: 'HTTPS /api' };
   }
   return { protocol: 'gRPC', latencyMs: 9, label: 'RPC Call' };
 }
@@ -203,9 +230,120 @@ function formatReadableTitle(rawId: string): string {
     .trim();
 }
 
-/**
- * Parses a docker-compose.yml string into GraphFlow nodes and edges.
- */
+function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const lines = csvText
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0 && !l.startsWith('#'));
+
+  if (lines.length === 0) {
+    return { nodes: [], edges: [] };
+  }
+
+  const firstLine = lines[0];
+  const delimiter = firstLine.includes(';') ? ';' : firstLine.includes('\t') ? '\t' : ',';
+
+  const rows = lines.map(line =>
+    line.split(delimiter).map(cell => cell.trim().replace(/^["']|["']$/g, ''))
+  );
+
+  const headerCandidate = rows[0].join(' ').toLowerCase();
+  const hasHeader = /(departman|kaynak|adim|adım|source|from|hedef|target|to|süreç|surec|kapasite|rps|latency)/i.test(
+    headerCandidate
+  );
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  const nodeMap = new Map<string, GraphNode>();
+  const edges: GraphEdge[] = [];
+
+  const ensureNode = (rawName: string, subtitleHint = '', customLat?: number, customRps?: number): GraphNode => {
+    const cleanTitle = rawName.trim().slice(0, 32);
+    const key = cleanTitle.toLowerCase();
+    const existing = nodeMap.get(key);
+    if (existing) {
+      if (subtitleHint && existing.subtitle === classifyByImageOrName(cleanTitle).defaultSubtitle) {
+        existing.subtitle = subtitleHint.slice(0, 36);
+      }
+      if (customLat && Number.isFinite(customLat)) existing.latencyMs = Math.max(1, customLat);
+      if (customRps && Number.isFinite(customRps)) existing.throughputRps = Math.max(10, customRps);
+      return existing;
+    }
+
+    const classified = classifyByImageOrName(cleanTitle, subtitleHint);
+    const idx = nodeMap.size;
+    const node: GraphNode = {
+      id: `erp-node-${idx + 1}`,
+      type: classified.type,
+      title: cleanTitle,
+      subtitle: (subtitleHint || classified.defaultSubtitle).slice(0, 36),
+      x: 100 + (idx % 4) * 280,
+      y: 100 + Math.floor(idx / 4) * 140,
+      width: 190,
+      height: 90,
+      status: 'healthy',
+      circuitBreaker: 'closed',
+      latencyMs: customLat && Number.isFinite(customLat) ? Math.max(1, customLat) : classified.latencyMs,
+      errorRate: 0.1,
+      throughputRps: customRps && Number.isFinite(customRps) ? Math.max(10, customRps) : classified.throughputRps,
+      color: classified.color,
+      iconName: classified.iconName,
+    };
+    nodeMap.set(key, node);
+    return node;
+  };
+
+  let edgeIdx = 1;
+  for (const cols of dataRows) {
+    const fromName = cols[0] || '';
+    const toName = cols[1] || '';
+    const desc = cols[2] || '';
+    const latNum = cols[3] ? Number(cols[3].replace(/[^0-9.]/g, '')) : undefined;
+    const rpsNum = cols[4] ? Number(cols[4].replace(/[^0-9.]/g, '')) : undefined;
+
+    if (!fromName) continue;
+    const fromNode = ensureNode(fromName, desc, latNum, rpsNum);
+
+    if (toName) {
+      const toNode = ensureNode(toName, '', undefined, undefined);
+      if (fromNode.id !== toNode.id) {
+        const proto = inferProtocol(fromNode.type, toNode.type);
+        edges.push({
+          id: `erp-csv-e${edgeIdx++}`,
+          fromNodeId: fromNode.id,
+          toNodeId: toNode.id,
+          protocol: proto.protocol,
+          latencyMs: latNum && Number.isFinite(latNum) ? Math.max(1, Math.round(latNum * 0.6)) : proto.latencyMs,
+          errorRate: 0,
+          label: (desc || proto.label).slice(0, 22),
+        });
+      }
+    }
+  }
+
+  const nodes = Array.from(nodeMap.values());
+
+  if (edges.length === 0 && nodes.length > 1) {
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const proto = inferProtocol(nodes[i].type, nodes[i + 1].type);
+      edges.push({
+        id: `erp-csv-chain-${i + 1}`,
+        fromNodeId: nodes[i].id,
+        toNodeId: nodes[i + 1].id,
+        protocol: proto.protocol,
+        latencyMs: proto.latencyMs,
+        errorRate: 0,
+        label: proto.label,
+      });
+    }
+  }
+
+  return {
+    nodes: autoLayoutTopology(nodes),
+    edges,
+  };
+}
+
 function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const lines = yamlText.replace(/\r\n/g, '\n').split('\n');
   let inServices = false;
@@ -239,14 +377,12 @@ function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; e
 
     if (!inServices) continue;
 
-    // Exited services block (e.g., top-level networks: or volumes:)
     if (indent <= servicesIndent && /^[a-zA-Z0-9_-]+\s*:/.test(trimmed)) {
       inServices = false;
       currentService = null;
       continue;
     }
 
-    // Service definition key (typically indent === servicesIndent + 2)
     const serviceMatch = trimmed.match(/^([a-zA-Z0-9_.-]+)\s*:\s*$/);
     if (serviceMatch && (currentService === null || indent === (servicesIndent >= 0 ? servicesIndent + 2 : 2))) {
       const sName = serviceMatch[1];
@@ -325,7 +461,6 @@ function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; e
     });
   });
 
-  // Also detect implicit dependencies in environment strings
   allServiceNames.forEach(sName => {
     const info = serviceMap.get(sName)!;
     const joinedEnv = info.envText.join(' ');
@@ -348,8 +483,6 @@ function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; e
       const toNode = nodeById.get(depName);
       if (!toNode || fromNode.id === toNode.id) return;
 
-      // Special case: if a worker depends_on a queue (e.g. ledger-worker depends_on events-kafka),
-      // data flows FROM the queue TO the worker in an event-driven pipeline.
       const isWorkerConsumingQueue =
         toNode.type === 'queue' && /(worker|consumer|processor|projector)/i.test(fromNode.id);
 
@@ -375,9 +508,6 @@ function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; e
   };
 }
 
-/**
- * Parses Terraform (.tf) resource blocks into a GraphFlow topology.
- */
 function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([\s\S]*?)\n\}/g;
   const resources: Array<{ tfType: string; name: string; body: string }> = [];
@@ -385,7 +515,6 @@ function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: 
   let match: RegExpExecArray | null;
   while ((match = resourceRegex.exec(tfText)) !== null) {
     const [, tfType, name, body] = match;
-    // Skip pure networking/IAM plumbing resources
     if (/(aws_vpc|aws_subnet|aws_security_group|aws_iam|aws_lb_target_group|aws_lb_listener)/.test(tfType)) {
       continue;
     }
@@ -416,7 +545,6 @@ function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: 
   const nodeById = new Map(nodes.map(n => [n.id, n]));
   let edgeIdx = 1;
 
-  // 1. Explicit references in HCL body
   resources.forEach(r => {
     resources.forEach(target => {
       if (r.name !== target.name && r.body.includes(target.name)) {
@@ -436,7 +564,6 @@ function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: 
     });
   });
 
-  // 2. If no explicit references found, wire standard architectural tiers (Ingress -> Compute -> Data)
   if (edges.length === 0 && nodes.length > 1) {
     const ingress = nodes.filter(n => n.type === 'client' || n.type === 'gateway');
     const compute = nodes.filter(n => n.type === 'service' || n.type === 'serverless');
@@ -480,9 +607,6 @@ function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: 
   };
 }
 
-/**
- * Reverse-engineers a Node.js / TypeScript package.json into a complete 4-tier GraphFlow topology.
- */
 function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const deps = {
     ...(typeof pkg.dependencies === 'object' ? pkg.dependencies : {}),
@@ -494,7 +618,6 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
 
-  // 1. Client / Frontend tier
   const hasNextOrReact = depKeys.some(k => /(^next$|^react$|^vue$|svelte|nuxt|vite)/.test(k));
   const clientId = 'pkg-client';
   nodes.push({
@@ -514,7 +637,6 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
     iconName: 'Globe',
   });
 
-  // 2. API Gateway tier
   const gatewayId = 'pkg-gateway';
   nodes.push({
     id: gatewayId,
@@ -534,7 +656,6 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
     circuitBreaker: 'closed',
   });
 
-  // 3. Core Compute Service tier
   const serviceId = 'pkg-core-service';
   const runtimeLabel = depKeys.some(k => k.includes('nestjs'))
     ? 'NestJS Microservice'
@@ -623,7 +744,6 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
     });
   };
 
-  // Detect Databases
   if (depKeys.some(k => /(^pg$|postgres|prisma|drizzle|typeorm|sequelize|supabase|mysql|mongodb|mongoose)/.test(k))) {
     const dbSub = depKeys.some(k => k.includes('supabase'))
       ? 'Supabase PostgreSQL'
@@ -635,23 +755,19 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
     addDownstream('pkg-db', 'database', 'Primary Database', dbSub, '#3b82f6', 'Database', 18, 520);
   }
 
-  // Detect Redis / Cache
   if (depKeys.some(k => /(ioredis|^redis$|upstash|memcached|keyv)/.test(k))) {
     addDownstream('pkg-redis', 'cache', 'Redis Cache Cluster', 'ioredis Low-Latency', '#f43f5e', 'Cpu', 2, 1900);
   }
 
-  // Detect Message Queues / Event Streams
   if (depKeys.some(k => /(kafkajs|amqplib|bullmq|^bull$|sqs|rabbitmq|nats)/.test(k))) {
     const qSub = depKeys.includes('kafkajs') ? 'Apache Kafka (kafkajs)' : 'BullMQ / Event Stream';
     addDownstream('pkg-queue', 'queue', 'Event Stream Broker', qSub, '#f59e0b', 'Shuffle', 7, 1300);
   }
 
-  // Detect S3 / Object Storage
   if (depKeys.some(k => /(client-s3|aws-sdk|minio|uploadthing|cloudinary)/.test(k))) {
     addDownstream('pkg-s3', 'storage', 'Object StorageBucket', 'AWS S3 SDK v3', '#14b8a6', 'HardDrive', 38, 400);
   }
 
-  // Detect External APIs (Stripe, OpenAI, Twilio, Resend)
   if (depKeys.some(k => /(stripe|openai|anthropic|twilio|resend|sendgrid|lemonsqueezy)/.test(k))) {
     const extSub = depKeys.includes('stripe')
       ? 'Stripe Billing & Webhooks'
@@ -661,7 +777,6 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
     addDownstream('pkg-ext', 'external', 'External Provider API', extSub, '#10b981', 'ExternalLink', 95, 320);
   }
 
-  // Ensure at least one backing database if minimal package.json was pasted
   if (nodes.length <= 3) {
     addDownstream('pkg-db-default', 'database', 'Primary Database', 'PostgreSQL 16', '#3b82f6', 'Database', 20, 500);
   }
@@ -672,9 +787,6 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
   };
 }
 
-/**
- * Reverse-engineers an OpenAPI 3.x / Swagger 2.0 YAML or JSON spec into a microservice topology.
- */
 function parseOpenApiToTopology(rawText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const pathMatches = Array.from(rawText.matchAll(/^\s{2,4}(\/[a-zA-Z0-9/_-]+)\s*:/gm)).map(m => m[1]);
   const routeGroups = Array.from(
@@ -826,18 +938,13 @@ function parseOpenApiToTopology(rawText: string): { nodes: GraphNode[]; edges: G
   };
 }
 
-/**
- * Universal infrastructure importer supporting GraphFlow JSON, package.json, OpenAPI/Swagger, Docker Compose YAML, and Terraform HCL.
- */
 export function parseInfrastructureToTopology(rawContent: string, filename = ''): ImportTopologyResult {
   const trimmed = rawContent.trim();
   const lowerFile = filename.toLowerCase();
 
-  // 1. Try JSON if starts with { or filename ends with .json
   if (trimmed.startsWith('{') || lowerFile.endsWith('.json')) {
     const parsed = JSON.parse(trimmed);
 
-    // Check if it's a Node.js package.json file
     if (
       lowerFile.endsWith('package.json') ||
       (parsed && typeof parsed === 'object' && !Array.isArray(parsed.nodes) && (parsed.dependencies || parsed.devDependencies))
@@ -846,7 +953,6 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
       return { format: 'package-json', nodes, edges };
     }
 
-    // Check if it's an OpenAPI / Swagger JSON spec
     if (parsed && typeof parsed === 'object' && (parsed.openapi || parsed.swagger) && parsed.paths) {
       const { nodes, edges } = parseOpenApiToTopology(trimmed);
       return { format: 'openapi', nodes, edges };
@@ -859,7 +965,6 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     return { format: 'json', nodes, edges };
   }
 
-  // 2. Try Terraform HCL if contains resource "..." "..." or ends with .tf
   if (/resource\s+"[^"]+"\s+"[^"]+"/.test(trimmed) || lowerFile.endsWith('.tf')) {
     const { nodes, edges } = parseTerraformToTopology(trimmed);
     if (nodes.length === 0) {
@@ -868,13 +973,11 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     return { format: 'terraform', nodes, edges };
   }
 
-  // 3. Try OpenAPI / Swagger YAML
   if (/^(openapi|swagger)\s*:/m.test(trimmed) && /paths\s*:/m.test(trimmed)) {
     const { nodes, edges } = parseOpenApiToTopology(trimmed);
     return { format: 'openapi', nodes, edges };
   }
 
-  // 4. Try Docker Compose YAML
   if (/services\s*:/.test(trimmed) || lowerFile.endsWith('.yml') || lowerFile.endsWith('.yaml')) {
     const { nodes, edges } = parseDockerComposeToTopology(trimmed);
     if (nodes.length === 0) {
@@ -883,8 +986,32 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     return { format: 'docker-compose', nodes, edges };
   }
 
+  const firstLine = trimmed.split(/\r?\n/)[0] || '';
+  if (
+    lowerFile.endsWith('.csv') ||
+    lowerFile.endsWith('.tsv') ||
+    firstLine.includes(';') ||
+    firstLine.includes('\t') ||
+    (trimmed.includes('\n') && (firstLine.match(/,/g) || []).length >= 2)
+  ) {
+    const { nodes, edges } = parseErpCsvToTopology(trimmed);
+    if (nodes.length > 0) {
+      return { format: 'erp-csv', nodes, edges };
+    }
+  }
+
+  if (
+    /(erp|kurumsal kaynak|inbound|outbound|depo giriş|depo giris|depo çıkış|depo cikis|mal kabul|satın alma|kalite kontrol|ar-ge|arge|üretim|uretim|bakım|bakim|pick list|fifo|lifo|sevkiyat)/i.test(
+      trimmed
+    )
+  ) {
+    const generated = synthesizeArchitectureOffline(trimmed);
+    if (generated.nodes.length > 0) {
+      return { format: 'erp-process', nodes: generated.nodes, edges: generated.edges };
+    }
+  }
+
   throw new Error(
-    'Unrecognized file format. Paste or upload a valid docker-compose.yml, main.tf, package.json, openapi.yaml, or GraphFlow .json file.'
+    'Unrecognized file format. Paste or upload a valid ERP CSV/Excel table, ERP process description, docker-compose.yml, main.tf, package.json, openapi.yaml, or GraphFlow .json file.'
   );
 }
-

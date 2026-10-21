@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { generateMarkdownDoc, generateArchitectureSvg, generateTerraform } from '../utils/export';
-import { parseInfrastructureToTopology, SAMPLE_DOCKER_COMPOSE_IMPORT } from '../utils/importTopology';
+import {
+  parseInfrastructureToTopology,
+  SAMPLE_DOCKER_COMPOSE_IMPORT,
+  SAMPLE_ERP_CSV_IMPORT,
+} from '../utils/importTopology';
+import { synthesizeArchitectureOffline } from '../services/aiGenerator';
 import { generateShareUrl, parseShareUrl, generateEmbedUrl, generateIframeSnippet } from '../services/projectStorage';
 import { GraphNode, GraphEdge } from '../types/graph';
 
@@ -136,5 +141,31 @@ describe('Export & Documentation Generator', () => {
     const tfResult = parseInfrastructureToTopology(tfHcl, 'main.tf');
     expect(tfResult.format).toBe('terraform');
     expect(tfResult.nodes.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('imports ERP / Excel CSV tables and multi-department ERP prompts into separate department nodes', () => {
+    const erpCsvResult = parseInfrastructureToTopology(SAMPLE_ERP_CSV_IMPORT, 'erp-uretim.csv');
+    expect(erpCsvResult.format).toBe('erp-csv');
+    expect(erpCsvResult.nodes.length).toBeGreaterThanOrEqual(8);
+    expect(erpCsvResult.edges.length).toBeGreaterThanOrEqual(10);
+
+    const csvTitles = erpCsvResult.nodes.map(n => n.title);
+    expect(csvTitles).toContain('Depo Giriş (Inbound)');
+    expect(csvTitles).toContain('Ar-Ge Departmanı (R&D)');
+    expect(csvTitles).toContain('Kalite Kontrol (IQC / QA)');
+    expect(csvTitles).toContain('Üretim Departmanı (MES)');
+    expect(csvTitles).toContain('Bakım Departmanı (MRO)');
+    expect(csvTitles).toContain('Depo Çıkış (Outbound)');
+
+    const erpPrompt = `ERP sistemlerinde Depo Giriş (Inbound), Ar-Ge, Kalite Kontrol, Üretim, Bakım ve Depo Çıkış (Outbound) süreçleri`;
+    const synthesized = synthesizeArchitectureOffline(erpPrompt);
+    const synthTitles = synthesized.nodes.map(n => n.title);
+    expect(synthTitles).not.toContain('Business Logic Service');
+    expect(synthTitles).toContain('Depo Giriş (Inbound)');
+    expect(synthTitles).toContain('Ar-Ge Departmanı (R&D)');
+    expect(synthTitles).toContain('Kalite Kontrol (IQC / QA)');
+    expect(synthTitles).toContain('Üretim Departmanı (MES)');
+    expect(synthTitles).toContain('Bakım Departmanı (MRO)');
+    expect(synthTitles).toContain('Depo Çıkış (Outbound)');
   });
 });

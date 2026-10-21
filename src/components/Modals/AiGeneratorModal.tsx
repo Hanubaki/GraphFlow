@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEscapeToClose } from '../../hooks/useEscapeToClose';
-import { Sparkles, X, Loader2, ArrowRight, Wand2, Key, Lock } from 'lucide-react';
+import { Sparkles, X, Loader2, ArrowRight, Wand2, Key, Lock, Check } from 'lucide-react';
 import { generateArchitectureWithGemini, synthesizeArchitectureOffline, GeneratedArchitecture } from '../../services/aiGenerator';
 import { useAuth } from '../../context/AuthContext';
 import { checkFeatureEntitlement, TIER_LIMITS } from '../../services/billing';
@@ -13,6 +13,30 @@ interface AiGeneratorModalProps {
 }
 
 const AI_QUOTA_STORAGE_KEY = 'graphflow_daily_ai_quota_v1';
+const GEMINI_API_KEY_STORAGE_KEY = 'graphflow_gemini_api_key_v1';
+
+function getStoredGeminiApiKey(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function saveStoredGeminiApiKey(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const trimmed = key.trim();
+    if (trimmed) {
+      localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, trimmed);
+    } else {
+      localStorage.removeItem(GEMINI_API_KEY_STORAGE_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function getDailyAiUsageCount(): number {
   if (typeof window === 'undefined') return 0;
@@ -39,6 +63,7 @@ function incrementDailyAiUsageCount(): number {
 }
 
 const PRESET_PROMPTS = [
+  'ERP Depo Giriş/Çıkış (Inbound/Outbound), Ar-Ge, Kalite Kontrol, Üretim ve Bakım Departmanları Akışı',
   'E-Commerce with Redis cache, Kafka events, and Stripe checkout',
   'On-demand food delivery with courier live tracking and database',
   'High-scale video streaming platform with CDN and S3 chunks',
@@ -54,8 +79,9 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 }) => {
   const { planTier, isPro } = useAuth();
   const [prompt, setPrompt] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [apiKey, setApiKey] = useState<string>(() => getStoredGeminiApiKey());
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(() => Boolean(getStoredGeminiApiKey()));
+  const [keySavedBadge, setKeySavedBadge] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [statusStep, setStatusStep] = useState('');
   const [usedToday, setUsedToday] = useState<number>(() => getDailyAiUsageCount());
@@ -64,40 +90,52 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 
   if (!isOpen) return null;
 
+  const hasCustomKey = Boolean(apiKey.trim());
   const aiEntitlement = checkFeatureEntitlement('ai_generation_unlimited', planTier, usedToday);
+  const canGenerate = aiEntitlement.allowed || hasCustomKey;
   const maxFreeDaily = TIER_LIMITS.free.maxDailyAiPrompts;
+
+  const handleSaveApiKey = () => {
+    saveStoredGeminiApiKey(apiKey);
+    setKeySavedBadge(true);
+    setTimeout(() => setKeySavedBadge(false), 2000);
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-    if (!aiEntitlement.allowed) {
+    if (!canGenerate) {
       onClose();
       onOpenPricing?.();
       return;
     }
 
+    saveStoredGeminiApiKey(apiKey);
     setIsLoading(true);
-    setStatusStep('Analyzing requirements & topologies...');
+    setStatusStep('Analyzing requirements, departments & topologies...');
 
     try {
-      await new Promise(r => setTimeout(r, 400));
-      setStatusStep('Synthesizing microservices, caches & databases...');
-      await new Promise(r => setTimeout(r, 400));
-      setStatusStep('Routing network protocols and latencies...');
+      await new Promise(r => setTimeout(r, 350));
+      setStatusStep('Synthesizing departments, services, queues & databases...');
+      await new Promise(r => setTimeout(r, 350));
+      setStatusStep('Routing workflow connections and latencies...');
 
       let result: GeneratedArchitecture;
-      if (apiKey.trim()) {
+      if (hasCustomKey) {
         result = await generateArchitectureWithGemini(prompt, apiKey.trim());
       } else {
         result = synthesizeArchitectureOffline(prompt);
       }
 
-      setUsedToday(incrementDailyAiUsageCount());
+      if (!hasCustomKey) {
+        setUsedToday(incrementDailyAiUsageCount());
+      }
       onApplyArchitecture(result);
       onClose();
     } catch (err) {
       console.error(err);
-      // Fallback
-      setUsedToday(incrementDailyAiUsageCount());
+      if (!hasCustomKey) {
+        setUsedToday(incrementDailyAiUsageCount());
+      }
       const fallback = synthesizeArchitectureOffline(prompt);
       onApplyArchitecture(fallback);
       onClose();
@@ -112,7 +150,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="ai-gen-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4"
     >
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
@@ -125,10 +163,16 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 id="ai-gen-modal-title" className="text-base font-bold text-slate-100">AI Prompt-to-Architecture</h2>
                 <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                  {isPro ? 'PRO UNLIMITED' : `${Math.max(0, maxFreeDaily - usedToday)}/${maxFreeDaily} FREE TODAY`}
+                  {isPro
+                    ? 'PRO UNLIMITED'
+                    : hasCustomKey
+                      ? 'BYOK UNLIMITED (GEMINI 2.5)'
+                      : `${Math.max(0, maxFreeDaily - usedToday)}/${maxFreeDaily} FREE TODAY`}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Describe your system in plain English; AI will layout and simulate it</p>
+              <p className="text-xs text-slate-400">
+                Describe software systems or ERP / factory departments (Ar-Ge, Kalite, Üretim, Depo)
+              </p>
             </div>
           </div>
           <button
@@ -142,11 +186,13 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 
         {/* Content */}
         <div className="p-5 space-y-4">
-          {!aiEntitlement.allowed && (
+          {!canGenerate && (
             <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-xs text-amber-200">{aiEntitlement.reason}</span>
+                <span className="text-xs text-amber-200">
+                  {aiEntitlement.reason} (veya aşağıya kendi ücretsiz Google Gemini API anahtarınızı girerek sınırsız kullanın)
+                </span>
               </div>
               {onOpenPricing && (
                 <button
@@ -161,26 +207,27 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
               )}
             </div>
           )}
+
           {/* Prompt Textarea */}
           <div className="space-y-1.5">
             <label htmlFor="ai-gen-prompt" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
               <Wand2 className="w-3.5 h-3.5 text-cyan-400" />
-              What kind of system do you want to model?
+              What kind of system or ERP workflow do you want to model?
             </label>
             <textarea
               id="ai-gen-prompt"
               rows={3}
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
-              placeholder="e.g. A ride-sharing app with real-time GPS tracking, microservices, Kafka queue, Redis cache, and PostgreSQL database..."
-              className="w-full bg-dark-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/50 transition-colors resize-none"
+              placeholder="e.g. ERP Depo Giriş (Inbound), Ar-Ge (BOM), Kalite Kontrol (IQC), Üretim (MES), Bakım (MRO) ve Depo Çıkış (Outbound) iş akışı..."
+              className="w-full select-text bg-dark-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/50 transition-colors resize-none"
             />
           </div>
 
           {/* Quick preset suggestions */}
           <div className="space-y-1.5">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              Quick Suggestions
+              Quick Suggestions (ERP & Cloud)
             </span>
             <div className="flex flex-wrap gap-1.5">
               {PRESET_PROMPTS.map(p => (
@@ -198,23 +245,63 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
           {/* Optional Gemini API Key Accordion */}
           <div className="pt-2 border-t border-slate-800/80">
             <button
+              type="button"
               onClick={() => setShowApiKeyInput(!showApiKeyInput)}
               className="text-[11px] text-slate-400 hover:text-cyan-400 flex items-center gap-1.5 transition-colors"
             >
               <Key className="w-3.5 h-3.5" />
-              <span>{showApiKeyInput ? 'Hide Gemini API Key' : 'Have a Google Gemini API Key? (Optional)'}</span>
+              <span>
+                {showApiKeyInput
+                  ? 'Hide Gemini API Key'
+                  : hasCustomKey
+                    ? 'Google Gemini API Key Configured (Click to Edit)'
+                    : 'Have a Google Gemini API Key? (Optional)'}
+              </span>
+              {hasCustomKey && (
+                <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 text-[10px] font-mono">
+                  ACTIVE
+                </span>
+              )}
             </button>
             {showApiKeyInput && (
-              <div className="mt-2 space-y-1">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                  placeholder="AIzaSy... (leave blank to use built-in smart engine)"
-                  className="w-full bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-400"
-                />
+              <div className="mt-2 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={e => setApiKey(e.target.value)}
+                    placeholder="AIzaSy... (leave blank to use built-in ERP & Cloud engine)"
+                    className="flex-1 select-text bg-dark-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveApiKey}
+                    className="h-8 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-cyan-300 flex items-center gap-1 shrink-0 transition-colors"
+                  >
+                    {keySavedBadge ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <span>Save Key</span>
+                    )}
+                  </button>
+                  {hasCustomKey && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setApiKey('');
+                        saveStoredGeminiApiKey('');
+                      }}
+                      className="h-8 px-2.5 rounded-lg bg-slate-900 hover:bg-rose-950/50 border border-slate-800 text-xs text-slate-400 hover:text-rose-300 shrink-0 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-400">
-                  By default, GraphFlow includes a built-in neural rules synthesizer that runs 100% offline.
+                  Uses <code className="text-cyan-300 font-mono">gemini-2.5-flash</code> when a key is saved, or runs 100% offline with the built-in Multi-Department ERP & Cloud synthesizer.
                 </p>
               </div>
             )}
