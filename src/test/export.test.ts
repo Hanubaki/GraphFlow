@@ -7,6 +7,12 @@ import {
 } from '../utils/importTopology';
 import { synthesizeArchitectureOffline } from '../services/aiGenerator';
 import { generateShareUrl, parseShareUrl, generateEmbedUrl, generateIframeSnippet } from '../services/projectStorage';
+import {
+  parseLiveTelemetryPayload,
+  generateSimulatedLiveTick,
+  SAMPLE_LOGO_ERP_BRIDGE_SCRIPT,
+} from '../services/liveTelemetry';
+import { checkFeatureEntitlement } from '../services/billing';
 import { GraphNode, GraphEdge } from '../types/graph';
 
 describe('Export & Documentation Generator', () => {
@@ -167,5 +173,53 @@ describe('Export & Documentation Generator', () => {
     expect(synthTitles).toContain('Üretim Departmanı (MES)');
     expect(synthTitles).toContain('Bakım Departmanı (MRO)');
     expect(synthTitles).toContain('Depo Çıkış (Outbound)');
+  });
+
+  it('parses real-time live telemetry JSON, CSV, and Prometheus payloads and enforces Pro entitlement for live URL streaming', () => {
+    const erpNodes = synthesizeArchitectureOffline(
+      'ERP Depo Giriş, Ar-Ge, Kalite Kontrol, Üretim, Bakım ve Depo Çıkış'
+    ).nodes;
+
+    // 1. JSON array live payload matching Turkish department names
+    const jsonPayload = JSON.stringify([
+      { department: 'Depo Giriş (Inbound)', throughputRps: 495, latencyMs: 19, errorRate: 0.2, status: 'healthy' },
+      { department: 'Kalite Kontrol (IQC / QA)', throughputRps: 310, latencyMs: 145, errorRate: 2.4, status: 'warning' },
+      { department: 'Üretim Departmanı (MES)', throughputRps: 640, latencyMs: 88, errorRate: 0.4, status: 'healthy' },
+    ]);
+    const parsedJson = parseLiveTelemetryPayload(jsonPayload, erpNodes);
+    expect(parsedJson.sourceFormat).toBe('json');
+    expect(parsedJson.updates.length).toBe(3);
+    const qcUpdate = parsedJson.updates.find(u => u.matchedTitle.includes('Kalite Kontrol'));
+    expect(qcUpdate?.throughputRps).toBe(310);
+    expect(qcUpdate?.status).toBe('degraded');
+
+    // 2. CSV live snapshot matching department names
+    const csvPayload = [
+      'Departman;Islem_Hizi_RPS;Gecikme_MS;Hata_Orani;Durum',
+      'Ar-Ge Departmanı (R&D);155;42;0.1;healthy',
+      'Bakım Departmanı (MRO);85;210;6.5;down',
+    ].join('\n');
+    const parsedCsv = parseLiveTelemetryPayload(csvPayload, erpNodes);
+    expect(parsedCsv.sourceFormat).toBe('csv');
+    expect(parsedCsv.updates.length).toBe(2);
+    const mroUpdate = parsedCsv.updates.find(u => u.matchedTitle.includes('Bakım'));
+    expect(mroUpdate?.status).toBe('down');
+
+    // 3. Simulated Live Tick generator
+    const demoTick = generateSimulatedLiveTick(erpNodes, 1);
+    expect(demoTick.parsed.updates.length).toBe(erpNodes.length);
+    expect(demoTick.parsed.updates[0].throughputRps).toBeGreaterThan(0);
+
+    // 4. Logo ERP / SQL Bridge script contains port 4040 and /metrics endpoint
+    expect(SAMPLE_LOGO_ERP_BRIDGE_SCRIPT).toContain('4040');
+    expect(SAMPLE_LOGO_ERP_BRIDGE_SCRIPT).toContain('/metrics');
+
+    // 5. Pro Plan feature entitlement check for live_telemetry_stream
+    const freeEntitlement = checkFeatureEntitlement('live_telemetry_stream', 'free');
+    expect(freeEntitlement.allowed).toBe(false);
+    expect(freeEntitlement.reason).toContain('Pro');
+
+    const proEntitlement = checkFeatureEntitlement('live_telemetry_stream', 'pro');
+    expect(proEntitlement.allowed).toBe(true);
   });
 });

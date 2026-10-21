@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useGraphStore } from './hooks/useGraphStore';
 import { SimulationProvider } from './context/SimulationContext';
 import { MultiplayerProvider } from './context/MultiplayerContext';
@@ -17,6 +17,7 @@ const AuthModal = React.lazy(() => import('./components/Modals/AuthModal').then(
 const EmbedModal = React.lazy(() => import('./components/Modals/EmbedModal').then(m => ({ default: m.EmbedModal })));
 const AnalyticsModal = React.lazy(() => import('./components/Modals/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
 const CommandPaletteModal = React.lazy(() => import('./components/Modals/CommandPaletteModal').then(m => ({ default: m.CommandPaletteModal })));
+const LiveTelemetryModal = React.lazy(() => import('./components/Modals/LiveTelemetryModal').then(m => ({ default: m.LiveTelemetryModal })));
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
@@ -31,8 +32,13 @@ import { createNodeFromCatalog } from './utils/nodeFactory';
 import { telemetry } from './utils/telemetry';
 import { autoHardenTopology, autoLayoutTopology } from './utils/simulationPhysics';
 import { captureFirstTouchAttribution } from './services/billing';
+import {
+  LiveNodeMetricUpdate,
+  generateSimulatedLiveTick,
+  parseLiveTelemetryPayload,
+} from './services/liveTelemetry';
 
-export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | 'commandPalette' | null;
+export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | 'commandPalette' | 'liveTelemetry' | null;
 
 export const App: React.FC = () => {
   const {
@@ -76,6 +82,113 @@ export const App: React.FC = () => {
 
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
+
+  // Real-Time Live Telemetry & ERP Digital Twin Streaming State
+  const [isLiveStreaming, setIsLiveStreaming] = useState<boolean>(false);
+  const [liveStreamMode, setLiveStreamMode] = useState<'demo' | 'url' | null>(null);
+  const [liveEndpointUrl, setLiveEndpointUrl] = useState<string>('http://localhost:4040/metrics');
+  const [livePollIntervalSec, setLivePollIntervalSec] = useState<number>(3);
+  const [lastLiveTickTime, setLastLiveTickTime] = useState<string | null>(null);
+  const [recentLiveUpdates, setRecentLiveUpdates] = useState<LiveNodeMetricUpdate[]>([]);
+  const [liveStreamError, setLiveStreamError] = useState<string | null>(null);
+
+  const nodesRef = useRef<GraphNode[]>(nodes);
+  const liveTickCounterRef = useRef<number>(0);
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  const applyLiveMetricUpdates = useCallback((updates: LiveNodeMetricUpdate[]) => {
+    if (!updates || updates.length === 0) return;
+    const updateMap = new Map<string, LiveNodeMetricUpdate>();
+    for (const u of updates) {
+      updateMap.set(u.nodeId, u);
+    }
+
+    const nextNodes = nodesRef.current.map(node => {
+      const u = updateMap.get(node.id);
+      if (!u) return node;
+      return {
+        ...node,
+        throughputRps: typeof u.throughputRps === 'number' ? u.throughputRps : node.throughputRps,
+        latencyMs: typeof u.latencyMs === 'number' ? u.latencyMs : node.latencyMs,
+        errorRate: typeof u.errorRate === 'number' ? u.errorRate : node.errorRate,
+        status: u.status || node.status,
+        subtitle: u.subtitle || node.subtitle,
+      };
+    });
+
+    setNodes(nextNodes);
+    setRecentLiveUpdates(updates);
+    setLastLiveTickTime(new Date().toLocaleTimeString());
+  }, [setNodes]);
+
+  useEffect(() => {
+    if (!isLiveStreaming || !liveStreamMode) return;
+
+    let cancelled = false;
+
+    const executeLiveTick = async () => {
+      if (cancelled) return;
+      const currentNodes = nodesRef.current;
+      if (currentNodes.length === 0) return;
+
+      if (liveStreamMode === 'demo') {
+        liveTickCounterRef.current += 1;
+        const simTick = generateSimulatedLiveTick(currentNodes, liveTickCounterRef.current);
+        applyLiveMetricUpdates(simTick.parsed.updates);
+        setLiveStreamError(null);
+        return;
+      }
+
+      if (liveStreamMode === 'url') {
+        const targetUrl = liveEndpointUrl.trim();
+        if (!targetUrl) {
+          setLiveStreamError('Canlı bağlantı için geçerli bir URL girin (örn. http://localhost:4040/metrics).');
+          return;
+        }
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(targetUrl, {
+            method: 'GET',
+            headers: { Accept: 'application/json, text/plain, text/csv, */*' },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+          const rawText = await res.text();
+          if (cancelled) return;
+
+          const parsed = parseLiveTelemetryPayload(rawText, currentNodes);
+          if (parsed.updates.length === 0) {
+            setLiveStreamError(
+              'Veri çekildi ancak tuvaldeki düğüm isimleriyle eşleşen departman/servis bulunamadı.'
+            );
+          } else {
+            applyLiveMetricUpdates(parsed.updates);
+            setLiveStreamError(null);
+          }
+        } catch (err: any) {
+          if (!cancelled) {
+            setLiveStreamError(
+              `Bağlantı hatası (${targetUrl}): ${err?.message || 'Sunucuya ulaşılamadı. Logo ERP Bridge scriptinin çalıştığından emin olun.'}`
+            );
+          }
+        }
+      }
+    };
+
+    executeLiveTick();
+    const intervalId = setInterval(executeLiveTick, Math.max(1, livePollIntervalSec) * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [isLiveStreaming, liveStreamMode, liveEndpointUrl, livePollIntervalSec, applyLiveMetricUpdates]);
   const [viewMode, setViewMode] = useState<'landing' | 'studio' | 'embed'>(() => {
     if (typeof window === 'undefined') return 'landing';
     if (window.location.hash.includes('#embed=')) return 'embed';
@@ -282,6 +395,8 @@ export const App: React.FC = () => {
           onOpenExport={() => setActiveModal('export')}
           onOpenEmbed={() => setActiveModal('embed')}
           onOpenAiGenerator={() => setActiveModal('aiGen')}
+          onOpenLiveTelemetry={() => setActiveModal('liveTelemetry')}
+          isLiveStreaming={isLiveStreaming}
           onOpenProjects={() => setActiveModal('projects')}
           onOpenPricing={() => setActiveModal('pricing')}
           onOpenAnalytics={() => setActiveModal('analytics')}
@@ -424,6 +539,47 @@ export const App: React.FC = () => {
             nodes={nodes}
             edges={edges}
             onClose={() => setActiveModal(null)}
+          />
+        )}
+
+        {activeModal === 'liveTelemetry' && (
+          <LiveTelemetryModal
+            isOpen={true}
+            nodes={nodes}
+            isStreaming={isLiveStreaming}
+            streamMode={liveStreamMode}
+            endpointUrl={liveEndpointUrl}
+            pollIntervalSec={livePollIntervalSec}
+            lastTickTime={lastLiveTickTime}
+            recentUpdates={recentLiveUpdates}
+            streamError={liveStreamError}
+            onClose={() => setActiveModal(null)}
+            onSetEndpointUrl={setLiveEndpointUrl}
+            onSetPollIntervalSec={setLivePollIntervalSec}
+            onStartDemoStream={() => {
+              setLiveStreamError(null);
+              setLiveStreamMode('demo');
+              setIsLiveStreaming(true);
+              soundFx.playSuccess();
+              telemetry.track('Simulation Toggled', { mode: 'live_demo_stream', nodeCount: nodes.length });
+            }}
+            onStartUrlStream={() => {
+              setLiveStreamError(null);
+              setLiveStreamMode('url');
+              setIsLiveStreaming(true);
+              soundFx.playSuccess();
+              telemetry.track('Simulation Toggled', { mode: 'live_url_stream', endpoint: liveEndpointUrl });
+            }}
+            onStopStream={() => {
+              setIsLiveStreaming(false);
+              setLiveStreamMode(null);
+              soundFx.playClick();
+            }}
+            onApplyManualSnapshot={updates => {
+              applyLiveMetricUpdates(updates);
+              soundFx.playSuccess();
+            }}
+            onOpenPricing={() => setActiveModal('pricing')}
           />
         )}
 
