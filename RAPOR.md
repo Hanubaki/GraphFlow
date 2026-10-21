@@ -1,9 +1,9 @@
 # GraphFlow — Proje Durum, Gelir Yolu ve Denetim Raporu (RAPOR.md)
 
-**Son Güncelleme:** 15 Ekim 2026
+**Son Güncelleme:** 21 Ekim 2026
 **Canlı Üretim Adresi:** https://graph-flow-virid.vercel.app
-**Git Durumu:** `main` (`7628dda` + Faz-4 Staff Engineer & Pro Satın Alma Özellikleri)
-**Test ve Derleme Durumu:** 19/19 Test Dosyası, 122/122 Birim Testi Başarılı, 0 TypeScript Hatası
+**Git Durumu:** `main` (`818dbe0` + Faz-6 Canlı ERP / API Dijital İkiz Telemetri Bağlayıcısı & Pro Canlı Akış)
+**Test ve Derleme Durumu:** 19/19 Test Dosyası, 124/124 Birim Testi Başarılı, 0 TypeScript Hatası
 **Lemon Squeezy Mağaza Durumu:** ONAYLANDI VE AKTİF (`APPROVED` - 15 Ekim 2026, 06:09 TSİ)
 
 ---
@@ -81,7 +81,24 @@
       - **MP4 (X, LinkedIn, Reddit için):** `public/graphflow-stripe-demo.mp4` (`747 KB`, H.264 30 FPS)
       - **GIF (GitHub README, Dev.to, HN için):** `public/graphflow-stripe-demo.gif` (`3.9 MB`, 800x450 Lanczos) — `README.md` en üstüne gömüldü.
       - **WebM (Ham 1280x720 Kayıt):** `public/graphflow-stripe-demo.webm`
-    - Tüm mühendis kanalları için kopyala-yapıştır hazır teknik inceleme (teardown) metinlerini, `Show HN` şablonunu, Reddit mimari kriz senaryolarını ve GitHub `Awesome` listesi PR bağlantılarını içeren **`ENGINEER_GROWTH_PLAYBOOK.md`** oluşturuldu.
+    - **Composio GitHub ile Otomatik Açılan 3 Canlı `Awesome` Listesi Pull Request'i (Toplam 90.000+ Yıldızlı Depolar):**
+      1. `madd86/awesome-system-design` — **PR #45:** https://github.com/madd86/awesome-system-design/pull/45
+      2. `dastergon/awesome-sre` — **PR #336:** https://github.com/dastergon/awesome-sre/pull/336
+      3. `binhnguyennus/awesome-scalability` — **PR #136:** https://github.com/binhnguyennus/awesome-scalability/pull/136
+    - Tüm mühendis kanalları için kopyala-yapıştır hazır teknik inceleme (teardown) metinlerini, `Show HN` şablonunu ve Reddit mimari kriz senaryolarını içeren **`ENGINEER_GROWTH_PLAYBOOK.md`** oluşturuldu.
+
+14. **Online Google Gemini 2.5 Flash API Düzeltmesi ve Teknik Bilmeyenler İçin Çoklu-Departman ERP / Excel CSV İçe Aktarıcı (`src/services/aiGenerator.ts`, `src/components/Modals/AiGeneratorModal.tsx`, `src/utils/importTopology.ts`, `src/components/Modals/ExportModal.tsx`, `src/constants/templates.ts`):**
+    - **Online Gemini API Key Düzeltmesi & Kalıcı Kayıt (`localStorage`):** Kaldırılan `gemini-1.5-flash` (`404 Not Found`) yerine otomatik sırayla `gemini-2.5-flash` $\rightarrow$ `gemini-2.0-flash` $\rightarrow$ `gemini-flash-latest` uç noktalarını deneyen çoklu model yapısı kuruldu. `AiGeneratorModal` içine `Save Key` / `Clear` butonları, `ACTIVE` rozeti, metin seçimi (`select-text`) ve kullanıcı kendi API anahtarını girdiğinde (`BYOK UNLIMITED`) günlük 3 ücretsiz kota sınırını devre dışı bırakan mantık eklendi.
+    - **Çoklu-Departman ERP & Üretim Sentezleyici (`synthesizeErpMultiDepartmentTopology`):** API anahtarı olmasa bile kullanıcı ERP, Depo Giriş (`Inbound`), Depo Çıkış (`Outbound`), **Ar-Ge (`R&D / BOM`)**, **Kalite Kontrol (`IQC / QA`)**, **Üretim (`MES / WIP`)**, **Bakım (`MRO`)** veya maddeli departman listesi girdiğinde tek bir `Business Logic Service` kutusu yerine her departmanı ayrı bir düğüm olarak 5 katmanlı mimaride çizen motor eklendi.
+    - **ERP / Excel CSV Tablosu İçe Aktarıcı (`parseErpCsvToTopology` & `SAMPLE_ERP_CSV_IMPORT`) ve Hazır ERP Şablonu (`erp-warehouse-mes`):** Teknik bilgisi olmayan ERP kullanıcılarının Excel/CSV tablolarını (`Departman;Hedef_Departman;Süreç;Süre;Kapasite`) veya düz ERP süreç metinlerini doğrudan `Export & Import Hub` içine yapıştırıp/yükleyip canlı simülasyona dönüştürmesi sağlandı; `Templates` galerisine hazır **"ERP Depo (Inbound/Outbound) & Üretim (MES) Akışı"** şablonu eklendi.
+
+15. **Gerçek Zamanlı Canlı ERP / API Dijital İkiz Telemetri Bağlayıcısı (`Live ERP/API` — `src/services/liveTelemetry.ts`, `src/components/Modals/LiveTelemetryModal.tsx`, `src/services/billing.ts`, `src/components/Toolbar/TopBar.tsx`, `src/App.tsx`):**
+    - **Üst Çubukta (`TopBar`) `Live ERP/API` Butonu ve Canlı Akış Rozeti (`Live: ON`):** Kullanıcının tuvaldeki mimarisini çalışan bir ERP (Logo Tiger/Go, SAP, Netsis) veya üretim sistemine (Prometheus, REST API) bağlamasını sağlayan 3 sekmeli **`LiveTelemetryModal`** eklendi.
+    - **Ücretsiz Canlı Demo Akışı (`Start Free Demo Stream`) + Pro Plan (`$19/ay`) Gerçek Zamanlı URL Polling Kilidi (`live_telemetry_stream`):**
+      - Ücretsiz kullanıcılar **1-Click Free Demo Stream** ile her 3 saniyede bir tuvaldeki departmanların/servislerin gerçek zamanlı veriyle nasıl davrandığını, darboğazların nasıl kaydığını ve animasyonlu paket hızlarının nasıl değiştiğini canlı deneyimleyebilir.
+      - Özel bir üretim URL'sine (`http://localhost:4040/metrics` veya kurumsal API) kesintisiz `2sn / 5sn / 10sn` periyotlarla bağlanmak (`Connect & Stream URL`) doğrudan **Pro Plan (`checkFeatureEntitlement('live_telemetry_stream')`)** aboneliğine bağlanarak B2B dönüşüm hunisine eklendi.
+    - **Çoklu Format Canlı Veri Çözümleyici (`parseLiveTelemetryPayload`):** Hem JSON dizilerini/nesnelerini, hem ERP/Excel CSV tablolarını (`Departman;RPS;Gecikme_MS;Hata_Orani;Durum`), hem de **Prometheus** (`metric{service="..."}`) formatını Türkçe karakter duyarsız akıllı eşleştirme (`matchNodeByIdOrTitle`) ile tuvaldeki düğümlere anlık uygular.
+    - **Hazır Kopyalanabilir Logo ERP / MS SQL Salt-Okunur Köprü Scripti (`SAMPLE_LOGO_ERP_BRIDGE_SCRIPT` — `logo-erp-bridge.mjs`):** Fabrika/staj ortamında Logo ERP (`LG_001_01_STFICHE`, `ORFICHE`, `PRODORD`) veya MS SQL kullananların 30 saniyede `http://localhost:4040/metrics` üzerinden canlı veri yayınlamasını sağlayan hazır Node.js köprü scripti modal içine eklendi.
 
 ---
 
@@ -94,4 +111,3 @@
   - Lemon Squeezy Canlı Webhook'u (`ID: 142796`) Composio API üzerinden otomatik olarak `https://graph-flow-virid.vercel.app/api/webhook` adresine bağlandı.
 - **Canlı Vercel Web Analytics Özeti (`VERCEL_MCP_GET_WEB_ANALYTICS`):**
   - Son 7 günde **16 tekil ziyaretçi** ve **43 sayfa görüntülemesi** kaydedildi (ABD `US`, Hindistan `IN`, Fas `MA` (`t.co` X/Twitter yönlendirmesi) ve Türkiye `TR`).
-
