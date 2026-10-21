@@ -86,7 +86,7 @@ export function checkFeatureEntitlement(
           reason: `Daily AI synthesis quota reached (${limits.maxDailyAiPrompts} per day). Upgrade to Pro for unlimited AI generation.`,
         };
       }
-      return { alowed: true };
+      return { allowed: true };
 
     case 'terraform_export':
       if (!limits.canExportTerraform) {
@@ -109,7 +109,7 @@ export function checkFeatureEntitlement(
     case 'docker_export':
       return { allowed: limits.canExportDocker };
 
-    case 'circuit_breakerq':
+    case 'circuit_breakers':
       return { allowed: limits.canSimulateCircuitBreakers };
 
     case 'multiplayer_collaboration':
@@ -163,7 +163,9 @@ export function resolveAcquisitionChannel(
       if (host && !INTERNAL_HOSTS.some(internal => host === internal || host.endsWith(`.${internal}`))) {
         referrerHost = host;
       }
-    } catch {}
+    } catch {
+      // ignore malformed referrer URLs
+    }
   }
 
   const rawSignal = utmSource || referrerHost || '';
@@ -181,7 +183,7 @@ export function resolveAcquisitionChannel(
     source = 'github';
   } else if (rawSignal.includes('reddit')) {
     source = 'reddit';
-  } else if (rawSignal.includes('combinator') || rawSignal === 'hn' || rawSignal === 'hackernews') {
+  } else if (rawSignal.includes('ycombinator') || rawSignal === 'hn' || rawSignal === 'hackernews') {
     source = 'hackernews';
   } else if (rawSignal.includes('linkedin') || rawSignal === 'lnkd.in') {
     source = 'linkedin';
@@ -214,6 +216,9 @@ export function resolveAcquisitionChannel(
   };
 }
 
+/**
+ * Captures and persists the visitor's first-touch acquisition channel in localStorage.
+ */
 export function captureFirstTouchAttribution(): AcquisitionAttribution {
   if (typeof window === 'undefined') {
     return resolveAcquisitionChannel();
@@ -234,15 +239,24 @@ export function captureFirstTouchAttribution(): AcquisitionAttribution {
       }
     }
     window.localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(current));
-  } catch {}
+  } catch {
+    // ignore storage quota / privacy mode errors
+  }
 
   return current;
 }
 
+/**
+ * Reads the persisted first-touch attribution (or captures it if not yet initialized).
+ */
 export function getFirstTouchAttribution(): AcquisitionAttribution {
   return captureFirstTouchAttribution();
 }
 
+/**
+ * Generates official Lemon Squeezy checkout link with overlay embed, user attribution,
+ * and first-touch acquisition channel metadata (`checkout[custom][acquisition_source]`).
+ */
 export function buildLemonCheckoutUrl(
   user?: { id: string; email?: string | null } | null,
   isAnnual = true,
@@ -280,6 +294,9 @@ export function buildLemonCheckoutUrl(
   return query ? `${baseUrl}&${query}` : baseUrl;
 }
 
+/**
+ * Customer billing portal link for subscription management and invoices.
+ */
 export function getCustomerBillingPortalUrl(): string {
   return LEMON_CONFIG.customerPortalUrl;
 }
