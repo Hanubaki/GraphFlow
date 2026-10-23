@@ -97,6 +97,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
 
     const handleTouchMove = (moveEvent: TouchEvent) => {
       if (moveEvent.touches.length !== 1) return;
+      if (moveEvent.cancelable) moveEvent.preventDefault();
       const currentTouch = moveEvent.touches[0];
       const currentZoom = zoomRef.current;
       const dx = (currentTouch.clientX - dragStartPos.current.mouseX) / currentZoom;
@@ -165,7 +166,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border backdrop-blur-md bg-dark-900/90 touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
+      className={`absolute select-none cursor-grab group transition-shadow duration-150 rounded-xl border md:backdrop-blur-md bg-dark-900/95 md:bg-dark-900/90 touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
         isSelected
           ? 'border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400 z-20'
           : 'border-slate-800 hover:border-slate-700 shadow-lg shadow-black/40'
@@ -444,4 +445,3 @@ function areNodePropsEqual(prev: NodeComponentProps, next: NodeComponentProps): 
 }
 
 export const NodeComponent = React.memo(NodeComponentBase, areNodePropsEqual);
-

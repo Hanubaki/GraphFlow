@@ -7,6 +7,8 @@ export interface AutoCenterResult {
 
 /**
  * Calculates optimal bounding box zoom and pan offsets to center graph nodes within viewport.
+ * Automatically adapts to mobile viewports (< 768px) where the right inspector is hidden
+ * and the left component palette is collapsed to 56px.
  */
 export function calculateAutoCenter(
   nodes: GraphNode[],
@@ -15,8 +17,14 @@ export function calculateAutoCenter(
 ): AutoCenterResult | null {
   if (nodes.length === 0) return null;
 
-  const availableWidth = Math.max(400, windowWidth - 256 - 320);
-  const availableHeight = Math.max(300, windowHeight - 56);
+  const isMobile = windowWidth < 768;
+  const leftSidebarOffset = isMobile ? 56 : 0;
+  const availableWidth = isMobile
+    ? Math.max(240, windowWidth - 56)
+    : Math.max(400, windowWidth - 256 - 320);
+  const availableHeight = isMobile
+    ? Math.max(240, windowHeight - 108)
+    : Math.max(300, windowHeight - 56);
 
   const minX = Math.min(...nodes.map(n => n.x));
   const maxX = Math.max(...nodes.map(n => n.x + n.width));
@@ -28,11 +36,13 @@ export function calculateAutoCenter(
   const centerX = (minX + maxX) / 2;
   const centerY = (minY + maxY) / 2;
 
-  const scaleX = (availableWidth - 80) / graphWidth;
-  const scaleY = (availableHeight - 80) / graphHeight;
-  const targetScale = Math.min(1.0, Math.max(0.45, Math.min(scaleX, scaleY)));
+  const padding = isMobile ? 32 : 80;
+  const minZoom = isMobile ? 0.22 : 0.45;
+  const scaleX = (availableWidth - padding) / graphWidth;
+  const scaleY = (availableHeight - padding) / graphHeight;
+  const targetScale = Math.min(1.0, Math.max(minZoom, Math.min(scaleX, scaleY)));
 
-  const targetPanX = Math.round((availableWidth / 2) - (centerX * targetScale));
+  const targetPanX = Math.round(leftSidebarOffset + (availableWidth / 2) - (centerX * targetScale));
   const targetPanY = Math.round((availableHeight / 2) - (centerY * targetScale));
 
   return {

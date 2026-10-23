@@ -8,6 +8,7 @@ import { PeerCursorLayer } from './PeerCursorLayer';
 import { createBezierPath } from '../../utils/geometry';
 import { useSimulationPackets, useSimulationControls } from '../../context/SimulationContext';
 import { useMultiplayer } from '../../context/MultiplayerContext';
+import { Maximize2, Sliders, Zap } from 'lucide-react';
 
 const EMPTY_PACKETS: DataPacket[] = [];
 
@@ -36,6 +37,9 @@ interface GraphCanvasProps {
   onAddNodeAt: (typeItem: CatalogItem, x: number, y: number) => void;
   onUpdateNode?: (id: string, updates: Partial<GraphNode>) => void;
   onDuplicateNode?: (id: string) => void;
+  onResetZoom?: () => void;
+  isMobileInspectorOpen?: boolean;
+  onToggleMobileInspector?: () => void;
 }
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
@@ -57,6 +61,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   onAddNodeAt,
   onUpdateNode,
   onDuplicateNode,
+  onResetZoom,
+  isMobileInspectorOpen = false,
+  onToggleMobileInspector,
 }) => {
   const contextPackets = useSimulationPackets();
   const packets = propPackets ?? contextPackets;
@@ -71,8 +78,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   }
   const trafficLoadMultiplier = simControls?.trafficLoadMultiplier ?? 1;
   const isSpikeMode = simControls?.isSpikeMode ?? false;
+  const metrics = simControls?.metrics;
 
-  // O(1) node lookup map (recomputes only when nodes array changes, not on 60 FPS packet ticks)
+  // O(1) node lookup map (recomputes only when nodes array changes, not on packet ticks)
   const nodeMap = useMemo(() => {
     const map = new Map<string, GraphNode>();
     for (const n of nodes) {
@@ -81,10 +89,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return map;
   }, [nodes]);
 
-  // O(P) single-pass packet grouping by edgeId (replaces O(E * P) per-edge filtering)
+  const lastInboundUpdateRef = useRef<number>(0);
+  const cachedInboundMapRef = useRef<Map<string, number>>(new Map());
+
+  // O(P) single-pass packet grouping by edgeId + 4 Hz throttled inboundCountByNode
+  // Prevents NodeComponent DOM trees from re-rendering at 30-60 FPS while keeping SVG PacketDots silky-smooth
   const { packetsByEdge, inboundCountByNode } = useMemo(() => {
     const edgeMap = new Map<string, DataPacket[]>();
-    const nodeCountMap = new Map<string, number>();
     for (const pkt of packets) {
       const list = edgeMap.get(pkt.edgeId);
       if (list) {
@@ -92,9 +103,23 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       } else {
         edgeMap.set(pkt.edgeId, [pkt]);
       }
-      nodeCountMap.set(pkt.toNodeId, (nodeCountMap.get(pkt.toNodeId) ?? 0) + 1);
     }
-    return { packetsByEdge: edgeMap, inboundCountByNode: nodeCountMap };
+
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (packets.length === 0) {
+      if (cachedInboundMapRef.current.size > 0) {
+        cachedInboundMapRef.current = new Map();
+      }
+    } else if (now - lastInboundUpdateRef.current >= 240 || cachedInboundMapRef.current.size === 0) {
+      lastInboundUpdateRef.current = now;
+      const nodeCountMap = new Map<string, number>();
+      for (const pkt of packets) {
+        nodeCountMap.set(pkt.toNodeId, (nodeCountMap.get(pkt.toNodeId) ?? 0) + 1);
+      }
+      cachedInboundMapRef.current = nodeCountMap;
+    }
+
+    return { packetsByEdge: edgeMap, inboundCountByNode: cachedInboundMapRef.current };
   }, [packets]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -136,7 +161,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     if (e.target !== containerRef.current && !(e.target as HTMLElement).classList.contains('canvas-background')) {
       return;
     }
-    
+
     onSelectNode(null);
     onSelectEdge(null);
 
@@ -188,7 +213,37 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     if (connectingState) setConnectingState(null);
   };
 
-  // Mobile multi-touch gesture handlers: pinch-to-zoom and two-finger/single-finger pan
+  const connectingStateRef = useRef(connectingState);
+  connectingStateRef.current = connectingState;
+
+  // Start connecting from node output port
+  const handleStartConnect = useCallback((nodeId: string, startPos: { x: number; y: number }) => {
+    setConnectingState({
+      sourceNodeId: nodeId,
+      startPos,
+      currentPos: { ...startPos },
+    });
+  }, []);
+
+  // Complete connection on node input port (stable reference: does not change on mouse move)
+  const handleEndConnect = useCallback((targetNodeId: string) => {
+    const current = connectingStateRef.current;
+    if (!current) return;
+    if (current.sourceNodeId !== targetNodeId) {
+      const newEdge: GraphEdge = {
+        id: `e-${Date.now()}`,
+        fromNodeId: current.sourceNodeId,
+        toNodeId: targetNodeId,
+        protocol: 'HTTP/REST',
+        latencyMs: 15,
+        errorRate: 0,
+      };
+      onAddEdge(newEdge);
+    }
+    setConnectingState(null);
+  }, [onAddEdge]);
+
+  // Mobile multi-touch gesture handlers: pinch-to-zoom, two-finger/single-finger pan, and touch port connecting
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -237,6 +292,15 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
 
+    // Update in-progress wire connection when dragging from an output port on touch devices
+    if (connectingStateRef.current && e.touches.length === 1) {
+      const touch = e.touches[0];
+      const worldX = (touch.clientX - rect.left - pan.x) / zoom;
+      const worldY = (touch.clientY - rect.top - pan.y) / zoom;
+      setConnectingState(prev => (prev ? { ...prev, currentPos: { x: worldX, y: worldY } } : null));
+      return;
+    }
+
     // Two-finger pinch-to-zoom & two-finger pan
     if (e.touches.length === 2 && touchPinchRef.current) {
       const t1 = e.touches[0];
@@ -246,7 +310,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
       const { initialDistance, initialZoom, midpoint: initMid, initialPan } = touchPinchRef.current;
       const scale = currentDist / initialDistance;
-      const targetZoom = Math.min(2.5, Math.max(0.3, initialZoom * scale));
+      const targetZoom = Math.min(2.5, Math.max(0.22, initialZoom * scale));
 
       // Focal point zoom into midpoint with translation delta
       const dx = currentMid.x - initMid.x;
@@ -273,6 +337,30 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    // Complete touch-dragged wire connection via bounding-box hit test (since touchend targets origin element)
+    if (connectingStateRef.current && containerRef.current && e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      const rect = containerRef.current.getBoundingClientRect();
+      const worldX = (touch.clientX - rect.left - pan.x) / zoom;
+      const worldY = (touch.clientY - rect.top - pan.y) / zoom;
+      const current = connectingStateRef.current;
+
+      const hitTarget = nodes.find(
+        n =>
+          n.id !== current.sourceNodeId &&
+          worldX >= n.x - 24 &&
+          worldX <= n.x + n.width + 24 &&
+          worldY >= n.y - 20 &&
+          worldY <= n.y + n.height + 20
+      );
+
+      if (hitTarget) {
+        handleEndConnect(hitTarget.id);
+      } else {
+        setConnectingState(null);
+      }
+    }
+
     if (e.touches.length === 0) {
       touchPanRef.current = null;
       touchPinchRef.current = null;
@@ -296,7 +384,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     if (!containerRef.current) return;
 
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newZoom = Math.min(2.5, Math.max(0.3, zoom * zoomFactor));
+    const newZoom = Math.min(2.5, Math.max(0.22, zoom * zoomFactor));
 
     const rect = containerRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -309,36 +397,6 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     setZoom(newZoom);
     setPan({ x: newPanX, y: newPanY });
   };
-
-  const connectingStateRef = useRef(connectingState);
-  connectingStateRef.current = connectingState;
-
-  // Start connecting from node output port
-  const handleStartConnect = useCallback((nodeId: string, startPos: { x: number; y: number }) => {
-    setConnectingState({
-      sourceNodeId: nodeId,
-      startPos,
-      currentPos: { ...startPos },
-    });
-  }, []);
-
-  // Complete connection on node input port (stable reference: does not change on mouse move)
-  const handleEndConnect = useCallback((targetNodeId: string) => {
-    const current = connectingStateRef.current;
-    if (!current) return;
-    if (current.sourceNodeId !== targetNodeId) {
-      const newEdge: GraphEdge = {
-        id: `e-${Date.now()}`,
-        fromNodeId: current.sourceNodeId,
-        toNodeId: targetNodeId,
-        protocol: 'HTTP/REST',
-        latencyMs: 15,
-        errorRate: 0,
-      };
-      onAddEdge(newEdge);
-    }
-    setConnectingState(null);
-  }, [onAddEdge]);
 
   // Handle Drag & Drop of new nodes from catalog
   const handleDragOver = (e: React.DragEvent) => {
@@ -385,13 +443,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           transformOrigin: '0 0',
         }}
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none will-change-transform"
       >
         {/* Remote Collaborator Cursors */}
         <PeerCursorLayer peers={peers} />
 
-        {/* SVG Layer for Connections & Animated Packets */}
-        <svg className="absolute inset-0 w-[50000px] h-[50000px] overflow-visible pointer-events-none">
+        {/* SVG Layer for Connections & Animated Packets (w-full h-full with overflow-visible avoids 50000px GPU backing store allocation on mobile) */}
+        <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
           <defs>
             <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#38bdf8" />
@@ -453,6 +511,85 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
               />
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Mobile Floating Simulation Telemetry & Viewport HUD Bar (Visible on phones < 768px) */}
+      <div
+        onMouseDown={e => e.stopPropagation()}
+        onTouchStart={e => e.stopPropagation()}
+        className="md:hidden absolute left-16 right-2 bottom-2.5 z-20 flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl bg-dark-900/95 border border-slate-800 shadow-xl font-mono text-[11px]"
+      >
+        {/* Live RPS & Latency */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="flex items-center gap-1 text-cyan-400 font-bold tabular-nums">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            {metrics?.currentRps ?? 0}
+            <span className="text-[10px] text-slate-400 font-normal">RPS</span>
+          </span>
+          <span className="text-slate-700">·</span>
+          <span
+            className={`tabular-nums font-semibold ${
+              (metrics?.avgLatencyMs ?? 0) > 120 ? 'text-amber-400' : 'text-emerald-400'
+            }`}
+          >
+            {metrics?.avgLatencyMs ?? 24}ms
+          </span>
+        </div>
+
+        {/* Mobile Traffic Load Quick Cycle + Fit + Inspector Toggle */}
+        <div className="flex items-center gap-1 shrink-0">
+          {simControls && (
+            <button
+              type="button"
+              onClick={() => {
+                const nextLoad =
+                  trafficLoadMultiplier < 2 ? 2 : trafficLoadMultiplier < 5 ? 5 : 1;
+                simControls.setTrafficLoadMultiplier(nextLoad);
+              }}
+              className={`h-7 px-2 rounded-lg border text-[10px] font-bold inline-flex items-center gap-1 transition-colors ${
+                trafficLoadMultiplier >= 5
+                  ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                  : trafficLoadMultiplier >= 2
+                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                    : 'bg-dark-950 border-slate-800 text-cyan-300'
+              }`}
+              title="Tap to cycle Traffic Load (1x / 2x / 5x)"
+            >
+              <Zap className="w-3 h-3" />
+              <span>{trafficLoadMultiplier}x</span>
+            </button>
+          )}
+
+          {onResetZoom && (
+            <button
+              type="button"
+              onClick={onResetZoom}
+              className="h-7 px-2 rounded-lg border border-slate-800 bg-dark-950 text-slate-200 hover:text-white text-[10px] font-semibold inline-flex items-center gap-1"
+              title="Fit architecture to mobile screen"
+              aria-label="Fit architecture to screen"
+            >
+              <Maximize2 className="w-3 h-3 text-cyan-400" />
+              <span>Fit</span>
+            </button>
+          )}
+
+          {onToggleMobileInspector && (
+            <button
+              type="button"
+              onClick={onToggleMobileInspector}
+              className={`h-7 px-2 rounded-lg border text-[10px] font-semibold inline-flex items-center gap-1 transition-colors ${
+                isMobileInspectorOpen
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                  : 'border-slate-800 bg-dark-950 text-slate-200'
+              }`}
+              title="Toggle System & Node Inspector Sheet"
+              aria-label="Toggle Inspector Panel"
+            >
+              <Sliders className="w-3 h-3 text-cyan-400" />
+              <span>Inspect</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

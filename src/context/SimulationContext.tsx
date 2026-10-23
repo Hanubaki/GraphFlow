@@ -30,7 +30,7 @@ export interface SimulationControls {
 // Low-frequency control context (updates on user interaction or 1 Hz metrics)
 const SimulationControlContext = createContext<SimulationControls | null>(null);
 
-// High-frequency animation context (updates at 60 FPS for canvas rendering)
+// High-frequency animation context (updates at 60 FPS on desktop, adaptive 33 FPS on mobile)
 const SimulationPacketContext = createContext<DataPacket[]>([]);
 
 export const useSimulationControls = (): SimulationControls => {
@@ -58,6 +58,19 @@ function formatIncidentTime(ts: number): string {
   const mm = String(d.getMinutes()).padStart(2, '0');
   const ss = String(d.getSeconds()).padStart(2, '0');
   return `${hh}:${mm}:${ss}`;
+}
+
+export function isMobileSimulationViewport(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (window.innerWidth > 0 && window.innerWidth < 768) return true;
+  if (typeof window.matchMedia === 'function') {
+    try {
+      return window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 export const SimulationProvider: React.FC<SimulationProviderProps> = ({
@@ -211,21 +224,25 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
   useEffect(() => {
     if (!isRunning || !hasEdges) return;
 
+    const isMobile = isMobileSimulationViewport();
     const effectiveRateScale = Math.max(0.5, Math.min(4, Math.sqrt(trafficLoadMultiplier)));
+    const baseDelay = isSpikeMode ? (isMobile ? 190 : 140) : (isMobile ? 520 : 420);
     const intervalTime = Math.max(
-      70,
-      (isSpikeMode ? 140 : 420) / (speedMultiplier * effectiveRateScale)
+      isMobile ? 110 : 70,
+      baseDelay / (speedMultiplier * effectiveRateScale)
     );
 
     const spawnInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
       const currentLoad = trafficLoadRef.current;
       const ingressEdges = findIngressEdges(currentNodes, currentEdges);
       if (ingressEdges.length === 0) return;
 
-      const baseBurst = currentLoad >= 5 ? 2 : 1;
-      const count = isSpikeMode ? Math.min(ingressEdges.length * 2, 4) : baseBurst;
+      const mobileNow = isMobileSimulationViewport();
+      const baseBurst = currentLoad >= 5 ? (mobileNow ? 1 : 2) : 1;
+      const count = isSpikeMode ? Math.min(ingressEdges.length * 2, mobileNow ? 2 : 4) : baseBurst;
       const newPackets: DataPacket[] = [];
 
       for (let i = 0; i < count; i++) {
@@ -249,8 +266,10 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
       }
 
       if (newPackets.length > 0) {
+        const maxQueue = mobileNow ? 22 : 42;
+        const keepQueue = mobileNow ? 16 : 32;
         setPackets(prev => {
-          const filtered = prev.length > 42 ? prev.slice(prev.length - 32) : prev;
+          const filtered = prev.length > maxQueue ? prev.slice(prev.length - keepQueue) : prev;
           return [...filtered, ...newPackets];
         });
         pendingMetricsRef.current.sent += newPackets.length;
@@ -260,7 +279,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     return () => clearInterval(spawnInterval);
   }, [isRunning, hasEdges, speedMultiplier, isSpikeMode, trafficLoadMultiplier]);
 
-  // Animation frame loop for smooth 60 FPS packet advancement & causal downstream hop propagation
+  // Animation frame loop for smooth packet advancement & causal downstream hop propagation
   useEffect(() => {
     if (!isRunning) {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -270,13 +289,32 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     let lastTimestamp = performance.now();
 
     const loop = (timestamp: number) => {
-      const dt = Math.min(32, timestamp - lastTimestamp);
+      if (typeof document !== 'undefined' && document.hidden) {
+        lastTimestamp = timestamp;
+        animFrameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      const isMobile = isMobileSimulationViewport();
+      const rawDt = timestamp - lastTimestamp;
+
+      // Adaptive frame pacing on mobile/coarse-pointer devices (~33 FPS vs 60 FPS on desktop)
+      // Halves main-thread React reconciliation while preserving exact physical packet velocity via dt scaling
+      if (isMobile && rawDt < 28) {
+        animFrameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      const dt = Math.min(isMobile ? 48 : 32, rawDt);
       lastTimestamp = timestamp;
       const now = Date.now();
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
       const currentLoad = trafficLoadRef.current;
       const handleUpdateNode = onUpdateNodeRef.current;
+      const maxDownstreamPool = isMobile ? 22 : 44;
+      const maxTotalPackets = isMobile ? 24 : 48;
+      const slicedPackets = isMobile ? 20 : 40;
 
       setPackets(prev => {
         if (prev.length === 0) return prev;
@@ -346,7 +384,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
                 }
 
                 // Causal hop propagation: forward packet to downstream edges
-                if (prev.length + spawnedDownstream.length < 44) {
+                if (prev.length + spawnedDownstream.length < maxDownstreamPool) {
                   const outEdges = findDownstreamEdges(targetNode.id, currentEdges);
                   for (const outEdge of outEdges) {
                     const nextTarget = currentNodes.find(n => n.id === outEdge.toNodeId);
@@ -383,7 +421,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
         }
 
         const combined = [...updated, ...spawnedDownstream];
-        return combined.length > 48 ? combined.slice(combined.length - 40) : combined;
+        return combined.length > maxTotalPackets ? combined.slice(combined.length - slicedPackets) : combined;
       });
 
       // Calculate RPS, effective backpressure latency, and circuit breaker cooldowns in 1 Hz batches (prevents 60 FPS UI thrashing)

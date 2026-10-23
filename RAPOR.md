@@ -1,9 +1,9 @@
 # GraphFlow — Proje Durum, Gelir Yolu ve Denetim Raporu (RAPOR.md)
 
-**Son Güncelleme:** 21 Ekim 2026
+**Son Güncelleme:** 23 Ekim 2026
 **Canlı Üretim Adresi:** https://graph-flow-virid.vercel.app
-**Git Durumu:** `main` (`818dbe0` + Faz-6 Canlı ERP / API Dijital İkiz Telemetri Bağlayıcısı & Pro Canlı Akış)
-**Test ve Derleme Durumu:** 19/19 Test Dosyası, 124/124 Birim Testi Başarılı, 0 TypeScript Hatası
+**Git Durumu:** `main` (`a4964ff` + Faz-7 Mobil Simülasyon GPU/FPS Optimizasyonu, Otomatik Mobil Kadrajlama ve Dokunmatik Ergonomi)
+**Test ve Derleme Durumu:** 19/19 Test Dosyası, 125/125 Birim Testi Başarılı, 0 TypeScript Hatası
 **Lemon Squeezy Mağaza Durumu:** ONAYLANDI VE AKTİF (`APPROVED` - 15 Ekim 2026, 06:09 TSİ)
 
 ---
@@ -77,28 +77,24 @@
 
 13. **Mühendis Toplulukları İçin Doğrudan Derin Link (`?template=...`), Otomatik Çekilen 5 Sahneli Demo Videosu (`.mp4` / `.gif` / `.webm`) ve Viral Büyüme Rehberi (`src/App.tsx`, `ENGINEER_GROWTH_PLAYBOOK.md`, `public/graphflow-stripe-demo.mp4`, `public/graphflow-stripe-demo.gif`):**
     - Hacker News (`Show HN`), Reddit (`r/softwarearchitecture`, `r/sre`, `r/devops`, `r/backend`), X ve Dev.to paylaşımlarında mühendislerin Landing Page'i atlayıp **tek tıkla doğrudan seçili mimarinin 60 FPS canlı simülasyonuna** düşmesini sağlayan `?template=<id>` ve `?blueprint=<id>` URL sorgu parametresi desteği (`?template=stripe-webhook-ledger`, `?template=netflix-chaos-streaming` vb.) eklendi.
-    - Playwright Headless Chrome (`1280x720`) ve Composio Remote Sandbox (`FFmpeg libx264 + Lanczos Palettegen`) kullanılarak 5 sahneli (`01: 1x Canlı Topoloji` -> `02: 4.5x Burst Load & Darboğaz` -> `03: Pin Baseline & Auto-Harden ROI Diff` -> `04: AWS/GCP/Azure FinOps` -> `05: Mermaid / k6 Load Test / Kubernetes Export`) tanıtım videosu otomatik kaydedildi:
-      - **MP4 (X, LinkedIn, Reddit için):** `public/graphflow-stripe-demo.mp4` (`747 KB`, H.264 30 FPS)
-      - **GIF (GitHub README, Dev.to, HN için):** `public/graphflow-stripe-demo.gif` (`3.9 MB`, 800x450 Lanczos) — `README.md` en üstüne gömüldü.
-      - **WebM (Ham 1280x720 Kayıt):** `public/graphflow-stripe-demo.webm`
+    - Playwright Headless Chrome (`1280x720`) ve Composio Remote Sandbox (`FFmpeg libx264 + Lanczos Palettegen`) kullanılarak 5 sahneli tanıtım videosu otomatik kaydedildi.
     - **Composio GitHub ile Otomatik Açılan 3 Canlı `Awesome` Listesi Pull Request'i (Toplam 90.000+ Yıldızlı Depolar):**
       1. `madd86/awesome-system-design` — **PR #45:** https://github.com/madd86/awesome-system-design/pull/45
       2. `dastergon/awesome-sre` — **PR #336:** https://github.com/dastergon/awesome-sre/pull/336
       3. `binhnguyennus/awesome-scalability` — **PR #136:** https://github.com/binhnguyennus/awesome-scalability/pull/136
-    - Tüm mühendis kanalları için kopyala-yapıştır hazır teknik inceleme (teardown) metinlerini, `Show HN` şablonunu ve Reddit mimari kriz senaryolarını içeren **`ENGINEER_GROWTH_PLAYBOOK.md`** oluşturuldu.
 
 14. **Online Google Gemini 2.5 Flash API Düzeltmesi ve Teknik Bilmeyenler İçin Çoklu-Departman ERP / Excel CSV İçe Aktarıcı (`src/services/aiGenerator.ts`, `src/components/Modals/AiGeneratorModal.tsx`, `src/utils/importTopology.ts`, `src/components/Modals/ExportModal.tsx`, `src/constants/templates.ts`):**
-    - **Online Gemini API Key Düzeltmesi & Kalıcı Kayıt (`localStorage`):** Kaldırılan `gemini-1.5-flash` (`404 Not Found`) yerine otomatik sırayla `gemini-2.5-flash` $\rightarrow$ `gemini-2.0-flash` $\rightarrow$ `gemini-flash-latest` uç noktalarını deneyen çoklu model yapısı kuruldu. `AiGeneratorModal` içine `Save Key` / `Clear` butonları, `ACTIVE` rozeti, metin seçimi (`select-text`) ve kullanıcı kendi API anahtarını girdiğinde (`BYOK UNLIMITED`) günlük 3 ücretsiz kota sınırını devre dışı bırakan mantık eklendi.
-    - **Çoklu-Departman ERP & Üretim Sentezleyici (`synthesizeErpMultiDepartmentTopology`):** API anahtarı olmasa bile kullanıcı ERP, Depo Giriş (`Inbound`), Depo Çıkış (`Outbound`), **Ar-Ge (`R&D / BOM`)**, **Kalite Kontrol (`IQC / QA`)**, **Üretim (`MES / WIP`)**, **Bakım (`MRO`)** veya maddeli departman listesi girdiğinde tek bir `Business Logic Service` kutusu yerine her departmanı ayrı bir düğüm olarak 5 katmanlı mimaride çizen motor eklendi.
-    - **ERP / Excel CSV Tablosu İçe Aktarıcı (`parseErpCsvToTopology` & `SAMPLE_ERP_CSV_IMPORT`) ve Hazır ERP Şablonu (`erp-warehouse-mes`):** Teknik bilgisi olmayan ERP kullanıcılarının Excel/CSV tablolarını (`Departman;Hedef_Departman;Süreç;Süre;Kapasite`) veya düz ERP süreç metinlerini doğrudan `Export & Import Hub` içine yapıştırıp/yükleyip canlı simülasyona dönüştürmesi sağlandı; `Templates` galerisine hazır **"ERP Depo (Inbound/Outbound) & Üretim (MES) Akışı"** şablonu eklendi.
+    - **Online Gemini API Key Düzeltmesi & Kalıcı Kayıt (`localStorage`):** Kaldırılan `gemini-1.5-flash` (`404 Not Found`) yerine otomatik sırayla `gemini-2.5-flash` $\rightarrow$ `gemini-2.0-flash` $\rightarrow$ `gemini-flash-latest` uç noktalarını deneyen çoklu model yapısı kuruldu.
+    - **Çoklu-Departman ERP & Üretim Sentezleyici (`synthesizeErpMultiDepartmentTopology`)** ve **ERP / Excel CSV Tablosu İçe Aktarıcı (`parseErpCsvToTopology` & `SAMPLE_ERP_CSV_IMPORT`)** eklendi.
 
 15. **Gerçek Zamanlı Canlı ERP / API Dijital İkiz Telemetri Bağlayıcısı (`Live ERP/API` — `src/services/liveTelemetry.ts`, `src/components/Modals/LiveTelemetryModal.tsx`, `src/services/billing.ts`, `src/components/Toolbar/TopBar.tsx`, `src/App.tsx`):**
-    - **Üst Çubukta (`TopBar`) `Live ERP/API` Butonu ve Canlı Akış Rozeti (`Live: ON`):** Kullanıcının tuvaldeki mimarisini çalışan bir ERP (Logo Tiger/Go, SAP, Netsis) veya üretim sistemine (Prometheus, REST API) bağlamasını sağlayan 3 sekmeli **`LiveTelemetryModal`** eklendi.
-    - **Ücretsiz Canlı Demo Akışı (`Start Free Demo Stream`) + Pro Plan (`$19/ay`) Gerçek Zamanlı URL Polling Kilidi (`live_telemetry_stream`):**
-      - Ücretsiz kullanıcılar **1-Click Free Demo Stream** ile her 3 saniyede bir tuvaldeki departmanların/servislerin gerçek zamanlı veriyle nasıl davrandığını, darboğazların nasıl kaydığını ve animasyonlu paket hızlarının nasıl değiştiğini canlı deneyimleyebilir.
-      - Özel bir üretim URL'sine (`http://localhost:4040/metrics` veya kurumsal API) kesintisiz `2sn / 5sn / 10sn` periyotlarla bağlanmak (`Connect & Stream URL`) doğrudan **Pro Plan (`checkFeatureEntitlement('live_telemetry_stream')`)** aboneliğine bağlanarak B2B dönüşüm hunisine eklendi.
-    - **Çoklu Format Canlı Veri Çözümleyici (`parseLiveTelemetryPayload`):** Hem JSON dizilerini/nesnelerini, hem ERP/Excel CSV tablolarını (`Departman;RPS;Gecikme_MS;Hata_Orani;Durum`), hem de **Prometheus** (`metric{service="..."}`) formatını Türkçe karakter duyarsız akıllı eşleştirme (`matchNodeByIdOrTitle`) ile tuvaldeki düğümlere anlık uygular.
-    - **Hazır Kopyalanabilir Logo ERP / MS SQL Salt-Okunur Köprü Scripti (`SAMPLE_LOGO_ERP_BRIDGE_SCRIPT` — `logo-erp-bridge.mjs`):** Fabrika/staj ortamında Logo ERP (`LG_001_01_STFICHE`, `ORFICHE`, `PRODORD`) veya MS SQL kullananların 30 saniyede `http://localhost:4040/metrics` üzerinden canlı veri yayınlamasını sağlayan hazır Node.js köprü scripti modal içine eklendi.
+    - **Üst Çubukta (`TopBar`) `Live ERP/API` Butonu ve Canlı Akış Rozeti (`Live: ON`)**, **Ücretsiz Canlı Demo Akışı (`Start Free Demo Stream`)** ve **Pro Plan (`$19/ay`) Gerçek Zamanlı URL Polling Kilidi (`live_telemetry_stream`)** eklendi.
+
+16. **Mobil Telefonlarda Simülasyon GPU/FPS Optimizasyonu, Otomatik Mobil Kadrajlama ve Dokunmatik Ergonomi (`src/context/SimulationContext.tsx`, `src/components/Canvas/GraphCanvas.tsx`, `src/components/Canvas/ConnectionLine.tsx`, `src/components/Canvas/NodeComponent.tsx`, `src/utils/viewportMath.ts`, `src/components/Inspector/InspectorPanel.tsx`, `src/components/Toolbar/TopBar.tsx`, `src/App.tsx`):**
+    - **2.5-Gigapiksel SVG GPU Doku Darboğazı ve Mobil Bulanıklık Filtreleri Kaldırıldı:** `GraphCanvas.tsx` içindeki `<svg className="w-[50000px] h-[50000px] overflow-visible">` katmanının mobil Safari/Chrome GPU'larında devasa tile belleği ayırmasını önlemek için `w-full h-full overflow-visible` ve `will-change-transform` yapısına geçildi; `NodeComponent.tsx` ve `ConnectionLine.tsx` (`<foreignObject>`) üzerindeki `backdrop-blur` filtreleri masaüstüyle (`md:backdrop-blur-*`) sınırlandırıldı.
+    - **Adaptif Mobil Kare Hızı (`~33 FPS` Frame Pacing) ve `4 Hz` Düğüm Yük İzolasyonu:** `SimulationContext.tsx` içine eklenen `isMobileSimulationViewport()` ile dokunmatik/mobil cihazlarda `requestAnimationFrame` durum güncellemeleri (`setPackets`) fiziksel paket hızı (`dt / 16.66`) korunarak `~33 FPS`'e, eşzamanlı paket havuzu `24` pakete ve arka plan sekme kontrolüne (`document.hidden`) bağlandı. `GraphCanvas.tsx` içinde `inboundCountByNode` güncellemeleri `240ms` (`4 Hz`) aralıklarla sınırlandırılarak simülasyon sırasında `NodeComponent` DOM ağaçlarının saniyede 60 kez yeniden çizilmesi tamamen engellendi.
+    - **Mobil Ekranlar (`< 768px`) İçin Otomatik Kadrajlama (`calculateAutoCenter`):** `viewportMath.ts` içinde mobil ekranlarda gizli olan sağ panel (`320px`) hesaptan çıkarıldı, sol daraltılmış palet (`56px`) ofseti ve `0.22x` minimum yakınlaştırma sınırı eklenerek geniş mimarilerin telefon ekranına tam ortalanarak sığması sağlandı.
+    - **Dokunmatik Kablo Bağlama (Touch Drag-to-Connect), Kaydırılabilir `TopBar` ve Yüzen Mobil Simülasyon HUD Çubuğu:** `GraphCanvas.tsx` içinde parmakla çıkış portundan başka bir düğüme sürükleyip bırakarak bağlantı kurma (`changedTouches` hedef kutusu çarpışma testi), kanvas altında canlı `RPS`, `ms`, `1x/2x/5x Load`, `Fit` (Ekrana Sığdır) ve isteğe bağlı açılıp kapanabilen (`Inspect` / `×`) mobil `InspectorPanel` alt çekmecesi eklendi.
 
 ---
 

@@ -45,12 +45,12 @@ const ConnectionWire = React.memo<ConnectionWireProps>(({
 
   return (
     <>
-      {/* Invisible thicker path for easier clicking */}
+      {/* Invisible thicker path for easier clicking / tapping */}
       <path
         d={pathD}
         fill="none"
         stroke="transparent"
-        strokeWidth="24"
+        strokeWidth="28"
         className="pointer-events-stroke"
       />
 
@@ -94,7 +94,7 @@ const ConnectionWire = React.memo<ConnectionWireProps>(({
         className="overflow-visible pointer-events-auto"
       >
         <div
-          className={`flex items-center justify-center gap-1.5 h-6 px-2 rounded-full border text-[11px] font-mono tracking-tight shadow-md backdrop-blur-sm transition-transform group-hover:scale-105 ${badgeStyle} ${
+          className={`flex items-center justify-center gap-1.5 h-6 px-2 rounded-full border text-[11px] font-mono tracking-tight shadow-md md:backdrop-blur-sm transition-transform group-hover:scale-105 ${badgeStyle} ${
             isSelected ? 'ring-1 ring-cyan-400' : ''
           }`}
         >
@@ -104,7 +104,9 @@ const ConnectionWire = React.memo<ConnectionWireProps>(({
               e.stopPropagation();
               onDelete(edgeId);
             }}
-            className="w-4 h-4 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-all shrink-0"
+            className={`w-4 h-4 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center text-xs font-bold transition-all shrink-0 ${
+              isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}
             title="Remove Connection"
           >
             ×

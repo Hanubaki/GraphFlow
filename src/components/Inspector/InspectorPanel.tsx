@@ -22,6 +22,7 @@ import {
   Copy,
   Check,
   GitCompare,
+  X,
 } from 'lucide-react';
 
 interface InspectorPanelProps {
@@ -35,6 +36,8 @@ interface InspectorPanelProps {
   onDeleteEdge: (id: string) => void;
   onAutoHarden?: () => void;
   onAutoLayout?: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 const ACCENT_COLORS = [
@@ -75,6 +78,8 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   onDeleteEdge,
   onAutoHarden,
   onAutoLayout,
+  isMobileOpen,
+  onCloseMobile,
 }) => {
   const diagnostics = useMemo(() => analyzeTopologyDiagnostics(nodes, edges), [nodes, edges]);
   const chaosAudit = useMemo(() => evaluateChaosResilienceAudit(nodes, edges), [nodes, edges]);
@@ -132,21 +137,35 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
     simControls?.triggerSpike();
   };
 
+  const showMobileSheet =
+    typeof isMobileOpen === 'boolean' ? isMobileOpen : Boolean(selectedNode || selectedEdge);
+
   return (
     <div
       data-tour="inspector"
       className={`${
-        selectedNode || selectedEdge ? 'flex' : 'hidden md:flex'
-      } absolute inset-x-0 bottom-0 max-h-[55vh] w-full rounded-t-2xl border-t md:relative md:inset-auto md:max-h-none md:w-80 md:h-full md:rounded-none md:border-t-0 md:border-l bg-dark-900/95 border-slate-800 backdrop-blur-xl flex-col z-30 md:z-20 overflow-y-auto shadow-2xl md:shadow-none`}
+        showMobileSheet ? 'flex' : 'hidden md:flex'
+      } absolute inset-x-0 bottom-0 max-h-[58vh] w-full rounded-t-2xl border-t md:relative md:inset-auto md:max-h-none md:w-80 md:h-full md:rounded-none md:border-t-0 md:border-l bg-dark-900/95 border-slate-800 md:backdrop-blur-xl flex-col z-30 md:z-20 overflow-y-auto shadow-2xl md:shadow-none`}
     >
       {/* Panel Header */}
-      <div className="p-3.5 border-b border-slate-800 flex items-center justify-between">
+      <div className="p-3.5 border-b border-slate-800 flex items-center justify-between sticky top-0 bg-dark-900/95 z-10">
         <div className="flex items-center gap-2">
           <Sliders className="w-4 h-4 text-cyan-400" />
           <span className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
             {selectedNode ? 'Service Inspector' : selectedEdge ? 'Connection Inspector' : 'System Overview'}
           </span>
         </div>
+        {onCloseMobile && (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="md:hidden w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center"
+            title="Close Inspector Sheet"
+            aria-label="Close Inspector Sheet"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <div className="p-4 space-y-5 flex-1">

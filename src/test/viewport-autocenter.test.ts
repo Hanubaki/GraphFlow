@@ -31,6 +31,24 @@ describe('Test-Driven Verification: Auto-Centering Math & Responsive Viewport', 
     expect(result.zoom).toBeGreaterThanOrEqual(0.45);
   });
 
+  it('fits wide architectures cleanly onto a 390x844 mobile phone screen to the right of the 56px sidebar', () => {
+    const result = calculateAutoCenter(defaultNodes, 390, 844);
+    expect(result).not.toBeNull();
+    if (!result) return;
+
+    const minX = Math.min(...defaultNodes.map(n => n.x));
+    const maxX = Math.max(...defaultNodes.map(n => n.x + n.width));
+
+    const leftmostScreenX = result.pan.x + minX * result.zoom;
+    const rightmostScreenX = result.pan.x + maxX * result.zoom;
+
+    // Must sit to the right of the 56px collapsed mobile palette and within the 390px screen width
+    expect(leftmostScreenX).toBeGreaterThanOrEqual(56);
+    expect(rightmostScreenX).toBeLessThanOrEqual(390);
+    expect(result.zoom).toBeGreaterThanOrEqual(0.22);
+    expect(result.zoom).toBeLessThan(0.45);
+  });
+
   it('preserves near-native ~0.96x zoom and centers graph on a 1920x1080 desktop display', () => {
     const result = calculateAutoCenter(defaultNodes, 1920, 1080);
     expect(result).not.toBeNull();

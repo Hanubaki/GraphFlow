@@ -182,8 +182,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         />
       </div>
 
-      {/* Right Controls Container */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
+      {/* Right Controls Container (Horizontally scrollable on narrow mobile screens) */}
+      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 overflow-x-auto max-w-full py-1">
         {/* Play/Pause + Speed + Stress Load + Spike Group */}
         <div data-tour="sim-controls" className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">

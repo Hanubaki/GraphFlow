@@ -82,6 +82,7 @@ export const App: React.FC = () => {
 
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
+  const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState<boolean>(false);
 
   // Real-Time Live Telemetry & ERP Digital Twin Streaming State
   const [isLiveStreaming, setIsLiveStreaming] = useState<boolean>(false);
@@ -270,11 +271,19 @@ export const App: React.FC = () => {
     }
   }, [nodes, setZoom, setPan]);
 
-  // Auto-center on initial mount
+  // Auto-center on initial mount, studio entry, and mobile screen orientation changes
   useEffect(() => {
     handleAutoCenter();
+    if (typeof window === 'undefined') return;
+    const handleViewportResize = () => {
+      if (window.innerWidth < 768) {
+        handleAutoCenter(nodesRef.current);
+      }
+    };
+    window.addEventListener('orientationchange', handleViewportResize);
+    return () => window.removeEventListener('orientationchange', handleViewportResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [viewMode]);
 
   const handleApplyAiArchitecture = useCallback((arch: GeneratedArchitecture) => {
     setNodes(arch.nodes);
@@ -313,22 +322,22 @@ export const App: React.FC = () => {
     telemetry.track('Node Removed', { canvasNodeCount: Math.max(0, nodes.length - 1) });
   }, [removeNode, nodes.length]);
 
-  // Load architecture template with success chime
+  // Load architecture template with success chime and viewport auto-fit
   const handleSelectTemplate = useCallback((template: any) => {
     loadTemplate(template);
+    handleAutoCenter(template.nodes);
     soundFx.playSuccess();
     telemetry.track('Preset Loaded', { templateId: template.id, nodeCount: template.nodes.length });
-  }, [loadTemplate]);
+  }, [loadTemplate, handleAutoCenter]);
 
   // Import JSON graph
   const handleImportGraph = useCallback((importedNodes: GraphNode[], importedEdges: GraphEdge[]) => {
     setNodes(importedNodes);
     setEdges(importedEdges);
-    setPan({ x: 0, y: 0 });
-    setZoom(1);
+    handleAutoCenter(importedNodes);
     soundFx.playSuccess();
     telemetry.track('Architecture Imported', { nodeCount: importedNodes.length, edgeCount: importedEdges.length });
-  }, [setNodes, setEdges, setPan, setZoom]);
+  }, [setNodes, setEdges, handleAutoCenter]);
 
   // Global Keyboard-First Command Palette Shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -389,7 +398,7 @@ export const App: React.FC = () => {
           onUndo={undo}
           onRedo={redo}
           onZoomIn={() => setZoom(z => Math.min(2.5, z * 1.2))}
-          onZoomOut={() => setZoom(z => Math.max(0.3, z / 1.2))}
+          onZoomOut={() => setZoom(z => Math.max(0.22, z / 1.2))}
           onResetZoom={() => handleAutoCenter()}
           onOpenTemplates={() => setActiveModal('templates')}
           onOpenExport={() => setActiveModal('export')}
@@ -434,6 +443,9 @@ export const App: React.FC = () => {
               onDuplicateNode={id => {
                 duplicateNode(id);
               }}
+              onResetZoom={() => handleAutoCenter()}
+              isMobileInspectorOpen={isMobileInspectorOpen}
+              onToggleMobileInspector={() => setIsMobileInspectorOpen(prev => !prev)}
             />
           </div>
 
@@ -447,6 +459,8 @@ export const App: React.FC = () => {
           onUpdateEdge={updateEdge}
           onDeleteNode={handleDeleteNode}
           onDeleteEdge={removeEdge}
+          isMobileOpen={isMobileInspectorOpen}
+          onCloseMobile={() => setIsMobileInspectorOpen(false)}
           onAutoHarden={() => {
             const hardened = autoHardenTopology(nodes, edges);
             setNodes(hardened);
