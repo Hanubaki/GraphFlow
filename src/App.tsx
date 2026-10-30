@@ -471,6 +471,7 @@ export const App: React.FC = () => {
               onDuplicateNode={id => {
                 duplicateNode(id);
               }}
+              onImportGraph={handleImportGraph}
               onResetZoom={() => handleAutoCenter()}
               isMobileInspectorOpen={isMobileInspectorOpen}
               onToggleMobileInspector={() => setIsMobileInspectorOpen(prev => !prev)}

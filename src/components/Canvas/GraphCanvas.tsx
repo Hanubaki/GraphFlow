@@ -6,6 +6,7 @@ import { NodeComponent } from './NodeComponent';
 import { ConnectionLine } from './ConnectionLine';
 import { PeerCursorLayer } from './PeerCursorLayer';
 import { createBezierPath } from '../../utils/geometry';
+import { parseInfrastructureToTopology } from '../../utils/importTopology';
 import { useSimulationPackets, useSimulationControls } from '../../context/SimulationContext';
 import { useMultiplayer } from '../../context/MultiplayerContext';
 import { Maximize2, Sliders, Zap } from 'lucide-react';
@@ -37,6 +38,7 @@ interface GraphCanvasProps {
   onAddNodeAt: (typeItem: CatalogItem, x: number, y: number) => void;
   onUpdateNode?: (id: string, updates: Partial<GraphNode>) => void;
   onDuplicateNode?: (id: string) => void;
+  onImportGraph?: (nodes: GraphNode[], edges: GraphEdge[]) => void;
   onResetZoom?: () => void;
   isMobileInspectorOpen?: boolean;
   onToggleMobileInspector?: () => void;
@@ -61,6 +63,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   onAddNodeAt,
   onUpdateNode,
   onDuplicateNode,
+  onImportGraph,
   onResetZoom,
   isMobileInspectorOpen = false,
   onToggleMobileInspector,
@@ -406,6 +409,22 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && onImportGraph) {
+      const file = e.dataTransfer.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target?.result;
+        if (typeof content === 'string') {
+          const parsed = parseInfrastructureToTopology(content, file.name);
+          if (parsed.nodes.length > 0) {
+            onImportGraph(parsed.nodes, parsed.edges);
+          }
+        }
+      };
+      reader.readAsText(file);
+      return;
+    }
+
     const rawData = e.dataTransfer.getData('application/graphflow-item');
     if (!rawData || !containerRef.current) return;
 
