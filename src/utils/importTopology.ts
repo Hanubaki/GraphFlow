@@ -999,13 +999,18 @@ function parseOpenApiToTopology(rawText: string): { nodes: GraphNode[]; edges: G
 }
 
 function cleanDiagramLabel(raw: string): string {
-  return raw
+  const decoded = raw
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
+    .replace(/&amp;/gi, '&');
+
+  const headingMatch = decoded.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i);
+  const targetHtml = headingMatch ? headingMatch[1] : decoded;
+
+  return targetHtml
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<\/(div|p|li|tr)>/gi, ' ')
     .replace(/<[^>]+>/g, '')
@@ -1019,7 +1024,151 @@ function getXmlAttr(attrs: string, name: string): string {
 }
 
 /**
- * Parses draw.io / diagrams.net (.drawio, .xml, .drawio.svg) mxGraphModel XML into a live GraphFlow topology.
+ * Pure RFC 1951 raw DEFLATE decompressor for compressed draw.io <diagram> blocks (zero external dependencies).
+ */
+function inflateRawBytes(src: Uint8Array): Uint8Array {
+  let pos = 0;
+  let bitBuf = 0;
+  let bitCnt = 0;
+  const out: number[] = [];
+
+  const bits = (n: number): number => {
+    while (bitCnt < n) {
+      bitBuf |= (src[pos++] || 0) << bitCnt;
+      bitCnt += 8;
+    }
+    const val = bitBuf & ((1 << n) - 1);
+    bitBuf >>>= n;
+    bitCnt -= n;
+    return val;
+  };
+
+  const buildTree = (lengths: Int32Array): Map<number, number> => {
+    const counts = new Int32Array(16);
+    const nextCode = new Int32Array(16);
+    for (let i = 0; i < lengths.length; i++) {
+      if (lengths[i]) counts[lengths[i]]++;
+    }
+    let code = 0;
+    for (let b = 1; b <= 15; b++) {
+      code = (code + counts[b - 1]) << 1;
+      nextCode[b] = code;
+    }
+    const map = new Map<number, number>();
+    for (let sym = 0; sym < lengths.length; sym++) {
+      const len = lengths[sym];
+      if (len) map.set((len << 16) | nextCode[len]++, sym);
+    }
+    return map;
+  };
+
+  const decode = (tree: Map<number, number>): number => {
+    let code = 0;
+    for (let len = 1; len <= 15; len++) {
+      code = (code << 1) | bits(1);
+      const sym = tree.get((len << 16) | code);
+      if (sym !== undefined) return sym;
+    }
+    throw new Error('Invalid DEFLATE Huffman code');
+  };
+
+  const fixedLit = new Int32Array(288);
+  for (let i = 0; i <= 143; i++) fixedLit[i] = 8;
+  for (let i = 144; i <= 255; i++) fixedLit[i] = 9;
+  for (let i = 256; i <= 279; i++) fixedLit[i] = 7;
+  for (let i = 280; i <= 287; i++) fixedLit[i] = 8;
+  const fixedDist = new Int32Array(32).fill(5);
+  const fixedLitTree = buildTree(fixedLit);
+  const fixedDistTree = buildTree(fixedDist);
+
+  const lenBase = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
+  const lenExtra = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0];
+  const distBase = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577];
+  const distExtra = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13];
+  const clOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+
+  let bfinal = 0;
+  while (!bfinal) {
+    bfinal = bits(1);
+    const btype = bits(2);
+    if (btype === 0) {
+      bitBuf = 0;
+      bitCnt = 0;
+      const len = src[pos] | (src[pos + 1] << 8);
+      pos += 4;
+      for (let i = 0; i < len; i++) out.push(src[pos++]);
+    } else if (btype === 1 || btype === 2) {
+      let litTree = fixedLitTree;
+      let distTree = fixedDistTree;
+      if (btype === 2) {
+        const hlit = bits(5) + 257;
+        const hdist = bits(5) + 1;
+        const hclen = bits(4) + 4;
+        const clLens = new Int32Array(19);
+        for (let i = 0; i < hclen; i++) clLens[clOrder[i]] = bits(3);
+        const clTree = buildTree(clLens);
+        const lens = new Int32Array(hlit + hdist);
+        for (let i = 0; i < hlit + hdist; ) {
+          const sym = decode(clTree);
+          if (sym < 16) {
+            lens[i++] = sym;
+          } else if (sym === 16) {
+            const prev = lens[i - 1];
+            let rep = bits(2) + 3;
+            while (rep--) lens[i++] = prev;
+          } else if (sym === 17) {
+            let rep = bits(3) + 3;
+            while (rep--) lens[i++] = 0;
+          } else {
+            let rep = bits(7) + 11;
+            while (rep--) lens[i++] = 0;
+          }
+        }
+        litTree = buildTree(lens.subarray(0, hlit));
+        distTree = buildTree(lens.subarray(hlit));
+      }
+      while (true) {
+        const sym = decode(litTree);
+        if (sym === 256) break;
+        if (sym < 256) {
+          out.push(sym);
+        } else {
+          const lIdx = sym - 257;
+          const length = lenBase[lIdx] + bits(lenExtra[lIdx]);
+          const dSym = decode(distTree);
+          const dist = distBase[dSym] + bits(distExtra[dSym]);
+          const start = out.length - dist;
+          for (let i = 0; i < length; i++) out.push(out[start + i]);
+        }
+      }
+    } else {
+      throw new Error('Invalid DEFLATE block type');
+    }
+  }
+  return new Uint8Array(out);
+}
+
+function expandCompressedDrawioDiagrams(xmlText: string): string {
+  return xmlText.replace(/<diagram\b[^>]*>([\s\S]*?)<\/diagram>/gi, (fullMatch, inner: string) => {
+    const trimmedInner = inner.trim();
+    if (!trimmedInner || /<mxGraphModel\b|<mxCell\b/i.test(trimmedInner)) {
+      return fullMatch;
+    }
+    try {
+      const b64 = trimmedInner.replace(/\s+/g, '');
+      const binaryStr = typeof atob === 'function' ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      const inflated = new TextDecoder().decode(inflateRawBytes(bytes));
+      return `<diagram>${decodeURIComponent(inflated)}</diagram>`;
+    } catch {
+      return fullMatch;
+    }
+  });
+}
+
+/**
+ * Parses draw.io / diagrams.net (.drawio, .xml, .drawio.svg) mxGraphModel XML (both uncompressed and Base64+DEFLATE compressed) into a live GraphFlow topology.
  */
 function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   // Handle .drawio.svg files where the mxfile XML is HTML-encoded inside a content="..." attribute
@@ -1035,6 +1184,9 @@ function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: Gr
         .replace(/&amp;/gi, '&');
     }
   }
+
+  // Decompress Base64 + raw DEFLATE <diagram> blocks used by draw.io Desktop / Electron
+  normalized = expandCompressedDrawioDiagrams(normalized);
 
   // Merge <object> or <UserObject> wrappers into their child <mxCell> so id and label/value stay together
   normalized = normalized.replace(
@@ -1072,8 +1224,8 @@ function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: Gr
     }
 
     if (isVertex) {
-      // Skip edge labels that draw.io sometimes stores as child vertex cells with connectable=0
-      if (/edgeLabel/i.test(style)) continue;
+      // Skip edge labels or huge slide title banners (font-size >= 36px)
+      if (/edgeLabel/i.test(style) || /font-size:\s*[3-9]\dpx/i.test(rawVal)) continue;
       let cleanTitle = cleanDiagramLabel(rawVal);
       if (!cleanTitle) {
         const shapeMatch = style.match(/mxgraph\.(?:aws\d*|gcp\d*|azure|kubernetes)\.([a-zA-Z0-9_-]+)/i);
@@ -1081,7 +1233,8 @@ function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: Gr
           cleanTitle = formatReadableTitle(shapeMatch[1]);
         }
       }
-      if (!cleanTitle) continue;
+      // Skip empty boxes or tiny 2-3 char port markers (IN, OUT, YES, NO)
+      if (!cleanTitle || /^(in|out|yes|no|ok|\d+)$/i.test(cleanTitle)) continue;
       rawVertices.push({ id, title: cleanTitle.slice(0, 32), style });
     }
   }
