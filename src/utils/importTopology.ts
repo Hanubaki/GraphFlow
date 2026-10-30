@@ -158,8 +158,8 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Redis Cluster',
     };
   }
-  // Queues / Pick Lists / Conveyors
-  if (/(kafka|rabbitmq|activemq|nats|pulsar|sqs|msk|queue|broker|event|pubsub|pick list|toplama listesi|kuyruk|konveyör|konveyor)/.test(token)) {
+  // Queues / Pick Lists / Conveyors / Middleware (MoM)
+  if (/(kafka|rabbitmq|activemq|nats|pulsar|sqs|msk|queue|broker|event|pubsub|middleware|mom|connector|pick list|toplama listesi|kuyruk|konveyör|konveyor)/.test(token)) {
     return {
       type: 'queue',
       color: '#f59e0b',
@@ -369,6 +369,19 @@ function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: Gr
   }
 
   const nodes = Array.from(nodeMap.values());
+
+  if (nodes.length >= 2 && !nodes.some(n => n.type === 'client')) {
+    nodes[0].type = 'client';
+    nodes[0].color = '#38bdf8';
+    nodes[0].iconName = 'Globe';
+    nodes[0].subtitle = 'Ingress / Client';
+    if (nodes.length >= 3 && !nodes.some(n => n.type === 'gateway') && nodes[1].type === 'service') {
+      nodes[1].type = 'gateway';
+      nodes[1].color = '#818cf8';
+      nodes[1].iconName = 'Network';
+      nodes[1].subtitle = 'API Gateway';
+    }
+  }
 
   // If single-column list was provided with no edges, chain them sequentially
   if (edges.length === 0 && nodes.length > 1) {
@@ -1240,9 +1253,10 @@ function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: Gr
   }
 
   const nodes: GraphNode[] = rawVertices.map((v, idx) => {
-    const classified = classifyByImageOrName(v.title, v.style);
+    const shapeHint = (v.style.match(/mxgraph\.[a-zA-Z0-9_.-]+/i) || [''])[0];
+    const classified = classifyByImageOrName(v.title, shapeHint);
     return {
-      id: `drawio-${v.id}`,
+      id: `d${idx + 1}`,
       type: classified.type,
       title: v.title,
       subtitle: classified.defaultSubtitle,
@@ -1259,6 +1273,19 @@ function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: Gr
       iconName: classified.iconName,
     };
   });
+
+  if (nodes.length >= 2 && !nodes.some(n => n.type === 'client')) {
+    nodes[0].type = 'client';
+    nodes[0].color = '#38bdf8';
+    nodes[0].iconName = 'Globe';
+    nodes[0].subtitle = 'Ingress / Client';
+    if (nodes.length >= 3 && !nodes.some(n => n.type === 'gateway') && nodes[1].type === 'service') {
+      nodes[1].type = 'gateway';
+      nodes[1].color = '#818cf8';
+      nodes[1].iconName = 'Network';
+      nodes[1].subtitle = 'API Gateway';
+    }
+  }
 
   const nodeByRawId = new Map(rawVertices.map((v, idx) => [v.id, nodes[idx]]));
   const edges: GraphEdge[] = [];

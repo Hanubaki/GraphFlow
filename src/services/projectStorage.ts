@@ -1,5 +1,6 @@
 import { GraphNode, GraphEdge } from '../types/graph';
 import { sanitizeArchitectureImport } from '../utils/securitySanitizer';
+import { parseInfrastructureToTopology } from '../utils/importTopology';
 
 export interface SavedProject {
   id: string;
@@ -50,9 +51,27 @@ export function deleteSavedProject(id: string): void {
 }
 
 /**
- * Encodes project state into a shareable URL hash string
+ * Encodes project state into a shareable URL hash string.
+ * Uses a clean human-readable slug (#share=Node_A~Node_B~Node_C) for imported topologies
+ * and Base64 for custom studio topologies.
  */
 export function generateShareUrl(nodes: GraphNode[], edges: GraphEdge[]): string {
+  const isImportedTopology =
+    nodes.length >= 2 &&
+    nodes.every(n => /^(d\d+|drawio-|excal-|mmd-|erp-)/.test(n.id));
+
+  if (isImportedTopology) {
+    const cleanSlug = nodes
+      .map(n =>
+        n.title
+          .replace(/[()[\]{}]/g, '')
+          .trim()
+          .replace(/\s+/g, '_')
+      )
+      .join('~');
+    return `${window.location.origin}${window.location.pathname}#share=${cleanSlug}`;
+  }
+
   const payload = {
     n: nodes.map(n => ({
       id: n.id,
@@ -75,7 +94,7 @@ export function generateShareUrl(nodes: GraphNode[], edges: GraphEdge[]): string
       p: e.protocol,
       l: e.label,
       lat: e.latencyMs,
-    }))
+    })),
   };
 
   const jsonStr = JSON.stringify(payload);
@@ -111,6 +130,24 @@ export function parseShareUrl(): { nodes: GraphNode[]; edges: GraphEdge[]; isEmb
     const key = isEmbed ? '#embed=' : '#share=';
     const base64Part = hash.split(key)[1]?.split('&')[0];
     if (!base64Part) return null;
+
+    // 1. Human-readable slug format (#share=Node_A~Node_B~Node_C)
+    if (base64Part.includes('~')) {
+      const titles = base64Part
+        .split('~')
+        .map(part => decodeURIComponent(part).replace(/_/g, ' ').trim())
+        .filter(Boolean);
+      if (titles.length >= 2) {
+        const csvLines: string[] = [];
+        for (let i = 0; i < titles.length - 1; i++) {
+          csvLines.push(`${titles[i]};${titles[i + 1]}`);
+        }
+        const imported = parseInfrastructureToTopology(csvLines.join('\n'), 'share.csv');
+        if (imported.nodes.length > 0) {
+          return { nodes: imported.nodes, edges: imported.edges, isEmbed };
+        }
+      }
+    }
 
     const jsonStr = decodeURIComponent(atob(base64Part));
     const payload = JSON.parse(jsonStr);
