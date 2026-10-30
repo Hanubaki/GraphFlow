@@ -3,6 +3,7 @@ import { generateMarkdownDoc, generateArchitectureSvg, generateTerraform } from 
 import {
   parseInfrastructureToTopology,
   SAMPLE_DOCKER_COMPOSE_IMPORT,
+  SAMPLE_DRAWIO_IMPORT,
   SAMPLE_ERP_CSV_IMPORT,
 } from '../utils/importTopology';
 import { synthesizeArchitectureOffline } from '../services/aiGenerator';
@@ -221,5 +222,55 @@ describe('Export & Documentation Generator', () => {
 
     const proEntitlement = checkFeatureEntitlement('live_telemetry_stream', 'pro');
     expect(proEntitlement.allowed).toBe(true);
+  });
+
+  it('reverse-engineers draw.io (.drawio), Excalidraw (.excalidraw), and Mermaid.js flowcharts into live topologies', () => {
+    // 1. draw.io XML import
+    const drawioResult = parseInfrastructureToTopology(SAMPLE_DRAWIO_IMPORT, 'architecture.drawio');
+    expect(drawioResult.format).toBe('drawio');
+    expect(drawioResult.nodes.length).toBe(6);
+    expect(drawioResult.edges.length).toBe(5);
+    expect(drawioResult.nodes.map(n => n.title)).toContain('PostgreSQL Ledger DB');
+
+    // 2. Excalidraw JSON import
+    const excalidrawJson = JSON.stringify({
+      type: 'excalidraw',
+      version: 2,
+      elements: [
+        { id: 'rect1', type: 'rectangle', x: 100, y: 100, width: 160, height: 80 },
+        { id: 'txt1', type: 'text', containerId: 'rect1', text: 'Next.js Web Client' },
+        { id: 'rect2', type: 'rectangle', x: 350, y: 100, width: 160, height: 80 },
+        { id: 'txt2', type: 'text', containerId: 'rect2', text: 'Kong API Gateway' },
+        { id: 'rect3', type: 'rectangle', x: 600, y: 100, width: 160, height: 80 },
+        { id: 'txt3', type: 'text', containerId: 'rect3', text: 'PostgreSQL Primary' },
+        {
+          id: 'arr1',
+          type: 'arrow',
+          startBinding: { elementId: 'rect1' },
+          endBinding: { elementId: 'rect2' },
+        },
+        {
+          id: 'arr2',
+          type: 'arrow',
+          startBinding: { elementId: 'rect2' },
+          endBinding: { elementId: 'rect3' },
+        },
+      ],
+    });
+    const excalResult = parseInfrastructureToTopology(excalidrawJson, 'system.excalidraw');
+    expect(excalResult.format).toBe('excalidraw');
+    expect(excalResult.nodes.length).toBe(3);
+    expect(excalResult.edges.length).toBe(2);
+
+    // 3. Mermaid.js flowchart import
+    const mermaidText = `flowchart LR
+      A[Web Storefront] -->|HTTPS| B[Envoy Gateway]
+      B -->|gRPC| C[Checkout Service]
+      C -->|SETNX| D[(Redis Cluster)]
+      C -->|SQL| E[(Postgres DB)]`;
+    const mmdResult = parseInfrastructureToTopology(mermaidText, 'architecture.mmd');
+    expect(mmdResult.format).toBe('mermaid');
+    expect(mmdResult.nodes.length).toBe(5);
+    expect(mmdResult.edges.length).toBe(4);
   });
 });

@@ -481,7 +481,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
         </div>
 
-        {/* Export Button */}
+        {/* Export / Import Button */}
         <button
           data-tour="export"
           onClick={handleOpenExport}
@@ -490,7 +490,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           aria-label="Export architecture as JSON, Markdown, Docker Compose, or Terraform"
         >
           <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden 3xl:inline">{t('topbar.export')}</span>
+          <span className="hidden sm:inline">Import / {t('topbar.export')}</span>
         </button>
 
         {/* Pro Upgrade Pill */}

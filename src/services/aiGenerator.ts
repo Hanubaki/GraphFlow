@@ -394,6 +394,7 @@ function buildPositionedTopologyFromSpecs(
 export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitecture {
   const p = prompt.toLowerCase();
 
+  // Check if the prompt describes an ERP, warehouse (inbound/outbound), manufacturing, or multi-department workflow
   if (
     /(erp|kurumsal kaynak|inbound|outbound|goods receipt|goods issue|depo giriş|depo giris|depo çıkış|depo cikis|mal kabul|satın alma|satin alma|barkod|kalite kontrol|ar-ge|arge|üretim talebi|uretim talebi|pick list|toplama listesi|stok düşümü|stok dusumu|fifo|lifo|sevkiyat|departman|fabrika|üretim hattı|uretim hatti|\bmrp\b|\bmes\b|\bwms\b|\bsap\b|\bodoo\b)/i.test(
       p
@@ -404,6 +405,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
 
   const specs: ComponentSpec[] = [];
 
+  // Determine Title
   let title = 'Custom Architecture';
   if (p.includes('food') || p.includes('yemek') || p.includes('restaurant')) {
     title = 'On-Demand Food Delivery Platform';
@@ -425,6 +427,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
     title = 'Real-time Ride-Hailing & Geo-Tracking System';
   }
 
+  // 1. Clients
   specs.push({
     id: 'client-web',
     type: 'client',
@@ -459,6 +462,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
     });
   }
 
+  // 2. Ingress & Routing
   specs.push({
     id: 'gateway-api',
     type: 'gateway',
@@ -475,6 +479,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
     edgeLabel: 'route',
   });
 
+  // 3. Core Services
   if (p.includes('video') || p.includes('netflix') || p.includes('youtube')) {
     specs.push({
       id: 'service-core',
@@ -613,6 +618,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
       edgeLabel: 'telemetry',
     });
   } else {
+    // Standard Microservice
     specs.push({
       id: 'service-core',
       type: 'service',
@@ -630,6 +636,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
     });
   }
 
+  // 4. Cache (Redis)
   if (!specs.some(s => s.id === 'cache-redis')) {
     specs.push({
       id: 'cache-redis',
@@ -647,6 +654,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
     });
   }
 
+  // 5. Async Queue (Kafka / RabbitMQ)
   if (p.includes('queue') || p.includes('kafka') || p.includes('event') || p.includes('food') || p.includes('ride') || p.includes('ecommerce')) {
     specs.push({
       id: 'queue-events',
@@ -701,6 +709,7 @@ export function synthesizeArchitectureOffline(prompt: string): GeneratedArchitec
     }
   }
 
+  // 6. Primary Database (PostgreSQL)
   if (!specs.some(s => s.id === 'db-primary') && !p.includes('rag')) {
     specs.push({
       id: 'db-primary',
@@ -801,6 +810,7 @@ Only output pure raw JSON without any markdown formatting.
       if (!res.ok) {
         const errBody = await res.text().catch(() => res.statusText);
         lastErrorText = `${modelName} (${res.status}): ${errBody.slice(0, 140)}`;
+        // If 400 API_KEY_INVALID or 403, no need to retry other models
         if (res.status === 400 || res.status === 403) {
           break;
         }

@@ -1,9 +1,9 @@
 # GraphFlow — Proje Durum, Gelir Yolu ve Denetim Raporu (RAPOR.md)
 
-**Son Güncelleme:** 23 Ekim 2026
+**Son Güncelleme:** 30 Ekim 2026
 **Canlı Üretim Adresi:** https://graph-flow-virid.vercel.app
-**Git Durumu:** `main` (`a4964ff` + Faz-7 Mobil Simülasyon GPU/FPS Optimizasyonu, Otomatik Mobil Kadrajlama ve Dokunmatik Ergonomi)
-**Test ve Derleme Durumu:** 19/19 Test Dosyası, 125/125 Birim Testi Başarılı, 0 TypeScript Hatası
+**Git Durumu:** `main` (`a4964ff` + Faz-8 `draw.io (.drawio)`, `Excalidraw (.excalidraw)` ve `Mermaid.js` Doğrudan İçe Aktarıcı & Kullanıcı Yakalama Playbook'u)
+**Test ve Derleme Durumu:** 19/19 Test Dosyası, 126/126 Birim Testi Başarılı, 0 TypeScript Hatası
 **Lemon Squeezy Mağaza Durumu:** ONAYLANDI VE AKTİF (`APPROVED` - 15 Ekim 2026, 06:09 TSİ)
 
 ---
@@ -96,6 +96,17 @@
     - **Mobil Ekranlar (`< 768px`) İçin Otomatik Kadrajlama (`calculateAutoCenter`):** `viewportMath.ts` içinde mobil ekranlarda gizli olan sağ panel (`320px`) hesaptan çıkarıldı, sol daraltılmış palet (`56px`) ofseti ve `0.22x` minimum yakınlaştırma sınırı eklenerek geniş mimarilerin telefon ekranına tam ortalanarak sığması sağlandı.
     - **Dokunmatik Kablo Bağlama (Touch Drag-to-Connect), Kaydırılabilir `TopBar` ve Yüzen Mobil Simülasyon HUD Çubuğu:** `GraphCanvas.tsx` içinde parmakla çıkış portundan başka bir düğüme sürükleyip bırakarak bağlantı kurma (`changedTouches` hedef kutusu çarpışma testi), kanvas altında canlı `RPS`, `ms`, `1x/2x/5x Load`, `Fit` (Ekrana Sığdır) ve isteğe bağlı açılıp kapanabilen (`Inspect` / `×`) mobil `InspectorPanel` alt çekmecesi eklendi.
 
+17. **Projenin Güncel Durumuna Uygun Tam Teşekküllü Dev.to Teknik Makalesi (`DEVTO_POST.md` & `ENGINEER_GROWTH_PLAYBOOK.md`) ve `/brag` Müzikli Tanıtım Videosu (`brag-output/brag.mp4`):**
+    - Projenin tamamlanan 16 mühendislik fazını kapsayan, Dev.to editörüne doğrudan yapıştırılmaya hazır, samimi geliştirici dilinde [`DEVTO_POST.md`](./DEVTO_POST.md) dosyası oluşturuldu.
+    - **`brag` / `brag-slim` Skill ile Yeni 20 Saniyelik Müzikli & Ses Efektli X (Twitter) Tanıtım Videosu (`brag-output/brag.mp4` & `brag-output/brag.jpg`):** 16 Ekim'deki son X paylaşımından sonra eklenen özellikleri (1 tıkla `docker-compose.yml` / `main.tf` / `package.json` / `ERP CSV` tersine mühendislik, `Live ERP/API` dijital ikiz telemetri akışı, 2.5-Gigapiksel mobil SVG GPU darboğazı çözümü + mobil dokunmatik HUD ve `Pin Baseline` / FinOps / PR çıktıları) sergileyen, `happy-beats-business-moves-vol-12` arka plan müziği ve 6 sahne geçiş ses efekti (SFX) mikslenmiş `1280x720` (`30 FPS`, `H.264 + AAC`, `Frame-0 Poster` gömülü) tanıtım videosu ve X paylaşım metinleri ([`brag-output/share-copy.txt`](./brag-output/share-copy.txt), [`brag-output/share-copy-variants.md`](./brag-output/share-copy-variants.md)) üretildi.
+
+18. **`draw.io (.drawio / .xml / .drawio.svg)`, `Excalidraw (.excalidraw)` ve `Mermaid.js` Doğrudan İçe Aktarıcı & Rakip Kullanıcı Yakalama Rehberi (`src/utils/importTopology.ts`, `src/components/Modals/ExportModal.tsx`, `src/test/export.test.ts`, `ENGINEER_GROWTH_PLAYBOOK.md`):**
+    - `draw.io` (`diagrams.net`), `Excalidraw` ve `Mermaid.js` kullanıcılarına ulaşıldığında diyagramlarını baştan çizme sürtünmesini **%100 sıfırlamak** için:
+      - **`parseDrawioToTopology`:** `<mxfile>`, `<mxGraphModel>`, `<mxCell>`, `<object>`/`<UserObject>` sarmalayıcılarını ve `.drawio.svg` içine gömülü XML diyagramlarını ayrıştırıp AWS/GCP/Azure ikon stillerine göre (`mxgraph.aws4.rds` vb.) otomatik sınıflandırarak 60 FPS topolojiye dönüştürür.
+      - **`parseExcalidrawToTopology`:** `.excalidraw` JSON dosyalarındaki kutu/elips/elmas şekillerini, bağlı (`containerId`) veya koordinat içi metin etiketlerini ve ok (`arrow`) bağlantılarını canlı simülasyona çevirir.
+      - **`parseMermaidToTopology`:** GitHub README, Notion ve Obsidian içindeki `flowchart LR/TD` ve `graph` bloklarını (`A[Client] -->|HTTPS| B[Gateway]`) tek tıkla içe aktarır.
+    - `ENGINEER_GROWTH_PLAYBOOK.md` Bölüm 5'e `draw.io`, `Excalidraw`, `Mermaid.js` ve `Cloudcraft` kullanıcılarının bulunduğu 6 spesifik kanal ve doğrudan GitHub kod arama sorguları (`extension:drawio`, `extension:excalidraw`) eklendi.
+
 ---
 
 ## 2. Gelir Yolu ve Canlı Trafik Analitiği (`vercel_mcp` & `lemonsqueezy`)
@@ -107,3 +118,7 @@
   - Lemon Squeezy Canlı Webhook'u (`ID: 142796`) Composio API üzerinden otomatik olarak `https://graph-flow-virid.vercel.app/api/webhook` adresine bağlandı.
 - **Canlı Vercel Web Analytics Özeti (`VERCEL_MCP_GET_WEB_ANALYTICS`):**
   - Son 7 günde **16 tekil ziyaretçi** ve **43 sayfa görüntülemesi** kaydedildi (ABD `US`, Hindistan `IN`, Fas `MA` (`t.co` X/Twitter yönlendirmesi) ve Türkiye `TR`).
+- **Reddit `r/sre` & Mimari Toplulukları Organik Mühendis Etkileşimi ve Dönüşüm Yanıtları (28 Ekim 2026):**
+  - `u/Double-Friendship493`: Fan-in kuyruk doygunluğu ve `p99` uçurum kenarı ("cliff edge") simülasyonunun gerçek üretim kazalarıyla birebir örtüştüğünü doğruladı.
+  - `u/DrKillswitch`: **Grafana** entegrasyonu ve **OpenShift** uyumluluğunu sordu (`Live ERP/API` Prometheus metrik ayrıştırıcısı, `Grafana k6` yük testi üreticisi ve `nginxinc/nginx-unprivileged:alpine` Port `8080` OpenShift `restricted-v2` SCC uyumu üzerinden doğal mühendis diliyle yanıtlandı).
+  - `u/HarmoniousArdor2`, `u/nOOberNZ`, `u/shocking_feedback` ve `u/KnowinglyTaut`: Kuyruk derinliği, `circuit breaker hysteresis`, retry/timeout fırtınaları ve başlığın akademik dili üzerine gelen yorumlar için samimi, doğal ve savunmaya geçmeyen geliştirici yanıtları hazırlandı.

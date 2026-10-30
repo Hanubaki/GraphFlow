@@ -4,10 +4,42 @@ import { autoLayoutTopology } from './simulationPhysics';
 import { synthesizeArchitectureOffline } from '../services/aiGenerator';
 
 export interface ImportTopologyResult {
-  format: 'json' | 'docker-compose' | 'terraform' | 'package-json' | 'openapi' | 'erp-csv' | 'erp-process';
+  format:
+    | 'json'
+    | 'docker-compose'
+    | 'terraform'
+    | 'package-json'
+    | 'openapi'
+    | 'erp-csv'
+    | 'erp-process'
+    | 'drawio'
+    | 'excalidraw'
+    | 'mermaid';
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
+
+export const SAMPLE_DRAWIO_IMPORT = `<mxfile host="app.diagrams.net">
+  <diagram name="Cloud Architecture">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="n1" value="Web &amp; Mobile Client" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1" />
+        <mxCell id="n2" value="Envoy API Gateway" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1" />
+        <mxCell id="n3" value="Order &amp; Checkout Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1" />
+        <mxCell id="n4" value="Redis Lock &amp; Cache" style="shape=cylinder3;whiteSpace=wrap;html=1;" vertex="1" parent="1" />
+        <mxCell id="n5" value="PostgreSQL Ledger DB" style="shape=mxgraph.aws4.rds;whiteSpace=wrap;html=1;" vertex="1" parent="1" />
+        <mxCell id="n6" value="Kafka Event Stream" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1" />
+        <mxCell id="e1" value="HTTPS /api" edge="1" parent="1" source="n1" target="n2" />
+        <mxCell id="e2" value="gRPC" edge="1" parent="1" source="n2" target="n3" />
+        <mxCell id="e3" value="SETNX / GET" edge="1" parent="1" source="n3" target="n4" />
+        <mxCell id="e4" value="SERIALIZABLE TX" edge="1" parent="1" source="n3" target="n5" />
+        <mxCell id="e5" value="order.created" edge="1" parent="1" source="n3" target="n6" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>`;
 
 export const SAMPLE_ERP_CSV_IMPORT = `Departman;Hedef_Departman;Süreç_Açıklaması;İşlem_Süresi_ms;Kapasite_RPS
 Satın Alma & Tedarikçi (PO);Depo Giriş (Inbound);Purchase Order & İrsaliye;14;500
@@ -104,6 +136,7 @@ interface ClassifiedComponent {
 function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
   const token = `${name} ${image}`.toLowerCase();
 
+  // ERP & Cloud Databases / Stock Ledgers
   if (/(postgres|mysql|mariadb|mongodb|mongo|cassandra|cockroach|dynamodb|rds|aurora|db|database|supabase|stok db|merkezi stok|fifo|lifo|veritaban)/.test(token)) {
     return {
       type: 'database',
@@ -114,6 +147,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'PostgreSQL / ERP Stok DB',
     };
   }
+  // Cache / Real-time Visibility
   if (/(redis|memcached|elasticache|valkey|dragonfly|cache|izlenebilirlik|visibility)/.test(token)) {
     return {
       type: 'cache',
@@ -124,6 +158,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Redis Cluster',
     };
   }
+  // Queues / Pick Lists / Conveyors
   if (/(kafka|rabbitmq|activemq|nats|pulsar|sqs|msk|queue|broker|event|pubsub|pick list|toplama listesi|kuyruk|konveyör|konveyor)/.test(token)) {
     return {
       type: 'queue',
@@ -134,6 +169,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Message / Pick Queue',
     };
   }
+  // Storage / Outbound Warehouse
   if (/(minio|s3|bucket|blob|storage|ceph|depo çıkış|depo cikis|outbound|goods issue|ambar)/.test(token)) {
     return {
       type: 'storage',
@@ -144,6 +180,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Object / Outbound Storage',
     };
   }
+  // Serverless / MRO Maintenance Triggers
   if (/(lambda|serverless|faas|edge-fn|cloud-function|bakım|bakim|mro|maintenance)/.test(token)) {
     return {
       type: 'serverless',
@@ -154,6 +191,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Serverless / MRO Unit',
     };
   }
+  // Gateways / Inbound Receiving
   if (/(kong|envoy|traefik|haproxy|gateway|ingress|alb|loadbalancer|lb|apigateway|depo giriş|depo giris|inbound|mal kabul|goods receipt)/.test(token)) {
     return {
       type: 'gateway',
@@ -164,6 +202,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'API Gateway / Inbound',
     };
   }
+  // Clients / Purchase Orders / Barcode Scanners
   if (/(client|frontend|web|storefront|nextjs|react|browser|mobile|cdn|cloudfront|satın alma|satin alma|tedarikçi|tedarikci|el terminali|barkod|rfid)/.test(token)) {
     return {
       type: 'client',
@@ -174,6 +213,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'Web / Edge Client',
     };
   }
+  // External APIs / e-Waybill / Dispatch
   if (/(stripe|openai|twilio|sendgrid|webhook|external|thirdparty|e-irsaliye|irsaliye|sevkiyat|teslimat)/.test(token)) {
     return {
       type: 'external',
@@ -184,6 +224,7 @@ function classifyByImageOrName(name: string, image = ''): ClassifiedComponent {
       defaultSubtitle: image || 'External API / Sevkiyat',
     };
   }
+  // Quality Control special icon/color
   if (/(kalite|quality|iqc|oqc|karantina)/.test(token)) {
     return {
       type: 'service',
@@ -230,6 +271,10 @@ function formatReadableTitle(rawId: string): string {
     .trim();
 }
 
+/**
+ * Parses an ERP / Excel / CSV / TSV table (semicolon, comma, or tab separated)
+ * into a multi-department GraphFlow topology.
+ */
 function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const lines = csvText
     .replace(/\r\n/g, '\n')
@@ -241,6 +286,7 @@ function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: Gr
     return { nodes: [], edges: [] };
   }
 
+  // Detect delimiter (; for Turkish Excel, \t for TSV paste, or , for standard CSV)
   const firstLine = lines[0];
   const delimiter = firstLine.includes(';') ? ';' : firstLine.includes('\t') ? '\t' : ',';
 
@@ -248,6 +294,7 @@ function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: Gr
     line.split(delimiter).map(cell => cell.trim().replace(/^["']|["']$/g, ''))
   );
 
+  // Skip header row if first row matches common header keywords
   const headerCandidate = rows[0].join(' ').toLowerCase();
   const hasHeader = /(departman|kaynak|adim|adım|source|from|hedef|target|to|süreç|surec|kapasite|rps|latency)/i.test(
     headerCandidate
@@ -323,6 +370,7 @@ function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: Gr
 
   const nodes = Array.from(nodeMap.values());
 
+  // If single-column list was provided with no edges, chain them sequentially
   if (edges.length === 0 && nodes.length > 1) {
     for (let i = 0; i < nodes.length - 1; i++) {
       const proto = inferProtocol(nodes[i].type, nodes[i + 1].type);
@@ -344,6 +392,9 @@ function parseErpCsvToTopology(csvText: string): { nodes: GraphNode[]; edges: Gr
   };
 }
 
+/**
+ * Parses a docker-compose.yml string into GraphFlow nodes and edges.
+ */
 function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const lines = yamlText.replace(/\r\n/g, '\n').split('\n');
   let inServices = false;
@@ -508,6 +559,9 @@ function parseDockerComposeToTopology(yamlText: string): { nodes: GraphNode[]; e
   };
 }
 
+/**
+ * Parses Terraform (.tf) resource blocks into a GraphFlow topology.
+ */
 function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([\s\S]*?)\n\}/g;
   const resources: Array<{ tfType: string; name: string; body: string }> = [];
@@ -607,6 +661,9 @@ function parseTerraformToTopology(tfText: string): { nodes: GraphNode[]; edges: 
   };
 }
 
+/**
+ * Reverse-engineers a Node.js / TypeScript package.json into a complete 4-tier GraphFlow topology.
+ */
 function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const deps = {
     ...(typeof pkg.dependencies === 'object' ? pkg.dependencies : {}),
@@ -787,6 +844,9 @@ function parsePackageJsonToTopology(pkg: Record<string, any>): { nodes: GraphNod
   };
 }
 
+/**
+ * Reverse-engineers an OpenAPI 3.x / Swagger 2.0 YAML or JSON spec into a microservice topology.
+ */
 function parseOpenApiToTopology(rawText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const pathMatches = Array.from(rawText.matchAll(/^\s{2,4}(\/[a-zA-Z0-9/_-]+)\s*:/gm)).map(m => m[1]);
   const routeGroups = Array.from(
@@ -938,12 +998,434 @@ function parseOpenApiToTopology(rawText: string): { nodes: GraphNode[]; edges: G
   };
 }
 
+function cleanDiagramLabel(raw: string): string {
+  return raw
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/(div|p|li|tr)>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getXmlAttr(attrs: string, name: string): string {
+  const m = attrs.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i'));
+  return m ? (m[1] ?? m[2] ?? '') : '';
+}
+
+/**
+ * Parses draw.io / diagrams.net (.drawio, .xml, .drawio.svg) mxGraphModel XML into a live GraphFlow topology.
+ */
+function parseDrawioToTopology(xmlText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  // Handle .drawio.svg files where the mxfile XML is HTML-encoded inside a content="..." attribute
+  let normalized = xmlText;
+  if (!/<mxCell\b/i.test(normalized) && /content\s*=\s*"[^"]*&lt;mxfile/i.test(normalized)) {
+    const contentMatch = normalized.match(/content\s*=\s*"([^"]*)"/i);
+    if (contentMatch) {
+      normalized = contentMatch[1]
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&amp;/gi, '&');
+    }
+  }
+
+  // Merge <object> or <UserObject> wrappers into their child <mxCell> so id and label/value stay together
+  normalized = normalized.replace(
+    /<(?:object|UserObject)\b([^>]*)>\s*<mxCell\b([^>]*)>/gi,
+    '<mxCell $1 $2>'
+  );
+
+  const cellRegex = /<mxCell\b([^>]*?)(?:\/>|>([\s\S]*?)<\/mxCell>)/gi;
+  const rawVertices: Array<{ id: string; title: string; style: string }> = [];
+  const rawEdges: Array<{ id: string; source: string; target: string; label: string }> = [];
+
+  let match: RegExpExecArray | null;
+  while ((match = cellRegex.exec(normalized)) !== null) {
+    const attrs = match[1] || '';
+    const id = getXmlAttr(attrs, 'id');
+    if (!id || id === '0' || id === '1') continue;
+
+    const isEdge = getXmlAttr(attrs, 'edge') === '1' || (Boolean(getXmlAttr(attrs, 'source')) && Boolean(getXmlAttr(attrs, 'target')));
+    const isVertex = getXmlAttr(attrs, 'vertex') === '1';
+    const rawVal = getXmlAttr(attrs, 'value') || getXmlAttr(attrs, 'label');
+    const style = getXmlAttr(attrs, 'style');
+
+    if (isEdge) {
+      const source = getXmlAttr(attrs, 'source');
+      const target = getXmlAttr(attrs, 'target');
+      if (source && target && source !== target) {
+        rawEdges.push({
+          id,
+          source,
+          target,
+          label: cleanDiagramLabel(rawVal),
+        });
+      }
+      continue;
+    }
+
+    if (isVertex) {
+      // Skip edge labels that draw.io sometimes stores as child vertex cells with connectable=0
+      if (/edgeLabel/i.test(style)) continue;
+      let cleanTitle = cleanDiagramLabel(rawVal);
+      if (!cleanTitle) {
+        const shapeMatch = style.match(/mxgraph\.(?:aws\d*|gcp\d*|azure|kubernetes)\.([a-zA-Z0-9_-]+)/i);
+        if (shapeMatch) {
+          cleanTitle = formatReadableTitle(shapeMatch[1]);
+        }
+      }
+      if (!cleanTitle) continue;
+      rawVertices.push({ id, title: cleanTitle.slice(0, 32), style });
+    }
+  }
+
+  const nodes: GraphNode[] = rawVertices.map((v, idx) => {
+    const classified = classifyByImageOrName(v.title, v.style);
+    return {
+      id: `drawio-${v.id}`,
+      type: classified.type,
+      title: v.title,
+      subtitle: classified.defaultSubtitle,
+      x: 100 + (idx % 4) * 280,
+      y: 100 + Math.floor(idx / 4) * 140,
+      width: 190,
+      height: 90,
+      status: 'healthy',
+      circuitBreaker: 'closed',
+      latencyMs: classified.latencyMs,
+      errorRate: 0.1,
+      throughputRps: classified.throughputRps,
+      color: classified.color,
+      iconName: classified.iconName,
+    };
+  });
+
+  const nodeByRawId = new Map(rawVertices.map((v, idx) => [v.id, nodes[idx]]));
+  const edges: GraphEdge[] = [];
+  let edgeIdx = 1;
+
+  for (const e of rawEdges) {
+    const fromNode = nodeByRawId.get(e.source);
+    const toNode = nodeByRawId.get(e.target);
+    if (!fromNode || !toNode || fromNode.id === toNode.id) continue;
+    const proto = inferProtocol(fromNode.type, toNode.type);
+    edges.push({
+      id: `drawio-e-${edgeIdx++}`,
+      fromNodeId: fromNode.id,
+      toNodeId: toNode.id,
+      protocol: proto.protocol,
+      latencyMs: proto.latencyMs,
+      errorRate: 0,
+      label: (e.label || proto.label).slice(0, 22),
+    });
+  }
+
+  if (edges.length === 0 && nodes.length > 1) {
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const proto = inferProtocol(nodes[i].type, nodes[i + 1].type);
+      edges.push({
+        id: `drawio-chain-${i + 1}`,
+        fromNodeId: nodes[i].id,
+        toNodeId: nodes[i + 1].id,
+        protocol: proto.protocol,
+        latencyMs: proto.latencyMs,
+        errorRate: 0,
+        label: proto.label,
+      });
+    }
+  }
+
+  return {
+    nodes: autoLayoutTopology(nodes),
+    edges,
+  };
+}
+
+/**
+ * Parses an Excalidraw (.excalidraw / JSON) diagram into a live GraphFlow topology.
+ */
+function parseExcalidrawToTopology(parsed: Record<string, any>): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const elements: any[] = Array.isArray(parsed.elements) ? parsed.elements.filter(el => el && !el.isDeleted) : [];
+  const shapes = elements.filter(el => ['rectangle', 'diamond', 'ellipse'].includes(el.type));
+  const texts = elements.filter(el => el.type === 'text' && typeof el.text === 'string' && el.text.trim());
+  const arrows = elements.filter(el => el.type === 'arrow');
+
+  const idToNodeId = new Map<string, string>();
+  const nodes: GraphNode[] = [];
+  const usedTextIds = new Set<string>();
+
+  shapes.forEach((shape, idx) => {
+    // Find bound text via containerId or spatial containment
+    let boundText = texts.find(t => t.containerId === shape.id);
+    if (!boundText && typeof shape.x === 'number' && typeof shape.y === 'number') {
+      const sx = shape.x;
+      const sy = shape.y;
+      const sw = shape.width || 160;
+      const sh = shape.height || 80;
+      boundText = texts.find(
+        t =>
+          !t.containerId &&
+          !usedTextIds.has(t.id) &&
+          typeof t.x === 'number' &&
+          typeof t.y === 'number' &&
+          t.x >= sx - 24 &&
+          t.x <= sx + sw + 24 &&
+          t.y >= sy - 24 &&
+          t.y <= sy + sh + 24
+      );
+    }
+
+    if (!boundText) return;
+    usedTextIds.add(boundText.id);
+    const cleanTitle = cleanDiagramLabel(boundText.text).slice(0, 32);
+    if (!cleanTitle) return;
+
+    const classified = classifyByImageOrName(cleanTitle);
+    const nodeId = `excal-${ nodes.length + 1 }`;
+    nodes.push({
+      id: nodeId,
+      type: classified.type,
+      title: cleanTitle,
+      subtitle: classified.defaultSubtitle,
+      x: 100 + (idx % 4) * 280,
+      y: 100 + Math.floor(idx / 4) * 140,
+      width: 190,
+      height: 90,
+      status: 'healthy',
+      circuitBreaker: 'closed',
+      latencyMs: classified.latencyMs,
+      errorRate: 0.1,
+      throughputRps: classified.throughputRps,
+      color: classified.color,
+      iconName: classified.iconName,
+    });
+    idToNodeId.set(shape.id, nodeId);
+    idToNodeId.set(boundText.id, nodeId);
+  });
+
+  // Fallback: if the user drew standalone text labels without rectangle containers
+  if (nodes.length === 0) {
+    texts.forEach((t, idx) => {
+      const cleanTitle = cleanDiagramLabel(t.text).slice(0, 32);
+      if (!cleanTitle) return;
+      const classified = classifyByImageOrName(cleanTitle);
+      const nodeId = `excal-${nodes.length + 1}`;
+      nodes.push({
+        id: nodeId,
+        type: classified.type,
+        title: cleanTitle,
+        subtitle: classified.defaultSubtitle,
+        x: 100 + (idx % 4) * 280,
+        y: 100 + Math.floor(idx / 4) * 140,
+        width: 190,
+        height: 90,
+        status: 'healthy',
+        circuitBreaker: 'closed',
+        latencyMs: classified.latencyMs,
+        errorRate: 0.1,
+        throughputRps: classified.throughputRps,
+        color: classified.color,
+        iconName: classified.iconName,
+      });
+      idToNodeId.set(t.id, nodeId);
+    });
+  }
+
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+  const edges: GraphEdge[] = [];
+  let edgeIdx = 1;
+
+  for (const arrow of arrows) {
+    const fromId = arrow.startBinding?.elementId ? idToNodeId.get(arrow.startBinding.elementId) : undefined;
+    const toId = arrow.endBinding?.elementId ? idToNodeId.get(arrow.endBinding.elementId) : undefined;
+    if (!fromId || !toId || fromId === toId) continue;
+
+    const fromNode = nodeById.get(fromId);
+    const toNode = nodeById.get(toId);
+    if (!fromNode || !toNode) continue;
+
+    const boundArrowText = texts.find(t => t.containerId === arrow.id);
+    const proto = inferProtocol(fromNode.type, toNode.type);
+    edges.push({
+      id: `excal-e-${edgeIdx++}`,
+      fromNodeId: fromNode.id,
+      toNodeId: toNode.id,
+      protocol: proto.protocol,
+      latencyMs: proto.latencyMs,
+      errorRate: 0,
+      label: (boundArrowText ? cleanDiagramLabel(boundArrowText.text) : proto.label).slice(0, 22),
+    });
+  }
+
+  if (edges.length === 0 && nodes.length > 1) {
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const proto = inferProtocol(nodes[i].type, nodes[i + 1].type);
+      edges.push({
+        id: `excal-chain-${i + 1}`,
+        fromNodeId: nodes[i].id,
+        toNodeId: nodes[i + 1].id,
+        protocol: proto.protocol,
+        latencyMs: proto.latencyMs,
+        errorRate: 0,
+        label: proto.label,
+      });
+    }
+  }
+
+  return {
+    nodes: autoLayoutTopology(nodes),
+    edges,
+  };
+}
+
+/**
+ * Parses a Mermaid.js flowchart / graph definition into a live GraphFlow topology.
+ */
+function parseMermaidToTopology(rawText: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const cleaned = rawText
+    .replace(/^```mermaid\s*/im, '')
+    .replace(/```\s*$/m, '')
+    .trim();
+
+  const lines = cleaned
+    .split(/\r?\n/)
+    .map(l => l.replace(/%%.*$/, '').trim())
+    .filter(
+      l =>
+        l.length > 0 &&
+        !/^(flowchart|graph|subgraph|end|style|classDef|class|click|linkStyle|direction)\b/i.test(l)
+    );
+
+  const nodeMap = new Map<string, GraphNode>();
+  const edges: GraphEdge[] = [];
+
+  const parseEndpoint = (token: string): GraphNode | null => {
+    const trimmed = token.trim();
+    if (!trimmed) return null;
+
+    // Matches ID[Label], ID([Label]), ID[(Label)], ID((Label)), ID{Label}, or bare ID
+    const m = trimmed.match(/^([a-zA-Z0-9_.-]+)\s*(?:[\[\(\{]+(["']?)(.*?)\2[\]\)\}]+)?$/);
+    const rawId = m ? m[1] : trimmed;
+    const rawLabel = m && m[3] ? cleanDiagramLabel(m[3]) : formatReadableTitle(rawId);
+    const key = rawId.toLowerCase();
+
+    const existing = nodeMap.get(key);
+    if (existing) {
+      if (m && m[3] && existing.title === formatReadableTitle(rawId)) {
+        existing.title = rawLabel.slice(0, 32);
+        const reclassified = classifyByImageOrName(existing.title, rawId);
+        existing.type = reclassified.type;
+        existing.color = reclassified.color;
+        existing.iconName = reclassified.iconName;
+        existing.latencyMs = reclassified.latencyMs;
+        existing.throughputRps = reclassified.throughputRps;
+        existing.subtitle = reclassified.defaultSubtitle;
+      }
+      return existing;
+    }
+
+    const classified = classifyByImageOrName(rawLabel, rawId);
+    const idx = nodeMap.size;
+    const node: GraphNode = {
+      id: `mmd-${idx + 1}`,
+      type: classified.type,
+      title: rawLabel.slice(0, 32),
+      subtitle: classified.defaultSubtitle,
+      x: 100 + (idx % 4) * 280,
+      y: 100 + Math.floor(idx / 4) * 140,
+      width: 190,
+      height: 90,
+      status: 'healthy',
+      circuitBreaker: 'closed',
+      latencyMs: classified.latencyMs,
+      errorRate: 0.1,
+      throughputRps: classified.throughputRps,
+      color: classified.color,
+      iconName: classified.iconName,
+    };
+    nodeMap.set(key, node);
+    return node;
+  };
+
+  let edgeIdx = 1;
+  for (const line of lines) {
+    // Match A -->|label| B, A -- label --> B, A -.-> B, A ==> B
+    const edgeMatch =
+      line.match(/^(.+?)\s*(?:--+|\.-+|==+)>\s*(?:\|([^|]*)\|\s*)?(.+)$/) ||
+      line.match(/^(.+?)\s*--\s*([^-]+?)\s*-->\s*(.+)$/);
+
+    if (edgeMatch) {
+      const fromNode = parseEndpoint(edgeMatch[1]);
+      const edgeLabel = cleanDiagramLabel(edgeMatch[2] || '');
+      const toNode = parseEndpoint(edgeMatch[3]);
+      if (fromNode && toNode && fromNode.id !== toNode.id) {
+        const proto = inferProtocol(fromNode.type, toNode.type);
+        edges.push({
+          id: `mmd-e-${edgeIdx++}`,
+          fromNodeId: fromNode.id,
+          toNodeId: toNode.id,
+          protocol: proto.protocol,
+          latencyMs: proto.latencyMs,
+          errorRate: 0,
+          label: (edgeLabel || proto.label).slice(0, 22),
+        });
+      }
+    } else if (/^[a-zA-Z0-9_.-]+\s*[\[\(\{]/.test(line)) {
+      parseEndpoint(line);
+    }
+  }
+
+  return {
+    nodes: autoLayoutTopology(Array.from(nodeMap.values())),
+    edges,
+  };
+}
+
+/**
+ * Universal infrastructure & ERP importer supporting draw.io (.drawio/.xml), Excalidraw (.excalidraw),
+ * Mermaid.js flowcharts, GraphFlow JSON, ERP/Excel CSV tables, ERP process descriptions,
+ * package.json, OpenAPI/Swagger, Docker Compose YAML, and Terraform HCL.
+ */
 export function parseInfrastructureToTopology(rawContent: string, filename = ''): ImportTopologyResult {
   const trimmed = rawContent.trim();
   const lowerFile = filename.toLowerCase();
 
-  if (trimmed.startsWith('{') || lowerFile.endsWith('.json')) {
+  // 0. Try draw.io / diagrams.net XML (.drawio, .xml, .drawio.svg, <mxfile>, <mxGraphModel>)
+  if (
+    lowerFile.endsWith('.drawio') ||
+    lowerFile.endsWith('.drawio.xml') ||
+    lowerFile.endsWith('.drawio.svg') ||
+    /<(mxfile|mxGraphModel|mxCell)\b/i.test(trimmed) ||
+    (/<svg\b/i.test(trimmed) && /&lt;mxfile\b/i.test(trimmed))
+  ) {
+    const { nodes, edges } = parseDrawioToTopology(trimmed);
+    if (nodes.length === 0) {
+      throw new Error('No labeled vertex boxes found in draw.io (.drawio / mxGraphModel) file.');
+    }
+    return { format: 'drawio', nodes, edges };
+  }
+
+  // 1. Try JSON or Excalidraw (.excalidraw / .json)
+  if (trimmed.startsWith('{') || lowerFile.endsWith('.json') || lowerFile.endsWith('.excalidraw')) {
     const parsed = JSON.parse(trimmed);
+
+    if (
+      lowerFile.endsWith('.excalidraw') ||
+      (parsed && typeof parsed === 'object' && (parsed.type === 'excalidraw' || Array.isArray(parsed.elements)))
+    ) {
+      const { nodes, edges } = parseExcalidrawToTopology(parsed);
+      if (nodes.length === 0) {
+        throw new Error('No labeled shapes or text nodes found in Excalidraw (.excalidraw) file.');
+      }
+      return { format: 'excalidraw', nodes, edges };
+    }
 
     if (
       lowerFile.endsWith('package.json') ||
@@ -965,6 +1447,20 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     return { format: 'json', nodes, edges };
   }
 
+  // 1.5 Try Mermaid.js flowchart / graph (.mmd, .mermaid, or flowchart/graph syntax)
+  if (
+    lowerFile.endsWith('.mmd') ||
+    lowerFile.endsWith('.mermaid') ||
+    /^(?:```mermaid\s*\r?\n\s*)?(?:flowchart|graph)\s+(?:LR|RL|TD|TB|BT)\b/im.test(trimmed) ||
+    (/[a-zA-Z0-9_.-]+\s*\[[^\]]+\]\s*(?:--+|\.-+|==+)>/m.test(trimmed))
+  ) {
+    const { nodes, edges } = parseMermaidToTopology(trimmed);
+    if (nodes.length > 0) {
+      return { format: 'mermaid', nodes, edges };
+    }
+  }
+
+  // 2. Try Terraform HCL if contains resource "..." "..." or ends with .tf
   if (/resource\s+"[^"]+"\s+"[^"]+"/.test(trimmed) || lowerFile.endsWith('.tf')) {
     const { nodes, edges } = parseTerraformToTopology(trimmed);
     if (nodes.length === 0) {
@@ -973,11 +1469,13 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     return { format: 'terraform', nodes, edges };
   }
 
+  // 3. Try OpenAPI / Swagger YAML
   if (/^(openapi|swagger)\s*:/m.test(trimmed) && /paths\s*:/m.test(trimmed)) {
     const { nodes, edges } = parseOpenApiToTopology(trimmed);
     return { format: 'openapi', nodes, edges };
   }
 
+  // 4. Try Docker Compose YAML
   if (/services\s*:/.test(trimmed) || lowerFile.endsWith('.yml') || lowerFile.endsWith('.yaml')) {
     const { nodes, edges } = parseDockerComposeToTopology(trimmed);
     if (nodes.length === 0) {
@@ -986,6 +1484,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     return { format: 'docker-compose', nodes, edges };
   }
 
+  // 5. Try ERP / Excel CSV or TSV table (.csv, .tsv, or multi-line delimited with ; / \t / ,)
   const firstLine = trimmed.split(/\r?\n/)[0] || '';
   if (
     lowerFile.endsWith('.csv') ||
@@ -1000,6 +1499,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     }
   }
 
+  // 6. Try ERP / Multi-Department plain text description (for non-technical ERP users pasting process descriptions)
   if (
     /(erp|kurumsal kaynak|inbound|outbound|depo giriş|depo giris|depo çıkış|depo cikis|mal kabul|satın alma|kalite kontrol|ar-ge|arge|üretim|uretim|bakım|bakim|pick list|fifo|lifo|sevkiyat)/i.test(
       trimmed

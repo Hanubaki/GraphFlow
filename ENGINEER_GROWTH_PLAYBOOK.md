@@ -102,7 +102,7 @@ Would love brutal feedback from practicing SREs on the Composite SLA calculation
 
 ---
 
-### D) X (Twitter) & Dev.to İçin "Yüksek Etkileşimli" Yeni Seri Formatı (Mevcut Paylaşımların Üzerine)
+### D) X (Twitter) İçin "Yüksek Etkileşimli" Meydan Okuma Serisi
 X'te sadece *"Yeni proje yaptım, link burada"* demek algoritmada gömülür. Bunun yerine **15 saniyelik ekran videosu/GIF** ile şu **"Meydan Okuma (Challenge)"** formatını atmalısın:
 
 **Tweet 1 (Video/GIF ile):**
@@ -132,6 +132,22 @@ https://graph-flow-virid.vercel.app/#studio
 
 ---
 
+### E) Dev.to — Tam Teşekküllü Teknik Makale (`DEVTO_POST.md` — Frontmatter + GIF + 16 Fazın Tamamı)
+- **Gönderim Adresi:** https://dev.to/new (Sağ üstteki ayar ikonundan **"Raw Markdown"** moduna geçip `DEVTO_POST.md` dosyasının tamamını tek seferde yapıştırabilirsin)
+- **Tam Metin Dosyası:** [`DEVTO_POST.md`](./DEVTO_POST.md)
+- **Öne Çıkan Başlık:**
+  `Why Static System Design Diagrams Lie (And How I Built a 60 FPS Distributed Systems Simulator in the Browser)`
+- **Etiketler (`tags`):** `architecture`, `devops`, `webdev`, `opensource`
+- **Kapak Görseli (`cover_image`):** `https://graph-flow-virid.vercel.app/og-image.png`
+- **İçerdiği Güncel Özellikler (Faz 1–16):**
+  1. 10 saniyelik sıfır kayıt şartlı **Stripe Webhook & Ledger** (`?template=stripe-webhook-ledger`) ve **Netflix Edge Chaos** (`?template=netflix-chaos-streaming`) canlı kırma testi.
+  2. Native De Casteljau kübik Bezier matematiği ($B(t)$) ve sıfır üçüncü parti kanvas kütüphanesi ile 60 FPS simülasyon döngüsü.
+  3. **Yeni (Faz 16):** Mobil tarayıcılardaki **2.5-Gigapiksel (`50000x50000`) SVG GPU doku darboğazının** çözümü, `~33 FPS` adaptif mobil kare hızı, `4 Hz` (`240ms`) düğüm yük izolasyonu ve dokunmatik kablo bağlama (`changedTouches`).
+  4. `docker-compose.yml`, `main.tf`, `package.json`, `OpenAPI 3.0` ve **Çoklu-Departman ERP CSV** tersine mühendislik içe aktarıcısı + **Canlı ERP/API Dijital İkiz Telemetri** (`Live: ON`) akışı.
+  5. `Pin Baseline` + `Executive ROI Proposal`, `3x Chaos Audit (Grade A+ – F)`, çoklu bulut FinOps (`AWS | GCP | Azure`) ve `Mermaid (GitHub PR)` / `Terraform` / `Kubernetes HPA` / `Grafana k6` çıktıları.
+
+---
+
 ## 3. GitHub "Awesome" Listelerine 5 Dakikada Kalıcı Backlink & Mühendis Trafiği Ekleme
 
 GitHub'da on binlerce yıldızlı aşağıdaki 4 depoya gidip `README.md` dosyasına tek satırlık PR (Pull Request) açmak **%100 ücretsizdir** ve her gün organik kıdemli mühendis trafiği getirir:
@@ -154,3 +170,18 @@ Projede halihazırda kurduğumuz **3 viral kanca** sayesinde gelen her mühendis
 1. **GitHub PR Mermaid Çıktısı (`Export -> Mermaid (GitHub PR)`):** Mühendis kendi şirketindeki Pull Request'e bu diyagramı yapıştırdığında en altında otomatik olarak *"Simulated & verified with GraphFlow"* imzası yer alır; ekipteki diğer 10 mühendis o linke tıklar.
 2. **SVG / 2x Retina PNG Filigranı (`Export -> SVG / PNG`):** Ücretsiz planda indirilen her yüksek çözünürlüklü mimari şemanın sağ altında `"Simulated with GraphFlow.dev"` rozeti bulunur (kaldırmak isteyenler Pro paketi satın alır).
 3. **Executive ROI Teklifi (`Inspector -> Pin Baseline -> Copy Executive ROI Proposal`):** Kıdemli mühendis CTO'suna veya takım liderine *"Neden Redis/Kafka eklemeliyiz?"* sunumu yaparken GraphFlow'un ürettiği öncesi/sonrası SLA ve maliyet tablosunu Slack/Notion'a yapıştırır.
+
+---
+
+## 5. `draw.io` (`diagrams.net`), `Excalidraw`, `Mermaid.js` ve `Cloudcraft` Kullanıcılarını Doğrudan Yakalama Rehberi
+
+Bu araçların kullanıcıları internette rastgele dağılmış değildir; **6 spesifik yerde** toplanırlar ve artık GraphFlow içinde **Tek Tıkla `.drawio`, `.excalidraw` ve `Mermaid.js` İçe Aktarıcı** (`Export & Import Hub`) bulunduğu için diyagramlarını sıfırdan çizmeden 1 saniyede 60 FPS canlı simülasyona dönüştürebilirler:
+
+| # | Hedef Kitle Nerededir? | Nasıl Bulunur / Arama Sorgusu | Dönüşüm Kancası (Nasıl Yaklaşılır?) |
+| :--- | :--- | :--- | :--- |
+| **1** | **GitHub Kod & Depo Aramaları (En Sıcak Kitle)** | GitHub arama çubuğuna:<br>• `extension:drawio path:docs` veya `filename:architecture.drawio`<br>• `extension:excalidraw architecture`<br>• `"```mermaid" "flowchart" microservice` | Depo sahibinin Issue/Discussion veya X/GitHub profiline: *"Deponuzdaki `architecture.drawio` dosyasını gördüm; aynı `.drawio` dosyasını sıfır değişiklikle GraphFlow'a sürükleyip 3x trafik altında ilk hangi servisin darboğaza girdiğini canlı test edebilirsiniz"* |
+| **2** | **`jgraph/drawio` & `excalidraw/excalidraw` GitHub Discussions** | • `github.com/jgraph/drawio/discussions`<br>• `github.com/excalidraw/excalidraw/discussions`<br>• *"simulation"*, *"dynamic"*, *"auto layout"*, *"cloud cost"* aramaları | Statik diyagramların yük testi, gecikme (`p99`) veya AWS/GCP/Azure maliyeti hesaplayamadığından şikayet eden kullanıcılara `.drawio` / `.excalidraw` dosyasını doğrudan içe aktaran tamamlayıcı simülatör olarak sunmak. |
+| **3** | **Reddit "Hangi Diyagram Aracını Kullanıyorsunuz?" Başlıkları** | • `r/softwarearchitecture`, `r/devops`, `r/aws`, `r/selfhosted`<br>• Arama: `"draw.io" OR "excalidraw" OR "cloudcraft" architecture` | Özellikle **Cloudcraft** (Datadog satın aldıktan sonra kurumsal fiyata kilitlendi) ve **Lucidchart** alternatiflerini soranlara: *"Draw.io veya Excalidraw'da çizdiğiniz dosyayı doğrudan yükleyip 60 FPS kuyruk fiziği + çoklu bulut FinOps maliyeti görebileceğiniz ücretsiz tarayıcı simülatörü"* yanıtı. |
+| **4** | **VS Code Eklenti Kullanıcıları (`hediet.vscode-drawio` — 2.5M+ İndirme)** | GitHub'da `.drawio.svg` veya `.drawio.png` uzantılı dosyaları repolarında tutan geliştiriciler (`extension:drawio.svg`) | GraphFlow'un `.drawio.svg` içindeki gömülü `<mxfile>` XML verisini bile otomatik okuyup canlı topolojiye çevirdiğini göstermek. |
+| **5** | **Obsidian & Notion Mimar Toplulukları (`r/ObsidianMD`, `r/Notion`)** | Obsidian Excalidraw eklentisi ve Notion Mermaid bloklarıyla sistem tasarımı notları tutan yazılımcılar | *"Obsidian'daki `.excalidraw` veya Notion'daki `Mermaid` kodunuzu yapıştırın, statik notunuz 60 FPS çalışan stres testine dönüşsün."* |
+| **6** | **AlternativeTo & Product Hunt "Draw.io / Cloudcraft Alternatives"** | • `alternativeto.net/software/cloudcraft/`<br>• `alternativeto.net/software/draw-io/` | GraphFlow'u **Cloudcraft**, **draw.io**, **Excalidraw** ve **IcePanel** altına *"Executable Architecture Simulator (with native .drawio & .excalidraw import)"* olarak eklemek. |

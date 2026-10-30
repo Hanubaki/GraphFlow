@@ -19,6 +19,7 @@ import {
 import {
   parseInfrastructureToTopology,
   SAMPLE_DOCKER_COMPOSE_IMPORT,
+  SAMPLE_DRAWIO_IMPORT,
   SAMPLE_ERP_CSV_IMPORT,
   SAMPLE_PACKAGE_JSON_IMPORT,
 } from '../../utils/importTopology';
@@ -68,6 +69,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [iacPasteText, setIacPasteText] = useState('');
   const terraformEntitlement = checkFeatureEntitlement('terraform_export', planTier);
 
+  // Accessibility: close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -133,6 +135,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
     >
       <div className="bg-dark-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+        {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-800/40 text-cyan-400">
@@ -154,6 +157,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </button>
         </div>
 
+        {/* Tab switcher */}
         <div role="tablist" aria-label="Export format selection" className="flex border-b border-slate-800 px-4 bg-dark-950/40 overflow-x-auto">
           <button
             role="tab"
@@ -257,89 +261,30 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </button>
         </div>
 
+        {/* Tab Content */}
         <div role="tabpanel" aria-label={activeTab} className="p-5 overflow-y-auto flex-1">
           {activeTab === 'export' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/15 flex flex-col gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-slate-100 font-semibold text-xs">
-                    <ImageIcon className="w-4 h-4 text-cyan-400" />
-                    <span>High-Resolution Architecture Blueprint Image (SVG / 2x PNG)</span>
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300">
-                    {isPro ? 'WHITE-LABEL PRO' : 'FREE (WITH GRAPHFLOW BADGE)'}
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Export a dark-mode CAD blueprint snapshot complete with SLA, p99 tail latency, and FinOps cloud cost HUD for GitHub PRs, Notion, and slide decks.
-                </p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    onClick={() => exportSvgDiagram(nodes, edges, !isPro)}
-                    className="h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Download Vector .SVG
-                  </button>
-                  <button
-                    onClick={() => exportPngDiagram(nodes, edges, !isPro)}
-                    className="h-9 px-3 rounded-lg border border-cyan-500/40 bg-dark-950 hover:bg-slate-900 text-cyan-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    Download 2x Retina .PNG
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-200 font-semibold text-xs mb-1">
-                      <FileCode className="w-4 h-4 text-cyan-400" />
-                      JSON Architecture Schema
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Download entire system topology including nodes, pipelines, and performance configs.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => exportArchitectureJson(nodes, edges)}
-                    className="w-full h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Download JSON
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-200 font-semibold text-xs mb-1">
-                      <FileText className="w-4 h-4 text-cyan-400" />
-                      Markdown Architecture Doc
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Ready-to-use specification with Mermaid diagrams for your project repository.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => exportMarkdownFile(nodes, edges)}
-                    className="w-full h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Download .md Spec
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/70 space-y-3 mt-2">
+              {/* Reverse-Engineering Infrastructure, draw.io, Excalidraw & ERP Importer Section (TOP PRIORITY) */}
+              <div className="p-4 rounded-xl border border-cyan-500/40 bg-dark-950/90 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4 text-cyan-400" />
                     <span className="text-xs font-semibold text-slate-100">
-                      Import Hub (<code className="text-amber-300 font-mono">ERP / Excel .CSV</code>, <code className="text-cyan-300 font-mono">package.json</code>, <code className="text-cyan-300 font-mono">docker-compose.yml</code>, <code className="text-cyan-300 font-mono">main.tf</code>)
+                      Import Hub (<code className="text-fuchsia-300 font-mono">draw.io .drawio</code>, <code className="text-violet-300 font-mono">.excalidraw</code>, <code className="text-cyan-300 font-mono">Mermaid</code>, <code className="text-amber-300 font-mono">ERP .CSV</code>, <code className="text-cyan-300 font-mono">docker-compose.yml</code>, <code className="text-cyan-300 font-mono">main.tf</code>)
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIacPasteText(SAMPLE_DRAWIO_IMPORT);
+                        handlePasteImport(SAMPLE_DRAWIO_IMPORT);
+                      }}
+                      className="text-[11px] font-mono text-fuchsia-400 hover:text-fuchsia-300 underline cursor-pointer font-semibold"
+                    >
+                      Try Sample draw.io (.drawio)
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -376,8 +321,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <textarea
                   value={iacPasteText}
                   onChange={e => setIacPasteText(e.target.value)}
-                  placeholder="Paste an ERP / Excel CSV table (Departman;Hedef_Departman;Süreç), ERP workflow description, package.json, docker-compose.yml, or Terraform main.tf here..."
-                  rows={4}
+                  placeholder="Paste draw.io XML (.drawio), Excalidraw JSON (.excalidraw), Mermaid.js flowchart, ERP CSV table, package.json, docker-compose.yml, or Terraform main.tf here..."
+                  rows={3}
                   className="w-full select-text rounded-lg border border-slate-800 bg-dark-900 p-2.5 font-mono text-[11px] text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none"
                 />
 
@@ -385,13 +330,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <label className="inline-block">
                     <input
                       type="file"
-                      accept=".csv,.tsv,.txt,.json,.yml,.yaml,.tf"
+                      accept=".drawio,.xml,.excalidraw,.mmd,.mermaid,.svg,.csv,.tsv,.txt,.json,.yml,.yaml,.tf"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
-                    <span className="cursor-pointer h-8 px-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-flex items-center gap-1.5 transition-colors">
-                      <Upload className="w-3.5 h-3.5" />
-                      Upload ERP .csv / package.json / .yml / .tf
+                    <span className="cursor-pointer h-8 px-3 rounded-lg border border-cyan-500/50 bg-cyan-950/50 hover:bg-cyan-900/60 text-xs font-semibold text-cyan-200 inline-flex items-center gap-1.5 transition-colors">
+                      <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                      Upload .drawio / .excalidraw / .csv / .yml / .tf
                     </span>
                   </label>
 
@@ -408,6 +353,80 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 {importError && (
                   <div className="text-xs text-rose-400 font-mono mt-1">{importError}</div>
                 )}
+              </div>
+
+              {/* High-Res Vector SVG & Retina PNG Architecture Snapshot Card */}
+              <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/15 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-slate-100 font-semibold text-xs">
+                    <ImageIcon className="w-4 h-4 text-cyan-400" />
+                    <span>High-Resolution Architecture Blueprint Image (SVG / 2x PNG)</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300">
+                    {isPro ? 'WHITE-LABEL PRO' : 'FREE (WITH GRAPHFLOW BADGE)'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Export a dark-mode CAD blueprint snapshot complete with SLA, p99 tail latency, and FinOps cloud cost HUD for GitHub PRs, Notion, and slide decks.
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => exportSvgDiagram(nodes, edges, !isPro)}
+                    className="h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download Vector .SVG
+                  </button>
+                  <button
+                    onClick={() => exportPngDiagram(nodes, edges, !isPro)}
+                    className="h-9 px-3 rounded-lg border border-cyan-500/40 bg-dark-950 hover:bg-slate-900 text-cyan-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    Download 2x Retina .PNG
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Export JSON Card */}
+                <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-slate-200 font-semibold text-xs mb-1">
+                      <FileCode className="w-4 h-4 text-cyan-400" />
+                      JSON Architecture Schema
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Download entire system topology including nodes, pipelines, and performance configs.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => exportArchitectureJson(nodes, edges)}
+                    className="w-full h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download JSON
+                  </button>
+                </div>
+
+                {/* Export Markdown Card */}
+                <div className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-slate-200 font-semibold text-xs mb-1">
+                      <FileText className="w-4 h-4 text-cyan-400" />
+                      Markdown Architecture Doc
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Ready-to-use specification with Mermaid diagrams for your project repository.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => exportMarkdownFile(nodes, edges)}
+                    className="w-full h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download .md Spec
+                  </button>
+                </div>
               </div>
             </div>
           )}
