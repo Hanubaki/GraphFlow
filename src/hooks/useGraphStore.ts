@@ -33,6 +33,14 @@ export function useGraphStore(options?: GraphStoreOptions) {
   const redoStackRef = useRef<HistorySnapshot[]>([]);
   const [historyChangeCount, setHistoryChangeCount] = useState<number>(0);
 
+  // Latest state & options refs so callbacks stay referentially stable across renders
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  const nodesRef = useRef<GraphNode[]>(nodes);
+  nodesRef.current = nodes;
+  const edgesRef = useRef<GraphEdge[]>(edges);
+  edgesRef.current = edges;
+
   // Snapshot before executing an action that mutates nodes/edges
   const recordSnapshot = useCallback((currentNodes: GraphNode[], currentEdges: GraphEdge[]) => {
     undoStackRef.current.push({
@@ -50,26 +58,36 @@ export function useGraphStore(options?: GraphStoreOptions) {
 
   const addNode = useCallback((node: GraphNode) => {
     setNodes(prevNodes => {
-      recordSnapshot(prevNodes, edges);
-      return [...prevNodes, node];
+      recordSnapshot(prevNodes, edgesRef.current);
+      const next = [...prevNodes, node];
+      nodesRef.current = next;
+      return next;
     });
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
-    options?.onSound?.('click');
-  }, [edges, recordSnapshot, options]);
+    optionsRef.current?.onSound?.('click');
+  }, [recordSnapshot]);
 
   const updateNode = useCallback((id: string, updates: Partial<GraphNode>) => {
-    setNodes(prev => prev.map(n => (n.id === id ? { ...n, ...updates } : n)));
+    setNodes(prev => {
+      const next = prev.map(n => (n.id === id ? { ...n, ...updates } : n));
+      nodesRef.current = next;
+      return next;
+    });
   }, []);
 
   const moveNode = useCallback((id: string, x: number, y: number) => {
     const snappedX = Math.round(x / 10) * 10;
     const snappedY = Math.round(y / 10) * 10;
-    setNodes(prev => prev.map(n => (n.id === id ? { ...n, x: snappedX, y: snappedY } : n)));
+    setNodes(prev => {
+      const next = prev.map(n => (n.id === id ? { ...n, x: snappedX, y: snappedY } : n));
+      nodesRef.current = next;
+      return next;
+    });
   }, []);
 
   const duplicateNode = useCallback((id: string) => {
-    const source = nodes.find(n => n.id === id);
+    const source = nodesRef.current.find(n => n.id === id);
     if (!source) return null;
 
     const copy: GraphNode = {
@@ -81,26 +99,34 @@ export function useGraphStore(options?: GraphStoreOptions) {
     };
 
     setNodes(prevNodes => {
-      recordSnapshot(prevNodes, edges);
-      return [...prevNodes, copy];
+      recordSnapshot(prevNodes, edgesRef.current);
+      const next = [...prevNodes, copy];
+      nodesRef.current = next;
+      return next;
     });
     setSelectedNodeId(copy.id);
     setSelectedEdgeId(null);
-    options?.onSound?.('click');
+    optionsRef.current?.onSound?.('click');
     a11yAnnouncer.announce(`Duplicated component ${source.title}`);
     return copy;
-  }, [nodes, edges, recordSnapshot, options]);
+  }, [recordSnapshot]);
 
   const removeNode = useCallback((id: string) => {
     setNodes(prevNodes => {
-      recordSnapshot(prevNodes, edges);
-      return prevNodes.filter(n => n.id !== id);
+      recordSnapshot(prevNodes, edgesRef.current);
+      const next = prevNodes.filter(n => n.id !== id);
+      nodesRef.current = next;
+      return next;
     });
     // Remove all connected edges
-    setEdges(prevEdges => prevEdges.filter(e => e.fromNodeId !== id && e.toNodeId !== id));
-    if (selectedNodeId === id) setSelectedNodeId(null);
-    options?.onSound?.('click');
-  }, [edges, recordSnapshot, selectedNodeId, options]);
+    setEdges(prevEdges => {
+      const next = prevEdges.filter(e => e.fromNodeId !== id && e.toNodeId !== id);
+      edgesRef.current = next;
+      return next;
+    });
+    setSelectedNodeId(prev => (prev === id ? null : prev));
+    optionsRef.current?.onSound?.('click');
+  }, [recordSnapshot]);
 
   const addEdge = useCallback((edge: GraphEdge) => {
     // Prevent duplicate edges between same nodes
@@ -109,35 +135,43 @@ export function useGraphStore(options?: GraphStoreOptions) {
         e => e.fromNodeId === edge.fromNodeId && e.toNodeId === edge.toNodeId
       );
       if (exists) return prevEdges;
-      recordSnapshot(nodes, prevEdges);
-      options?.onSound?.('connect');
-      return [...prevEdges, edge];
+      recordSnapshot(nodesRef.current, prevEdges);
+      optionsRef.current?.onSound?.('connect');
+      const next = [...prevEdges, edge];
+      edgesRef.current = next;
+      return next;
     });
-  }, [nodes, recordSnapshot, options]);
+  }, [recordSnapshot]);
 
   const updateEdge = useCallback((id: string, updates: Partial<GraphEdge>) => {
-    setEdges(prev => prev.map(e => (e.id === id ? { ...e, ...updates } : e)));
+    setEdges(prev => {
+      const next = prev.map(e => (e.id === id ? { ...e, ...updates } : e));
+      edgesRef.current = next;
+      return next;
+    });
   }, []);
 
   const removeEdge = useCallback((id: string) => {
     setEdges(prevEdges => {
-      recordSnapshot(nodes, prevEdges);
-      return prevEdges.filter(e => e.id !== id);
+      recordSnapshot(nodesRef.current, prevEdges);
+      const next = prevEdges.filter(e => e.id !== id);
+      edgesRef.current = next;
+      return next;
     });
-    if (selectedEdgeId === id) setSelectedEdgeId(null);
-    options?.onSound?.('click');
-  }, [nodes, recordSnapshot, selectedEdgeId, options]);
+    setSelectedEdgeId(prev => (prev === id ? null : prev));
+    optionsRef.current?.onSound?.('click');
+  }, [recordSnapshot]);
 
   const selectNode = useCallback((id: string | null) => {
     setSelectedNodeId(id);
     if (id) {
       setSelectedEdgeId(null);
-      const found = nodes.find(n => n.id === id);
+      const found = nodesRef.current.find(n => n.id === id);
       if (found) {
         a11yAnnouncer.announceNodeSelected(found.title, found.subtitle);
       }
     }
-  }, [nodes]);
+  }, []);
 
   const selectEdge = useCallback((id: string | null) => {
     setSelectedEdgeId(id);
@@ -151,51 +185,59 @@ export function useGraphStore(options?: GraphStoreOptions) {
     if (undoStackRef.current.length === 0) return;
     const previous = undoStackRef.current.pop()!;
     redoStackRef.current.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
+      nodes: JSON.parse(JSON.stringify(nodesRef.current)),
+      edges: JSON.parse(JSON.stringify(edgesRef.current)),
     });
+    nodesRef.current = previous.nodes;
+    edgesRef.current = previous.edges;
     setNodes(previous.nodes);
     setEdges(previous.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setHistoryChangeCount(c => c + 1);
-    options?.onSound?.('click');
-  }, [nodes, edges, options]);
+    optionsRef.current?.onSound?.('click');
+  }, []);
 
   const redo = useCallback(() => {
     if (redoStackRef.current.length === 0) return;
     const next = redoStackRef.current.pop()!;
     undoStackRef.current.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
+      nodes: JSON.parse(JSON.stringify(nodesRef.current)),
+      edges: JSON.parse(JSON.stringify(edgesRef.current)),
     });
+    nodesRef.current = next.nodes;
+    edgesRef.current = next.edges;
     setNodes(next.nodes);
     setEdges(next.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setHistoryChangeCount(c => c + 1);
-    options?.onSound?.('click');
-  }, [nodes, edges, options]);
+    optionsRef.current?.onSound?.('click');
+  }, []);
 
   const loadTemplate = useCallback((template: ArchitectureTemplate) => {
-    recordSnapshot(nodes, edges);
+    recordSnapshot(nodesRef.current, edgesRef.current);
+    nodesRef.current = template.nodes;
+    edgesRef.current = template.edges;
     setNodes(template.nodes);
     setEdges(template.edges);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setPan({ x: 0, y: 0 });
     setZoom(1);
-    options?.onSound?.('connect');
-  }, [nodes, edges, recordSnapshot, options]);
+    optionsRef.current?.onSound?.('connect');
+  }, [recordSnapshot]);
 
   const clearGraph = useCallback(() => {
-    recordSnapshot(nodes, edges);
+    recordSnapshot(nodesRef.current, edgesRef.current);
+    nodesRef.current = [];
+    edgesRef.current = [];
     setNodes([]);
     setEdges([]);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
-    options?.onSound?.('click');
-  }, [nodes, edges, recordSnapshot, options]);
+    optionsRef.current?.onSound?.('click');
+  }, [recordSnapshot]);
 
   // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D, Delete, Esc, Tab, Arrow Navigation, Shift+Arrow Nudge)
   useEffect(() => {

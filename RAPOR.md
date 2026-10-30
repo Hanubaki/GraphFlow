@@ -122,3 +122,6 @@
   - `u/Double-Friendship493`: Fan-in kuyruk doygunluğu ve `p99` uçurum kenarı ("cliff edge") simülasyonunun gerçek üretim kazalarıyla birebir örtüştüğünü doğruladı.
   - `u/DrKillswitch`: **Grafana** entegrasyonu ve **OpenShift** uyumluluğunu sordu (`Live ERP/API` Prometheus metrik ayrıştırıcısı, `Grafana k6` yük testi üreticisi ve `nginxinc/nginx-unprivileged:alpine` Port `8080` OpenShift `restricted-v2` SCC uyumu üzerinden doğal mühendis diliyle yanıtlandı).
   - `u/HarmoniousArdor2`, `u/nOOberNZ`, `u/shocking_feedback` ve `u/KnowinglyTaut`: Kuyruk derinliği, `circuit breaker hysteresis`, retry/timeout fırtınaları ve başlığın akademik dili üzerine gelen yorumlar için samimi, doğal ve savunmaya geçmeyen geliştirici yanıtları hazırlandı.
+
+
+- **30 Ekim 2026 Güncellemesi (`#share=` Etkileşim ve Sürükleme Düzeltmesi):** Sıkıştırılmış `Electron` `.drawio` (`RFC 1951` raw DEFLATE) desteği, okunabilir `#share=Node_A~Node_B` URL yapısı ve paylaşılan `#share=` linklerinde düğüm sürükleme (`moveNode`), bileşen ekleme (`addNode`) ve silme (`removeNode`) işlemlerinin `useEffect` tarafından sıfırlanmasını önleyen `hasBootedUrlRef` + `useGraphStore` referans sabitlemesi canlıya alındı.

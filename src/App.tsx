@@ -220,19 +220,46 @@ export const App: React.FC = () => {
     }
   }, [viewMode]);
 
+  const hasBootedUrlRef = useRef(false);
+
   // Capture first-touch acquisition attribution & auto-load shared architecture or URL template deep-link on boot
   useEffect(() => {
+    if (hasBootedUrlRef.current) return;
+    hasBootedUrlRef.current = true;
+
     captureFirstTouchAttribution();
-    const shared = parseShareUrl();
-    if (shared && shared.nodes.length > 0) {
-      setNodes(shared.nodes);
-      setEdges(shared.edges);
-      setPan({ x: 0, y: 0 });
-      setZoom(1);
-      if (shared.isEmbed) {
-        setViewMode('embed');
-      } else {
-        setViewMode('studio');
+
+    const applyShareFromHash = () => {
+      const shared = parseShareUrl();
+      if (shared && shared.nodes.length > 0) {
+        nodesRef.current = shared.nodes;
+        setNodes(shared.nodes);
+        setEdges(shared.edges);
+        const centered =
+          typeof window !== 'undefined'
+            ? calculateAutoCenter(shared.nodes, window.innerWidth, window.innerHeight)
+            : null;
+        if (centered) {
+          setZoom(centered.zoom);
+          setPan(centered.pan);
+        } else {
+          setPan({ x: 0, y: 0 });
+          setZoom(1);
+        }
+        if (shared.isEmbed) {
+          setViewMode('embed');
+        } else {
+          setViewMode('studio');
+        }
+        return true;
+      }
+      return false;
+    };
+
+    if (applyShareFromHash()) {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('hashchange', applyShareFromHash);
+        return () => window.removeEventListener('hashchange', applyShareFromHash);
       }
       return;
     }
@@ -245,6 +272,7 @@ export const App: React.FC = () => {
           (t) => t.id.toLowerCase() === requestedTemplateId.toLowerCase()
         );
         if (matchedTemplate) {
+          nodesRef.current = matchedTemplate.nodes;
           loadTemplate(matchedTemplate);
           const centered = calculateAutoCenter(matchedTemplate.nodes, window.innerWidth, window.innerHeight);
           if (centered) {
@@ -262,18 +290,18 @@ export const App: React.FC = () => {
     }
   }, [setNodes, setEdges, setPan, setZoom, loadTemplate]);
 
-  const handleAutoCenter = useCallback((targetNodes = nodes) => {
+  const handleAutoCenter = useCallback((targetNodes = nodesRef.current) => {
     if (typeof window === 'undefined' || targetNodes.length === 0) return;
     const result = calculateAutoCenter(targetNodes, window.innerWidth, window.innerHeight);
     if (result) {
       setZoom(result.zoom);
       setPan(result.pan);
     }
-  }, [nodes, setZoom, setPan]);
+  }, [setZoom, setPan]);
 
   // Auto-center on initial mount, studio entry, and mobile screen orientation changes
   useEffect(() => {
-    handleAutoCenter();
+    handleAutoCenter(nodesRef.current);
     if (typeof window === 'undefined') return;
     const handleViewportResize = () => {
       if (window.innerWidth < 768) {
@@ -304,23 +332,23 @@ export const App: React.FC = () => {
     const newNode = createNodeFromCatalog(item, { x: centerWorldX, y: centerWorldY });
     addNode(newNode);
     soundFx.playNodeAdded();
-    telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodes.length + 1 });
-  }, [addNode, pan, zoom, nodes.length]);
+    telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodesRef.current.length });
+  }, [addNode, pan, zoom]);
 
   // Add node at exact canvas coordinates (drop target)
   const handleAddNodeAt = useCallback((item: CatalogItem, x: number, y: number) => {
     const newNode = createNodeFromCatalog(item, { x, y });
     addNode(newNode);
     soundFx.playNodeAdded();
-    telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodes.length + 1 });
-  }, [addNode, nodes.length]);
+    telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodesRef.current.length });
+  }, [addNode]);
 
   // Delete node with audio feedback & telemetry
   const handleDeleteNode = useCallback((id: string) => {
     removeNode(id);
     soundFx.playNodeDeleted();
-    telemetry.track('Node Removed', { canvasNodeCount: Math.max(0, nodes.length - 1) });
-  }, [removeNode, nodes.length]);
+    telemetry.track('Node Removed', { canvasNodeCount: Math.max(0, nodesRef.current.length) });
+  }, [removeNode]);
 
   // Load architecture template with success chime and viewport auto-fit
   const handleSelectTemplate = useCallback((template: any) => {
