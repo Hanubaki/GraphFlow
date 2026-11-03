@@ -356,8 +356,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
           return (
             <div className="pt-1 border-t border-slate-800/80 space-y-1">
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                <span className={`flex items-center gap-1 ${latColor}`} title="Effective latency under current queueing load">
-                  <span className="text-[10px] text-slate-400">LAT</span> {effectiveLat}ms
+                <span className={`flex items-center gap-1 ${node.status === 'down' ? 'text-rose-400 font-bold' : latColor}`} title="Effective latency under current queueing load">
+                  <span className="text-[10px] text-slate-400">LAT</span> {node.status === 'down' ? '—' : `${effectiveLat}ms`}
                 </span>
                 {utilPct > 0 && (
                   <span
@@ -369,8 +369,11 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
                     {utilPct}%
                   </span>
                 )}
-                <span className="flex items-center gap-1 text-slate-300">
-                  <span className="text-[10px] text-slate-400">RPS</span> {node.throughputRps}
+                <span
+                  className={`flex items-center gap-1 ${node.status === 'down' ? 'text-rose-400 font-bold' : 'text-slate-300'}`}
+                  title={node.status === 'down' ? `Service is DOWN (0 RPS active; configured ceiling: ${node.throughputRps} RPS)` : `Throughput capacity: ${node.throughputRps} RPS`}
+                >
+                  <span className="text-[10px] text-slate-400">RPS</span> {node.status === 'down' ? 0 : node.throughputRps}
                 </span>
               </div>
               <div className="h-1 w-full rounded-full bg-slate-800/90 overflow-hidden" title={`Capacity utilization: ${utilPct}%`}>

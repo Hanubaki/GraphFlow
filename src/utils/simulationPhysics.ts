@@ -126,8 +126,25 @@ export function createHopPacket(
   randomFn: () => number = Math.random,
   trafficLoadMultiplier = 1
 ): DataPacket | null {
-  if (!fromNode || !toNode || fromNode.status === 'down' || toNode.status === 'down') {
+  if (!fromNode || !toNode || fromNode.status === 'down') {
     return null;
+  }
+
+  const isCircuitOpen = toNode.circuitBreaker === 'open' || fromNode.circuitBreaker === 'open';
+
+  if (toNode.status === 'down') {
+    const baseSpeed = Math.min(0.025, Math.max(0.005, 120 / Math.max(30, fromNode.latencyMs + edge.latencyMs)));
+    return {
+      id: `pkt-${Date.now()}-${randomFn().toString(36).substring(2, 7)}`,
+      edgeId: edge.id,
+      fromNodeId: edge.fromNodeId,
+      toNodeId: edge.toNodeId,
+      progress: 0,
+      speed: baseSpeed,
+      status: isCircuitOpen ? 'dlq' : 'error',
+      label: isCircuitOpen ? 'DLQ/Trip' : '503 DOWN',
+      createdAt: Date.now(),
+    };
   }
 
   const effectiveToLatency = calculateEffectiveLatency(
@@ -146,7 +163,6 @@ export function createHopPacket(
     Math.max(fromNode.errorRate, toNode.errorRate, edge.errorRate) + overloadPenalty
   );
 
-  const isCircuitOpen = toNode.circuitBreaker === 'open';
   const isError = !isCircuitOpen && randomFn() * 100 < combinedErrorRate;
 
   const status: DataPacket['status'] = isCircuitOpen
@@ -168,6 +184,173 @@ export function createHopPacket(
     label: isCircuitOpen ? 'DLQ/Trip' : edge.protocol,
     createdAt: Date.now(),
   };
+}
+
+/**
+ * Propagates cascading degradation to direct upstream callers when a downstream dependency
+ * goes DOWN without Circuit Breaker protection, and restores callers when the dependency heals.
+ */
+export function applyDownstreamFailureCascade(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  targetNodeId: string,
+  updates: Partial<GraphNode>
+): GraphNode[] {
+  const updatedNodes = nodes.map(n => (n.id === targetNodeId ? { ...n, ...updates } : n));
+  const targetAfter = updatedNodes.find(n => n.id === targetNodeId);
+  if (!targetAfter) return updatedNodes;
+
+  if (updates.status === undefined && updates.circuitBreaker === undefined) {
+    return updatedNodes;
+  }
+
+  const callerIds = new Set(
+    edges.filter(e => e.toNodeId === targetNodeId).map(e => e.fromNodeId)
+  );
+  if (callerIds.size === 0) return updatedNodes;
+
+  const nodeById = new Map(updatedNodes.map(n => [n.id, n]));
+
+  return updatedNodes.map(node => {
+    if (!callerIds.has(node.id) || node.id === targetNodeId || node.type === 'client') {
+      return node;
+    }
+
+    const hasBreakerProtection = Boolean(node.circuitBreaker) || Boolean(targetAfter.circuitBreaker);
+
+    if (targetAfter.status === 'down' && !hasBreakerProtection && node.status === 'healthy') {
+      return {
+        ...node,
+        status: 'degraded',
+        errorRate: Math.max(node.errorRate, 35),
+      };
+    }
+
+    if (
+      (targetAfter.status === 'healthy' || hasBreakerProtection) &&
+      node.status === 'degraded'
+    ) {
+      const stillHasUnprotectedDownDependency = edges
+        .filter(e => e.fromNodeId === node.id)
+        .some(e => {
+          const dep = nodeById.get(e.toNodeId);
+          return dep && dep.status === 'down' && !node.circuitBreaker && !dep.circuitBreaker;
+        });
+
+      if (!stillHasUnprotectedDownDependency) {
+        return {
+          ...node,
+          status: 'healthy',
+          errorRate: node.errorRate === 35 ? 1 : node.errorRate,
+        };
+      }
+    }
+
+    return node;
+  });
+}
+
+export interface ClusterHealthSummary {
+  optimalCount: number;
+  saturatedCount: number;
+  degradedCount: number;
+  downCount: number;
+  totalCount: number;
+  label: string;
+  isAllOptimal: boolean;
+}
+
+/**
+ * Computes an honest Cluster Health headline that accounts for saturated (>=100% utilization),
+ * degraded, and down nodes so it never claims "10/10 Optimal" while nodes sit at >100% load.
+ */
+export function summarizeClusterHealth(
+  nodes: GraphNode[],
+  isSpikeMode = false,
+  trafficLoadMultiplier = 1
+): ClusterHealthSummary {
+  let optimalCount = 0;
+  let saturatedCount = 0;
+  let degradedCount = 0;
+  let downCount = 0;
+
+  for (const n of nodes) {
+    if (n.status === 'down') {
+      downCount++;
+    } else if (n.status === 'degraded') {
+      degradedCount++;
+    } else if (
+      n.type !== 'client' &&
+      calculateNodeUtilizationPercent(n, 2, isSpikeMode, trafficLoadMultiplier) >= 100
+    ) {
+      saturatedCount++;
+    } else {
+      optimalCount++;
+    }
+  }
+
+  const parts = [`${optimalCount}/${nodes.length} Optimal`];
+  if (saturatedCount > 0) parts.push(`${saturatedCount} Saturated`);
+  if (degradedCount > 0) parts.push(`${degradedCount} Degraded`);
+  if (downCount > 0) parts.push(`${downCount} Down`);
+
+  return {
+    optimalCount,
+    saturatedCount,
+    degradedCount,
+    downCount,
+    totalCount: nodes.length,
+    label: parts.join(' · '),
+    isAllOptimal: optimalCount === nodes.length && nodes.length > 0,
+  };
+}
+
+/**
+ * Builds the FinOps cloud service summary label strictly from the node types actually present on the canvas.
+ */
+export function getCloudStackSummaryLabel(
+  nodes: GraphNode[],
+  provider: 'aws' | 'gcp' | 'azure'
+): string {
+  const presentTypes = new Set(nodes.map(n => n.type));
+  const labelsByProvider: Record<'aws' | 'gcp' | 'azure', Array<[GraphNode['type'], string]>> = {
+    aws: [
+      ['service', 'ECS Fargate'],
+      ['serverless', 'AWS Lambda'],
+      ['database', 'RDS Multi-AZ'],
+      ['cache', 'ElastiCache'],
+      ['queue', 'MSK'],
+      ['gateway', 'ALB'],
+      ['storage', 'S3'],
+    ],
+    gcp: [
+      ['service', 'Cloud Run'],
+      ['serverless', 'Cloud Functions'],
+      ['database', 'Cloud SQL HA'],
+      ['cache', 'Memorystore'],
+      ['queue', 'Pub/Sub'],
+      ['gateway', 'Cloud LB'],
+      ['storage', 'Cloud Storage'],
+    ],
+    azure: [
+      ['service', 'Container Apps'],
+      ['serverless', 'Azure Functions'],
+      ['database', 'Azure DB'],
+      ['cache', 'Redis Cache'],
+      ['queue', 'Event Hubs'],
+      ['gateway', 'App Gateway'],
+      ['storage', 'Blob Storage'],
+    ],
+  };
+
+  const activeLabels = labelsByProvider[provider]
+    .filter(([type]) => presentTypes.has(type))
+    .map(([, label]) => label);
+
+  if (activeLabels.length === 0) {
+    return 'No billable cloud compute';
+  }
+  return activeLabels.slice(0, 4).join(' · ');
 }
 
 export interface IncidentEvent {

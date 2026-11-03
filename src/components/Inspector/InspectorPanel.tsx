@@ -6,6 +6,8 @@ import {
   generateIncidentPostMortemMarkdown,
   compareTopologyWithBaseline,
   evaluateChaosResilienceAudit,
+  summarizeClusterHealth,
+  getCloudStackSummaryLabel,
   TopologyDiagnostics,
 } from '../../utils/simulationPhysics';
 import { useSimulationControls } from '../../context/SimulationContext';
@@ -60,12 +62,6 @@ const PROTOCOLS: ProtocolType[] = [
   'TCP',
   'SQL Query',
 ];
-
-const CLOUD_STACK_LABELS: Record<'aws' | 'gcp' | 'azure', string> = {
-  aws: 'ECS Fargate · RDS Multi-AZ · ElastiCache · MSK',
-  gcp: 'Cloud Run · Cloud SQL HA · Memorystore · Pub/Sub',
-  azure: 'Container Apps · Azure DB · Redis Cache · Event Hubs',
-};
 
 export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   selectedNode,
@@ -493,15 +489,31 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 <span className="font-mono font-bold text-slate-200">{edges.length}</span>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-dark-950 border border-slate-800 text-xs">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                  Cluster Health
-                </span>
-                <span className="font-mono text-emerald-400 font-medium">
-                  {nodes.filter(n => n.status === 'healthy').length}/{nodes.length} Optimal
-                </span>
-              </div>
+              {(() => {
+                const clusterHealth = summarizeClusterHealth(
+                  nodes,
+                  simControls?.isSpikeMode ?? false,
+                  trafficLoadMultiplier
+                );
+                const healthColor =
+                  clusterHealth.downCount > 0
+                    ? 'text-rose-400'
+                    : !clusterHealth.isAllOptimal
+                      ? 'text-amber-300'
+                      : 'text-emerald-400';
+
+                return (
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-dark-950 border border-slate-800 text-xs">
+                    <span className="text-slate-400 flex items-center gap-1.5">
+                      <Zap className={`w-3.5 h-3.5 ${healthColor}`} />
+                      Cluster Health
+                    </span>
+                    <span className={`font-mono ${healthColor} font-medium text-[11px]`}>
+                      {clusterHealth.label}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Automated Engineering Diagnostics (Critical Path, Tail Latency, FinOps Cost, Bottleneck, SLA, SPOF) */}
@@ -569,8 +581,11 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-mono text-[10px] text-slate-400 truncate max-w-[165px]" title={CLOUD_STACK_LABELS[cloudProvider]}>
-                    {CLOUD_STACK_LABELS[cloudProvider]}
+                  <span
+                    className="font-mono text-[10px] text-slate-400 truncate max-w-[165px]"
+                    title={getCloudStackSummaryLabel(nodes, cloudProvider)}
+                  >
+                    {getCloudStackSummaryLabel(nodes, cloudProvider)}
                   </span>
                   <span className="font-mono font-bold text-emerald-400">
                     ~${diagnostics.cloudCostsUsd[cloudProvider]}/mo

@@ -48,7 +48,7 @@ interface ExportModalProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   onClose: () => void;
-  onImportGraph: (nodes: GraphNode[], edges: GraphEdge[]) => void;
+  onImportGraph: (nodes: GraphNode[], edges: GraphEdge[], mode?: 'replace' | 'merge') => void;
   onOpenPricing?: () => void;
 }
 
@@ -112,7 +112,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     reader.readAsText(file);
   };
 
-  const handlePasteImport = (rawInput = iacPasteText) => {
+  const handlePasteImport = (rawInput = iacPasteText, mode: 'replace' | 'merge' = 'replace') => {
     setImportError(null);
     if (!rawInput.trim()) {
       setImportError('Paste an ERP CSV/Excel table, docker-compose.yml, main.tf, or GraphFlow JSON payload first.');
@@ -120,7 +120,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
     try {
       const { nodes: importedNodes, edges: importedEdges } = parseInfrastructureToTopology(rawInput);
-      onImportGraph(importedNodes, importedEdges);
+      onImportGraph(importedNodes, importedEdges, mode);
       onClose();
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'Failed to parse infrastructure definition.');
@@ -340,14 +340,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     </span>
                   </label>
 
-                  <button
-                    type="button"
-                    onClick={() => handlePasteImport()}
-                    className="h-8 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
-                  >
-                    <Box className="w-3.5 h-3.5" />
-                    Convert to Live Topology
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePasteImport(iacPasteText, 'merge')}
+                      className="h-8 px-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/40 text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                      title="Append imported services below current topology without replacing existing nodes (Undo supported)"
+                    >
+                      <span>Add Alongside</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePasteImport(iacPasteText, 'replace')}
+                      className="h-8 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
+                      title="Replace canvas with imported topology (pushes current canvas onto Undo stack)"
+                    >
+                      <Box className="w-3.5 h-3.5" />
+                      Convert to Live Topology
+                    </button>
+                  </div>
                 </div>
 
                 {importError && (

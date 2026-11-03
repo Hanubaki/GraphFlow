@@ -7,6 +7,10 @@ import {
   evaluateChaosResilienceAudit,
   autoHardenTopology,
   generateIncidentPostMortemMarkdown,
+  applyDownstreamFailureCascade,
+  summarizeClusterHealth,
+  getCloudStackSummaryLabel,
+  createHopPacket,
   IncidentEvent,
 } from '../utils/simulationPhysics';
 import {
@@ -131,5 +135,52 @@ paths:
     expect(md).toContain('Orders Database');
     expect(md).toContain('Traffic Load Scale:** 4x');
     expect(md).toContain('Multi-Cloud FinOps Estimate');
+  });
+
+  it('propagates cascading degradation to callers without circuit breakers when downstream DB goes DOWN and heals on recovery', () => {
+    const nodes = [
+      { ...sampleTemplate.nodes[0], id: 'billing-api', type: 'service' as const, title: 'Billing API', status: 'healthy' as const, errorRate: 0.5, circuitBreaker: undefined },
+      { ...sampleTemplate.nodes[6], id: 'postgres-db', type: 'database' as const, title: 'Postgres', status: 'healthy' as const, errorRate: 0.1, circuitBreaker: undefined },
+    ];
+    const edges = [
+      { id: 'e-billing-pg', fromNodeId: 'billing-api', toNodeId: 'postgres-db', protocol: 'SQL Query' as const, latencyMs: 12, errorRate: 0 },
+    ];
+
+    const afterKill = applyDownstreamFailureCascade(nodes, edges, 'postgres-db', { status: 'down' });
+    const callerAfterKill = afterKill.find(n => n.id === 'billing-api')!;
+    const dbAfterKill = afterKill.find(n => n.id === 'postgres-db')!;
+
+    expect(dbAfterKill.status).toBe('down');
+    expect(callerAfterKill.status).toBe('degraded');
+    expect(callerAfterKill.errorRate).toBeGreaterThanOrEqual(35);
+
+    // Emits error packet when calling DOWN database
+    const hopPkt = createHopPacket(edges[0], callerAfterKill, dbAfterKill);
+    expect(hopPkt).not.toBeNull();
+    expect(hopPkt?.status).toBe('error');
+
+    // Healing Postgres restores caller to healthy
+    const afterHeal = applyDownstreamFailureCascade(afterKill, edges, 'postgres-db', { status: 'healthy' });
+    const callerAfterHeal = afterHeal.find(n => n.id === 'billing-api')!;
+    expect(callerAfterHeal.status).toBe('healthy');
+  });
+
+  it('reports saturated nodes honestly in summarizeClusterHealth and builds FinOps stack labels from actual node types', () => {
+    const defaultHealth = summarizeClusterHealth(sampleTemplate.nodes, false, 1);
+    expect(defaultHealth.saturatedCount).toBe(2);
+    expect(defaultHealth.optimalCount).toBe(8);
+    expect(defaultHealth.label).toBe('8/10 Optimal · 2 Saturated');
+
+    const hardenedNodes = autoHardenTopology(sampleTemplate.nodes, sampleTemplate.edges);
+    const hardenedHealth = summarizeClusterHealth(hardenedNodes, false, 1);
+    expect(hardenedHealth.saturatedCount).toBe(0);
+    expect(hardenedHealth.label).toBe('10/10 Optimal');
+
+    // Stack with only service + database should NOT mention ElastiCache or MSK
+    const minimalStack = sampleTemplate.nodes.filter(n => n.type === 'service' || n.type === 'database');
+    const awsMinimalLabel = getCloudStackSummaryLabel(minimalStack, 'aws');
+    expect(awsMinimalLabel).toBe('ECS Fargate · RDS Multi-AZ');
+    expect(awsMinimalLabel).not.toContain('MSK');
+    expect(awsMinimalLabel).not.toContain('ElastiCache');
   });
 });

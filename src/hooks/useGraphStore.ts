@@ -3,6 +3,41 @@ import { GraphNode, GraphEdge, ArchitectureTemplate } from '../types/graph';
 import { TEMPLATES } from '../constants/templates';
 import { a11yAnnouncer } from '../utils/a11yAnnouncer';
 import { findAdjacentNodeInDirection, getNextNodeInCycle } from '../utils/a11ySpatial';
+import { applyDownstreamFailureCascade } from '../utils/simulationPhysics';
+
+export const CANVAS_AUTOSAVE_KEY = 'graphflow_autosave_canvas_v1';
+
+export interface AutosavedCanvasPayload {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  updatedAt: number;
+  hasUserChanges?: boolean;
+  lastUrlTemplateId?: string | null;
+}
+
+export function loadAutosavedCanvas(): AutosavedCanvasPayload | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CANVAS_AUTOSAVE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AutosavedCanvasPayload;
+    if (Array.isArray(parsed?.nodes) && parsed.nodes.length > 0 && Array.isArray(parsed?.edges)) {
+      return parsed;
+    }
+  } catch {
+    // Ignore malformed storage
+  }
+  return null;
+}
+
+export function saveAutosavedCanvas(payload: AutosavedCanvasPayload): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CANVAS_AUTOSAVE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore quota errors
+  }
+}
 
 interface HistorySnapshot {
   nodes: GraphNode[];
@@ -16,11 +51,20 @@ export interface GraphStoreOptions {
 }
 
 export function useGraphStore(options?: GraphStoreOptions) {
-  // Default to E-Commerce template on initial load for immediate wow factor
+  // Restore autosaved canvas if available; otherwise default to E-Commerce template
   const initialTemplate = TEMPLATES[0];
+  const initialAutosave = useRef<AutosavedCanvasPayload | null>(loadAutosavedCanvas());
 
-  const [nodes, setNodes] = useState<GraphNode[]>(initialTemplate.nodes);
-  const [edges, setEdges] = useState<GraphEdge[]>(initialTemplate.edges);
+  const [nodes, setNodes] = useState<GraphNode[]>(
+    () => initialAutosave.current?.nodes ?? initialTemplate.nodes
+  );
+  const [edges, setEdges] = useState<GraphEdge[]>(
+    () => initialAutosave.current?.edges ?? initialTemplate.edges
+  );
+  const hasUserChangesRef = useRef<boolean>(Boolean(initialAutosave.current?.hasUserChanges));
+  const lastUrlTemplateIdRef = useRef<string | null>(
+    initialAutosave.current?.lastUrlTemplateId ?? null
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   
@@ -57,6 +101,7 @@ export function useGraphStore(options?: GraphStoreOptions) {
   }, []);
 
   const addNode = useCallback((node: GraphNode) => {
+    hasUserChangesRef.current = true;
     setNodes(prevNodes => {
       recordSnapshot(prevNodes, edgesRef.current);
       const next = [...prevNodes, node];
@@ -69,12 +114,18 @@ export function useGraphStore(options?: GraphStoreOptions) {
   }, [recordSnapshot]);
 
   const updateNode = useCallback((id: string, updates: Partial<GraphNode>) => {
+    if (updates.status !== undefined) {
+      hasUserChangesRef.current = true;
+    }
     setNodes(prev => {
-      const next = prev.map(n => (n.id === id ? { ...n, ...updates } : n));
+      if (updates.status !== undefined) {
+        recordSnapshot(prev, edgesRef.current);
+      }
+      const next = applyDownstreamFailureCascade(prev, edgesRef.current, id, updates);
       nodesRef.current = next;
       return next;
     });
-  }, []);
+  }, [recordSnapshot]);
 
   const moveNode = useCallback((id: string, x: number, y: number) => {
     const snappedX = Math.round(x / 10) * 10;
@@ -215,8 +266,16 @@ export function useGraphStore(options?: GraphStoreOptions) {
     optionsRef.current?.onSound?.('click');
   }, []);
 
-  const loadTemplate = useCallback((template: ArchitectureTemplate) => {
-    recordSnapshot(nodesRef.current, edgesRef.current);
+  const loadTemplate = useCallback((template: ArchitectureTemplate, isUrlBoot = false) => {
+    if (!isUrlBoot && nodesRef.current.length > 0) {
+      recordSnapshot(nodesRef.current, edgesRef.current);
+    }
+    if (isUrlBoot) {
+      lastUrlTemplateIdRef.current = template.id;
+      hasUserChangesRef.current = false;
+    } else {
+      hasUserChangesRef.current = true;
+    }
     nodesRef.current = template.nodes;
     edgesRef.current = template.edges;
     setNodes(template.nodes);
@@ -228,7 +287,75 @@ export function useGraphStore(options?: GraphStoreOptions) {
     optionsRef.current?.onSound?.('connect');
   }, [recordSnapshot]);
 
+  const replaceGraph = useCallback(
+    (
+      nextNodes: GraphNode[],
+      nextEdges?: GraphEdge[],
+      opts?: { recordHistory?: boolean; mode?: 'replace' | 'merge' }
+    ) => {
+      const shouldRecord = opts?.recordHistory !== false;
+      const mode = opts?.mode ?? 'replace';
+
+      if (shouldRecord && nodesRef.current.length > 0) {
+        recordSnapshot(nodesRef.current, edgesRef.current);
+      }
+
+      hasUserChangesRef.current = true;
+
+      if (mode === 'merge' && nodesRef.current.length > 0) {
+        const existingIds = new Set(nodesRef.current.map(n => n.id));
+        const maxBottomY = Math.max(...nodesRef.current.map(n => n.y + n.height), 100);
+        const minIncomingY = nextNodes.length > 0 ? Math.min(...nextNodes.map(n => n.y)) : 0;
+        const offsetY = Math.round((maxBottomY - minIncomingY + 120) / 10) * 10;
+
+        const idRemap = new Map<string, string>();
+        const mergedNodes: GraphNode[] = [
+          ...nodesRef.current,
+          ...nextNodes.map((n, idx) => {
+            const newId = existingIds.has(n.id) ? `${n.id}-m${Date.now()}-${idx}` : n.id;
+            idRemap.set(n.id, newId);
+            return {
+              ...n,
+              id: newId,
+              y: n.y + offsetY,
+            };
+          }),
+        ];
+
+        const mergedEdges: GraphEdge[] = [
+          ...edgesRef.current,
+          ...(nextEdges ?? []).map((e, idx) => ({
+            ...e,
+            id: `${e.id}-m${Date.now()}-${idx}`,
+            fromNodeId: idRemap.get(e.fromNodeId) ?? e.fromNodeId,
+            toNodeId: idRemap.get(e.toNodeId) ?? e.toNodeId,
+          })),
+        ];
+
+        nodesRef.current = mergedNodes;
+        edgesRef.current = mergedEdges;
+        setNodes(mergedNodes);
+        setEdges(mergedEdges);
+        setSelectedNodeId(null);
+        setSelectedEdgeId(null);
+        return { nodes: mergedNodes, edges: mergedEdges };
+      }
+
+      nodesRef.current = nextNodes;
+      setNodes(nextNodes);
+      if (nextEdges !== undefined) {
+        edgesRef.current = nextEdges;
+        setEdges(nextEdges);
+      }
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
+      return { nodes: nextNodes, edges: nextEdges ?? edgesRef.current };
+    },
+    [recordSnapshot]
+  );
+
   const clearGraph = useCallback(() => {
+    hasUserChangesRef.current = true;
     recordSnapshot(nodesRef.current, edgesRef.current);
     nodesRef.current = [];
     edgesRef.current = [];
@@ -238,6 +365,18 @@ export function useGraphStore(options?: GraphStoreOptions) {
     setSelectedEdgeId(null);
     optionsRef.current?.onSound?.('click');
   }, [recordSnapshot]);
+
+  // Persist active canvas topology to localStorage so reloads never lose user work
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    saveAutosavedCanvas({
+      nodes,
+      edges,
+      updatedAt: Date.now(),
+      hasUserChanges: hasUserChangesRef.current,
+      lastUrlTemplateId: lastUrlTemplateIdRef.current,
+    });
+  }, [nodes, edges]);
 
   // Global keyboard shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D, Delete, Esc, Tab, Arrow Navigation, Shift+Arrow Nudge)
   useEffect(() => {
@@ -352,6 +491,7 @@ export function useGraphStore(options?: GraphStoreOptions) {
     canRedo: redoStackRef.current.length > 0,
     historyChangeCount,
     loadTemplate,
+    replaceGraph,
     clearGraph,
     setNodes,
     setEdges,

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useGraphStore } from './hooks/useGraphStore';
+import { useGraphStore, loadAutosavedCanvas } from './hooks/useGraphStore';
 import { SimulationProvider } from './context/SimulationContext';
 import { MultiplayerProvider } from './context/MultiplayerContext';
 import { soundFx } from './utils/sound';
@@ -67,6 +67,7 @@ export const App: React.FC = () => {
     canUndo,
     canRedo,
     loadTemplate,
+    replaceGraph,
     clearGraph,
     setNodes,
     setEdges,
@@ -268,23 +269,52 @@ export const App: React.FC = () => {
       const params = new URLSearchParams(window.location.search);
       const requestedTemplateId = params.get('template') || params.get('blueprint');
       if (requestedTemplateId) {
-        const matchedTemplate = TEMPLATES.find(
-          (t) => t.id.toLowerCase() === requestedTemplateId.toLowerCase()
-        );
-        if (matchedTemplate) {
-          nodesRef.current = matchedTemplate.nodes;
-          loadTemplate(matchedTemplate);
-          const centered = calculateAutoCenter(matchedTemplate.nodes, window.innerWidth, window.innerHeight);
+        const autosaved = loadAutosavedCanvas();
+        const shouldRestoreUserAutosave =
+          autosaved &&
+          autosaved.hasUserChanges &&
+          (!autosaved.lastUrlTemplateId ||
+            autosaved.lastUrlTemplateId.toLowerCase() === requestedTemplateId.toLowerCase());
+
+        if (shouldRestoreUserAutosave && autosaved) {
+          nodesRef.current = autosaved.nodes;
+          const centered = calculateAutoCenter(autosaved.nodes, window.innerWidth, window.innerHeight);
           if (centered) {
             setZoom(centered.zoom);
             setPan(centered.pan);
           }
           setViewMode('studio');
-          telemetry.track('Preset Loaded', {
-            templateId: matchedTemplate.id,
-            nodeCount: matchedTemplate.nodes.length,
-            source: 'url_deeplink',
-          });
+        } else {
+          const matchedTemplate = TEMPLATES.find(
+            (t) => t.id.toLowerCase() === requestedTemplateId.toLowerCase()
+          );
+          if (matchedTemplate) {
+            nodesRef.current = matchedTemplate.nodes;
+            loadTemplate(matchedTemplate, true);
+            const centered = calculateAutoCenter(matchedTemplate.nodes, window.innerWidth, window.innerHeight);
+            if (centered) {
+              setZoom(centered.zoom);
+              setPan(centered.pan);
+            }
+            setViewMode('studio');
+            telemetry.track('Preset Loaded', {
+              templateId: matchedTemplate.id,
+              nodeCount: matchedTemplate.nodes.length,
+              source: 'url_deeplink',
+            });
+          }
+        }
+
+        // Clean ?template= / ?blueprint= from URL bar after boot so reloading never overwrites the user's canvas
+        try {
+          params.delete('template');
+          params.delete('blueprint');
+          params.set('studio', '1');
+          const nextSearch = params.toString();
+          const cleanUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
+          window.history.replaceState({}, '', cleanUrl);
+        } catch {
+          // ignore history security exceptions in sandboxed iframes
         }
       }
     }
@@ -314,16 +344,14 @@ export const App: React.FC = () => {
   }, [viewMode]);
 
   const handleApplyAiArchitecture = useCallback((arch: GeneratedArchitecture) => {
-    setNodes(arch.nodes);
-    setEdges(arch.edges);
+    replaceGraph(arch.nodes, arch.edges);
     handleAutoCenter(arch.nodes);
-  }, [setNodes, setEdges, handleAutoCenter]);
+  }, [replaceGraph, handleAutoCenter]);
 
   const handleLoadSavedProject = useCallback((proj: SavedProject | CloudProject) => {
-    setNodes(proj.nodes);
-    setEdges(proj.edges);
+    replaceGraph(proj.nodes, proj.edges);
     handleAutoCenter(proj.nodes);
-  }, [setNodes, setEdges, handleAutoCenter]);
+  }, [replaceGraph, handleAutoCenter]);
 
   // Add node from catalog to center of screen
   const handleAddNodeFromPalette = useCallback((item: CatalogItem) => {
@@ -358,14 +386,20 @@ export const App: React.FC = () => {
     telemetry.track('Preset Loaded', { templateId: template.id, nodeCount: template.nodes.length });
   }, [loadTemplate, handleAutoCenter]);
 
-  // Import JSON graph
-  const handleImportGraph = useCallback((importedNodes: GraphNode[], importedEdges: GraphEdge[]) => {
-    setNodes(importedNodes);
-    setEdges(importedEdges);
-    handleAutoCenter(importedNodes);
-    soundFx.playSuccess();
-    telemetry.track('Architecture Imported', { nodeCount: importedNodes.length, edgeCount: importedEdges.length });
-  }, [setNodes, setEdges, handleAutoCenter]);
+  // Import JSON / IaC graph (records undo snapshot & supports 'replace' or 'merge' alongside existing canvas)
+  const handleImportGraph = useCallback(
+    (importedNodes: GraphNode[], importedEdges: GraphEdge[], mode: 'replace' | 'merge' = 'replace') => {
+      const result = replaceGraph(importedNodes, importedEdges, { recordHistory: true, mode });
+      handleAutoCenter(result.nodes);
+      soundFx.playSuccess();
+      telemetry.track('Architecture Imported', {
+        nodeCount: importedNodes.length,
+        edgeCount: importedEdges.length,
+        mode,
+      });
+    },
+    [replaceGraph, handleAutoCenter]
+  );
 
   // Global Keyboard-First Command Palette Shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -492,12 +526,12 @@ export const App: React.FC = () => {
           onCloseMobile={() => setIsMobileInspectorOpen(false)}
           onAutoHarden={() => {
             const hardened = autoHardenTopology(nodes, edges);
-            setNodes(hardened);
+            replaceGraph(hardened);
             soundFx.playSuccess();
           }}
           onAutoLayout={() => {
             const aligned = autoLayoutTopology(nodes);
-            setNodes(aligned);
+            replaceGraph(aligned);
             handleAutoCenter(aligned);
             soundFx.playClick();
           }}
