@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { NODE_CATALOG, CatalogItem } from '../../constants/nodeCatalog';
 import { GraphNode } from '../../types/graph';
+import { useAuth } from '../../context/AuthContext';
 
 interface CommandPaletteModalProps {
   isOpen: boolean;
@@ -61,6 +62,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenTour,
   onClearGraph,
 }) => {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -192,7 +194,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       category: 'Spawn Infrastructure Node',
       title: `Add ${item.title}`,
       subtitle: `${item.subtitle} (${item.defaultLatencyMs}ms base latency • ${item.defaultThroughput} RPS)`,
-      badge: item.category.toUpperCase(),
+      badge: item.requiresAuth && !user ? 'FREE SIGN-IN' : item.category.toUpperCase(),
       icon: <Plus className="w-4 h-4 text-cyan-400" />,
       action: () => {
         onAddNode(item);
@@ -228,6 +230,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     onAddNode,
     onSelectNode,
     onClose,
+    user,
   ]);
 
   const filteredCommands = useMemo(() => {

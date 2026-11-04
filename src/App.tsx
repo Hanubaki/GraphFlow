@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useGraphStore, loadAutosavedCanvas } from './hooks/useGraphStore';
 import { SimulationProvider } from './context/SimulationContext';
 import { MultiplayerProvider } from './context/MultiplayerContext';
+import { useAuth } from './context/AuthContext';
 import { soundFx } from './utils/sound';
 import { TopBar } from './components/Toolbar/TopBar';
 import { NodePalette } from './components/Sidebar/NodePalette';
@@ -83,6 +84,8 @@ export const App: React.FC = () => {
     },
   });
 
+  const { user } = useAuth();
+  const pendingCatalogItemRef = useRef<{ item: CatalogItem; x?: number; y?: number } | null>(null);
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [legalTab, setLegalTab] = useState<LegalTab>('kvkk');
   const handleOpenLegal = useCallback((tab: LegalTab = 'kvkk') => {
@@ -360,23 +363,33 @@ export const App: React.FC = () => {
     handleAutoCenter(proj.nodes);
   }, [replaceGraph, handleAutoCenter]);
 
-  // Add node from catalog to center of screen
+  // Add node from catalog to center of screen (gates requiresAuth items behind free email sign-in)
   const handleAddNodeFromPalette = useCallback((item: CatalogItem) => {
+    if (item.requiresAuth && !user) {
+      pendingCatalogItemRef.current = { item };
+      setActiveModal('auth');
+      return;
+    }
     const centerWorldX = Math.round((-pan.x + window.innerWidth / 2) / zoom - 95);
     const centerWorldY = Math.round((-pan.y + window.innerHeight / 2) / zoom - 45);
     const newNode = createNodeFromCatalog(item, { x: centerWorldX, y: centerWorldY });
     addNode(newNode);
     soundFx.playNodeAdded();
     telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodesRef.current.length });
-  }, [addNode, pan, zoom]);
+  }, [addNode, pan, zoom, user]);
 
   // Add node at exact canvas coordinates (drop target)
   const handleAddNodeAt = useCallback((item: CatalogItem, x: number, y: number) => {
+    if (item.requiresAuth && !user) {
+      pendingCatalogItemRef.current = { item, x, y };
+      setActiveModal('auth');
+      return;
+    }
     const newNode = createNodeFromCatalog(item, { x, y });
     addNode(newNode);
     soundFx.playNodeAdded();
     telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodesRef.current.length });
-  }, [addNode]);
+  }, [addNode, user]);
 
   // Delete node with audio feedback & telemetry
   const handleDeleteNode = useCallback((id: string) => {
@@ -500,7 +513,10 @@ export const App: React.FC = () => {
         {/* Main Studio Workspace */}
         <main className="flex flex-1 relative overflow-hidden">
           {/* Left: Component Catalog Palette */}
-          <NodePalette onAddNode={handleAddNodeFromPalette} />
+          <NodePalette
+            onAddNode={handleAddNodeFromPalette}
+            onOpenAuth={() => setActiveModal('auth')}
+          />
 
           {/* Center: Interactive Graph Canvas */}
           <div className="flex-1 relative h-full">
@@ -628,6 +644,23 @@ export const App: React.FC = () => {
             isOpen={true}
             onClose={() => setActiveModal(null)}
             onOpenLegal={handleOpenLegal}
+            onSuccess={() => {
+              const pending = pendingCatalogItemRef.current;
+              if (pending) {
+                pendingCatalogItemRef.current = null;
+                const spawnX =
+                  typeof pending.x === 'number'
+                    ? pending.x
+                    : Math.round((-pan.x + window.innerWidth / 2) / zoom - 95);
+                const spawnY =
+                  typeof pending.y === 'number'
+                    ? pending.y
+                    : Math.round((-pan.y + window.innerHeight / 2) / zoom - 45);
+                const newNode = createNodeFromCatalog(pending.item, { x: spawnX, y: spawnY });
+                addNode(newNode);
+                soundFx.playNodeAdded();
+              }
+            }}
           />
         )}
 

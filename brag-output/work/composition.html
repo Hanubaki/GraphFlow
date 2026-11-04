@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>GraphFlow — Launch Update Video</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background: #08090a;
+    color: #f3f4f6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .blueprint-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(to right, rgba(34,211,238,0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(34,211,238,0.07) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+  }
+
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(8,9,10,0.85) 100%);
+    pointer-events: none;
+  }
+
+  .hud-header {
+    position: absolute;
+    top: 22px;
+    left: 36px;
+    right: 36px;
+    height: 44px;
+    background: rgba(15,17,21,0.92);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    z-index: 50;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22d3ee;
+    box-shadow: 0 0 12px #22d3ee;
+  }
+
+  .hud-pills {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .pill {
+    padding: 5px 11px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #9ca3af;
+  }
+
+  .pill.live {
+    background: rgba(16,185,129,0.12);
+    border-color: rgba(16,185,129,0.4);
+    color: #34d399;
+    font-weight: 600;
+  }
+
+  .pill.cyan {
+    background: rgba(34,211,238,0.12);
+    border-color: rgba(34,211,238,0.4);
+    color: #22d3ee;
+    font-weight: 600;
+  }
+
+  .scene {
+    position: absolute;
+    inset: 82px 36px 28px 36px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: none;
+  }
+
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #22d3ee;
+    margin-bottom: 10px;
+  }
+
+  .h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: #f9fafb;
+    margin-bottom: 14px;
+  }
+
+  .sub {
+    font-size: 18px;
+    color: #9ca3af;
+    line-height: 1.45;
+  }
+
+  .card {
+    background: #101216;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  }
+
+  .node-box {
+    position: absolute;
+    width: 205px;
+    background: #12151b;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.55);
+  }
+
+  .node-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .node-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-bottom: 8px;
+  }
+
+  .util-bar {
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .util-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .node-metrics {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #d1d5db;
+  }
+</style>
+</head>
+<body>
+  <div class="blueprint-bg"></div>
+  <div class="vignette"></div>
+
+  <!-- Top Control Room Bar -->
+  <div class="hud-header">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span>GraphFlow</span>
+      <span style="font-family:'JetBrains Mono';font-size:11px;color:#22d3ee;background:rgba(34,211,238,0.12);padding:2px 7px;border-radius:4px;border:1px solid rgba(34,211,238,0.3);">SIM ENGINE v2.4</span>
+    </div>
+    <div class="hud-pills">
+      <div class="pill live" id="top-live-pill">● Live ERP/API: ON</div>
+      <div class="pill cyan" id="top-load-pill">LOAD: 3.5x SURGE</div>
+      <div class="pill" id="top-fps-pill">60 FPS // DE CASTELJAU</div>
+      <div class="pill" style="color:#f3f4f6;">graph-flow-virid.vercel.app</div>
+    </div>
+  </div>
+
+  <!-- SCENE 1: 1-Click Infra Reverse-Engineering (0.0s - 3.3s) -->
+  <div class="scene" id="scene-1">
+    <div style="display:grid;grid-template-columns:460px 1fr;gap:28px;height:100%;align-items:center;">
+      <div>
+        <div class="kicker">01 // REVERSE-ENGINEER YOUR STACK</div>
+        <div class="h1">Paste your config.<br/><span style="color:#22d3ee;">Watch it run at 60 FPS.</span></div>
+        <div class="sub" style="margin-bottom:20px;">
+          Don't drag 15 boxes by hand. Paste <code style="color:#f3f4f6;font-family:'JetBrains Mono';">docker-compose.yml</code>, <code style="color:#f3f4f6;font-family:'JetBrains Mono';">main.tf</code>, <code style="color:#f3f4f6;font-family:'JetBrains Mono';">package.json</code>, or <code style="color:#f3f4f6;font-family:'JetBrains Mono';">ERP.csv</code> to auto-align a live 4-tier topology.
+        </div>
+        <div class="card" style="padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;color:#d1d5db;border-color:rgba(34,211,238,0.3);">
+          <div style="color:#22d3ee;margin-bottom:6px;font-weight:600;">// AI / Import &rarr; Import Infra (1-Click)</div>
+          <div>services:</div>
+          <div>&nbsp;&nbsp;<span style="color:#34d399;">envoy-gateway</span>: image: envoyproxy/envoy</div>
+          <div>&nbsp;&nbsp;<span style="color:#38bdf8;">redis-setnx</span>: image: redis:7-alpine</div>
+          <div>&nbsp;&nbsp;<span style="color:#f59e0b;">ledger-core</span>: depends_on: [postgres-db, kafka]</div>
+          <div>&nbsp;&nbsp;<span style="color:#f87171;">postgres-db</span>: image: postgres:16-alpine</div>
+        </div>
+      </div>
+
+      <!-- Right: Auto-generated 4-Tier DAG Preview -->
+      <div class="card" style="height:540px;position:relative;overflow:hidden;background:#0b0d11;border-color:rgba(255,255,255,0.12);">
+        <div style="position:absolute;top:14px;left:18px;font-family:'JetBrains Mono';font-size:11px;color:#9ca3af;">
+          AUTO-ALIGNED 4-TIER DAG // <span style="color:#34d399;">125/125 VITEST SUITE PASSING</span>
+        </div>
+        <svg width="700" height="540" style="position:absolute;inset:0;">
+          <path d="M 195 165 C 245 165, 245 120, 295 120" stroke="#22d3ee" stroke-width="2.5" fill="none" stroke-dasharray="6 6"/>
+          <path d="M 195 165 C 245 165, 245 270, 295 270" stroke="#22d3ee" stroke-width="2.5" fill="none"/>
+          <path d="M 465 270 C 500 270, 500 180, 520 180" stroke="#10b981" stroke-width="2.5" fill="none"/>
+          <path d="M 465 270 C 500 270, 500 360, 520 360" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+        </svg>
+
+        <div class="node-box" style="left:24px;top:125px;width:170px;border-color:#22d3ee;">
+          <div class="node-title"><span>Merchant SDK</span><span style="color:#22d3ee;">INGRESS</span></div>
+          <div class="node-sub">Webhook Source</div>
+          <div class="util-bar"><div class="util-fill" style="width:45%;background:#22d3ee;"></div></div>
+          <div class="node-metrics"><span>840 RPS</span><span>LAT 4ms</span></div>
+        </div>
+
+        <div class="node-box" style="left:285px;top:75px;width:180px;border-color:#10b981;">
+          <div class="node-title"><span>Redis SETNX</span><span style="color:#34d399;">22%</span></div>
+          <div class="node-sub">Idempotency Lock</div>
+          <div class="util-bar"><div class="util-fill" style="width:22%;background:#10b981;"></div></div>
+          <div class="node-metrics"><span>2,400 RPS CAP</span><span>LAT 2ms</span></div>
+        </div>
+
+        <div class="node-box" style="left:285px;top:225px;width:180px;border-color:#22d3ee;">
+          <div class="node-title"><span>Rust Ledger API</span><span style="color:#22d3ee;">64%</span></div>
+          <div class="node-sub">Core Microservice</div>
+          <div class="util-bar"><div class="util-fill" style="width:64%;background:#22d3ee;"></div></div>
+          <div class="node-metrics"><span>1,200 RPS CAP</span><span>LAT 14ms</span></div>
+        </div>
+
+        <div class="node-box" style="left:505px;top:135px;width:175px;border-color:#10b981;">
+          <div class="node-title"><span>Kafka Outbox</span><span style="color:#34d399;">38%</span></div>
+          <div class="node-sub">Async Event Bus</div>
+          <div class="util-bar"><div class="util-fill" style="width:38%;background:#10b981;"></div></div>
+          <div class="node-metrics"><span>3,000 RPS CAP</span><span>LAT 6ms</span></div>
+        </div>
+
+        <div class="node-box" style="left:505px;top:315px;width:175px;border-color:#ef4444;box-shadow:0 0 25px rgba(239,68,68,0.28);">
+          <div class="node-title"><span>Postgres Ledger</span><span style="color:#f87171;">96% !</span></div>
+          <div class="node-sub">Serializable Primary</div>
+          <div class="util-bar"><div class="util-fill" style="width:96%;background:#ef4444;"></div></div>
+          <div class="node-metrics"><span style="color:#f87171;">400 RPS CAP</span><span style="color:#f87171;">p99: 380ms</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 2: Live ERP/API Digital Twin & Circuit Breakers (3.3s - 8.7s) -->
+  <div class="scene" id="scene-2">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;">
+      <div>
+        <div class="kicker">02 // LIVE ERP &amp; API DIGITAL TWIN TELEMETRY</div>
+        <div class="h1" style="font-size:36px;margin-bottom:4px;">Feed live JSON streams or spike load to <span style="color:#f59e0b;">3.5x</span> until circuit breakers trip.</div>
+      </div>
+      <div class="card" style="padding:10px 16px;font-family:'JetBrains Mono';font-size:12px;border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.08);color:#34d399;">
+        ● STREAMING: Order Ingress &rarr; SAP ERP &rarr; WMS &rarr; Stripe &rarr; BI
+      </div>
+    </div>
+
+    <div class="card" style="height:475px;position:relative;background:#0a0c10;overflow:hidden;">
+      <svg width="1208" height="475" id="sim-svg" style="position:absolute;inset:0;">
+        <!-- Bezier Edges -->
+        <path id="edge-1" d="M 245 230 C 315 230, 315 130, 385 130" stroke="#22d3ee" stroke-width="2.5" fill="none"/>
+        <path id="edge-2" d="M 245 230 C 315 230, 315 330, 385 330" stroke="#22d3ee" stroke-width="2.5" fill="none"/>
+        <path id="edge-3" d="M 590 130 C 660 130, 660 130, 730 130" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        <path id="edge-4" d="M 590 330 C 660 330, 660 330, 730 330" stroke="#ef4444" stroke-width="3" fill="none" stroke-dasharray="8 6"/>
+        <path id="edge-5" d="M 935 130 C 980 130, 980 230, 1015 230" stroke="#22d3ee" stroke-width="2.5" fill="none"/>
+        <path id="edge-6" d="M 935 330 C 980 330, 980 230, 1015 230" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+      </svg>
+
+      <!-- Nodes -->
+      <div class="node-box" style="left:40px;top:185px;border-color:#22d3ee;">
+        <div class="node-title"><span>Order Ingress</span><span style="color:#22d3ee;">LIVE</span></div>
+        <div class="node-sub">B2B + Storefront Stream</div>
+        <div class="util-bar"><div class="util-fill" style="width:58%;background:#22d3ee;"></div></div>
+        <div class="node-metrics"><span>1,120 RPS</span><span>LAT 8ms</span></div>
+      </div>
+
+      <div class="node-box" style="left:385px;top:85px;border-color:#10b981;">
+        <div class="node-title"><span>WMS Inventory</span><span style="color:#34d399;">44%</span></div>
+        <div class="node-sub">Redis Stock Reservation</div>
+        <div class="util-bar"><div class="util-fill" style="width:44%;background:#10b981;"></div></div>
+        <div class="node-metrics"><span>2,000 RPS CAP</span><span>LAT 5ms</span></div>
+      </div>
+
+      <div class="node-box" style="left:385px;top:285px;border-color:#f59e0b;">
+        <div class="node-title"><span>SAP ERP Core</span><span style="color:#fbbf24;">88%</span></div>
+        <div class="node-sub">Invoice &amp; GL Posting</div>
+        <div class="util-bar"><div class="util-fill" style="width:88%;background:#f59e0b;"></div></div>
+        <div class="node-metrics"><span>650 RPS CAP</span><span>LAT 94ms</span></div>
+      </div>
+
+      <div class="node-box" style="left:730px;top:85px;border-color:#10b981;">
+        <div class="node-title"><span>Kafka Event Bus</span><span style="color:#34d399;">31%</span></div>
+        <div class="node-sub">Transactional Outbox</div>
+        <div class="util-bar"><div class="util-fill" style="width:31%;background:#10b981;"></div></div>
+        <div class="node-metrics"><span>3,500 RPS CAP</span><span>LAT 7ms</span></div>
+      </div>
+
+      <div class="node-box" style="left:730px;top:285px;border-color:#ef4444;box-shadow:0 0 30px rgba(239,68,68,0.35);">
+        <div style="position:absolute;top:-32px;left:0;white-space:nowrap;background:#ef4444;color:#fff;font-family:'JetBrains Mono';font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;">
+          ⚡ CIRCUIT BREAKER: OPEN (6s)
+        </div>
+        <div class="node-title"><span>Stripe Ledger DB</span><span style="color:#f87171;">99% !</span></div>
+        <div class="node-sub">Serializable Postgres</div>
+        <div class="util-bar"><div class="util-fill" style="width:99%;background:#ef4444;"></div></div>
+        <div class="node-metrics"><span style="color:#f87171;">400 RPS CAP</span><span style="color:#f87171;">p99: 412ms</span></div>
+      </div>
+
+      <div class="node-box" style="left:985px;top:185px;width:190px;border-color:#22d3ee;">
+        <div class="node-title"><span>Executive BI</span><span style="color:#22d3ee;">SYNC</span></div>
+        <div class="node-sub">ClickHouse Read Model</div>
+        <div class="util-bar"><div class="util-fill" style="width:36%;background:#22d3ee;"></div></div>
+        <div class="node-metrics"><span>1,800 RPS CAP</span><span>LAT 18ms</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 3: Killing the 2.5-Gigapixel Mobile SVG GPU Bug (8.7s - 13.6s) -->
+  <div class="scene" id="scene-3">
+    <div style="display:grid;grid-template-columns:1fr 390px;gap:32px;height:100%;align-items:center;">
+      <div>
+        <div class="kicker">03 // MOBILE GPU &amp; TOUCH ERGONOMICS</div>
+        <div class="h1">Killed a <span style="color:#ef4444;text-decoration:line-through;">2.5-Gigapixel</span><br/>Mobile SVG GPU Bottleneck.</div>
+        <div class="sub" style="margin-bottom:22px;">
+          A <code style="color:#f3f4f6;font-family:'JetBrains Mono';">50,000px &times; 50,000px</code> SVG canvas with <code style="color:#f3f4f6;font-family:'JetBrains Mono';">backdrop-blur</code> forced mobile Safari/Chrome to allocate 2.5GP of tile memory. We rebuilt the mobile rendering pipeline from scratch:
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="card" style="padding:16px;border-color:rgba(239,68,68,0.35);">
+            <div style="font-family:'JetBrains Mono';font-size:11px;color:#f87171;margin-bottom:6px;">BEFORE // 50,000px STATIC SVG</div>
+            <div style="font-family:'Space Grotesk';font-size:28px;font-weight:700;color:#f87171;">4–8 FPS</div>
+            <div style="font-size:13px;color:#9ca3af;margin-top:4px;">2.5GP texture buffer + 60Hz React DOM diffing on every node card.</div>
+          </div>
+          <div class="card" style="padding:16px;border-color:rgba(16,185,129,0.45);background:rgba(16,185,129,0.06);">
+            <div style="font-family:'JetBrains Mono';font-size:11px;color:#34d399;margin-bottom:6px;">NOW // VIEWPORT LAYER + 4Hz ISOLATION</div>
+            <div style="font-family:'Space Grotesk';font-size:28px;font-weight:700;color:#34d399;">Smooth 33 FPS</div>
+            <div style="font-size:13px;color:#d1d5db;margin-top:4px;">Zero GPU tile overflow, touch drag-to-connect &amp; auto-framed viewport.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Simulated Phone Viewport with Floating Mobile HUD -->
+      <div class="card" style="width:360px;height:545px;margin:0 auto;border-radius:28px;border:3px solid #27272a;background:#08090a;position:relative;padding:16px;display:flex;flex-direction:column;justify-content:space-between;">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono';font-size:11px;color:#9ca3af;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px;">
+          <span style="color:#f3f4f6;font-weight:600;">GraphFlow Mobile</span>
+          <span style="color:#22d3ee;">AUTO-FIT: 0.34x</span>
+        </div>
+
+        <div style="position:relative;flex:1;margin:14px 0;border:1px dashed rgba(34,211,238,0.25);border-radius:12px;padding:14px;background:rgba(15,17,21,0.7);">
+          <div style="font-family:'JetBrains Mono';font-size:10px;color:#22d3ee;margin-bottom:10px;">TOUCH DRAG-TO-CONNECT ACTIVE</div>
+          <div style="background:#12151b;border:1px solid #22d3ee;border-radius:8px;padding:10px;margin-bottom:18px;">
+            <div style="font-size:12px;font-weight:600;">Envoy API Gateway</div>
+            <div style="font-family:'JetBrains Mono';font-size:10px;color:#34d399;">920 RPS • LAT 9ms</div>
+          </div>
+          <div style="background:#12151b;border:1px solid #10b981;border-radius:8px;padding:10px;margin-bottom:18px;">
+            <div style="font-size:12px;font-weight:600;">Redis Cluster</div>
+            <div style="font-family:'JetBrains Mono';font-size:10px;color:#34d399;">2,400 RPS • LAT 2ms</div>
+          </div>
+          <div style="background:#12151b;border:1px solid #f59e0b;border-radius:8px;padding:10px;">
+            <div style="font-size:12px;font-weight:600;">Postgres Primary</div>
+            <div style="font-family:'JetBrains Mono';font-size:10px;color:#fbbf24;">82% UTIL • p99 145ms</div>
+          </div>
+        </div>
+
+        <!-- Floating Mobile Simulation HUD -->
+        <div style="background:#12151b;border:1px solid rgba(34,211,238,0.4);border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono';font-size:11px;">
+          <span style="color:#34d399;font-weight:600;">920 RPS</span>
+          <span style="background:rgba(34,211,238,0.18);color:#22d3ee;padding:3px 7px;border-radius:5px;">2x Load</span>
+          <span style="color:#f3f4f6;">Fit</span>
+          <span style="background:#22d3ee;color:#08090a;font-weight:700;padding:3px 8px;border-radius:5px;">Inspect</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 4: Pin Baseline, Multi-Cloud FinOps & PR Export (13.6s - 17.5s) -->
+  <div class="scene" id="scene-4">
+    <div class="kicker">04 // STAFF ENGINEER DIAGNOSTICS &amp; ARTIFACT EXPORT</div>
+    <div class="h1" style="margin-bottom:20px;">Pin baseline. Auto-harden SPOFs. <span style="color:#22d3ee;">Export straight to your PR.</span></div>
+
+    <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:24px;">
+      <!-- Left: Pin Baseline & Multi-Cloud FinOps -->
+      <div class="card" style="padding:22px;border-color:rgba(34,211,238,0.35);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <span style="font-family:'JetBrains Mono';font-size:12px;color:#22d3ee;font-weight:600;">BEFORE / AFTER BASELINE DELTA</span>
+          <span style="background:rgba(16,185,129,0.15);color:#34d399;font-family:'JetBrains Mono';font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;">RESILIENCE GRADE: A+</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;">
+          <div style="background:#0b0d11;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:11px;color:#9ca3af;">p99 Tail Latency</div>
+            <div style="font-family:'Space Grotesk';font-size:22px;font-weight:700;color:#34d399;">380ms &rarr; 54ms</div>
+          </div>
+          <div style="background:#0b0d11;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:11px;color:#9ca3af;">Composite SLA</div>
+            <div style="font-family:'Space Grotesk';font-size:22px;font-weight:700;color:#34d399;">98.4% &rarr; 99.95%</div>
+          </div>
+          <div style="background:#0b0d11;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:11px;color:#9ca3af;">Max Safe Load</div>
+            <div style="font-family:'Space Grotesk';font-size:22px;font-weight:700;color:#22d3ee;">400 &rarr; 1,600 RPS</div>
+          </div>
+        </div>
+
+        <div style="font-family:'JetBrains Mono';font-size:11px;color:#9ca3af;margin-bottom:8px;">MULTI-CLOUD FINOPS ESTIMATOR (MONTHLY)</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-family:'JetBrains Mono';font-size:12px;">
+          <div style="background:rgba(34,211,238,0.1);border:1px solid #22d3ee;padding:10px;border-radius:8px;color:#f3f4f6;">AWS: <strong>~$340/mo</strong><br/><span style="font-size:10px;color:#9ca3af;">ECS Fargate + RDS</span></div>
+          <div style="background:#0b0d11;border:1px solid rgba(255,255,255,0.08);padding:10px;border-radius:8px;color:#d1d5db;">GCP: <strong>~$310/mo</strong><br/><span style="font-size:10px;color:#9ca3af;">Cloud Run + SQL</span></div>
+          <div style="background:#0b0d11;border:1px solid rgba(255,255,255,0.08);padding:10px;border-radius:8px;color:#d1d5db;">Azure: <strong>~$325/mo</strong><br/><span style="font-size:10px;color:#9ca3af;">Container Apps</span></div>
+        </div>
+      </div>
+
+      <!-- Right: 4 Production Artifact Cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card" id="exp-1" style="padding:18px;border-color:rgba(34,211,238,0.4);">
+          <div style="font-family:'JetBrains Mono';font-size:11px;color:#22d3ee;margin-bottom:6px;">GITHUB PR &amp; RFC</div>
+          <div style="font-family:'Space Grotesk';font-size:20px;font-weight:700;margin-bottom:6px;">Mermaid.js Bundle</div>
+          <div style="font-size:13px;color:#9ca3af;">Flowchart + Sequence Diagram + SLA/FinOps table.</div>
+        </div>
+        <div class="card" id="exp-2" style="padding:18px;border-color:rgba(16,185,129,0.4);">
+          <div style="font-family:'JetBrains Mono';font-size:11px;color:#34d399;margin-bottom:6px;">INFRASTRUCTURE AS CODE</div>
+          <div style="font-family:'Space Grotesk';font-size:20px;font-weight:700;margin-bottom:6px;">Terraform &amp; K8s HPA</div>
+          <div style="font-size:13px;color:#9ca3af;">Auto-scaled <code style="color:#f3f4f6;">main.tf</code> &amp; <code style="color:#f3f4f6;">k8s-manifests.yaml</code>.</div>
+        </div>
+        <div class="card" id="exp-3" style="padding:18px;border-color:rgba(245,158,11,0.4);">
+          <div style="font-family:'JetBrains Mono';font-size:11px;color:#fbbf24;margin-bottom:6px;">STRESS VERIFICATION</div>
+          <div style="font-family:'Space Grotesk';font-size:20px;font-weight:700;margin-bottom:6px;">Grafana k6 Script</div>
+          <div style="font-size:13px;color:#9ca3af;">Runnable <code style="color:#f3f4f6;">load-test.k6.js</code> with p95/p99 thresholds.</div>
+        </div>
+        <div class="card" id="exp-4" style="padding:18px;border-color:rgba(255,255,255,0.2);">
+          <div style="font-family:'JetBrains Mono';font-size:11px;color:#e5e7eb;margin-bottom:6px;">EXECUTIVE ALIGNMENT</div>
+          <div style="font-family:'Space Grotesk';font-size:20px;font-weight:700;margin-bottom:6px;">1-Click ROI &amp; Post-Mortem</div>
+          <div style="font-size:13px;color:#9ca3af;">Ready-to-paste CTO proposal &amp; SRE incident timeline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 5: Outro / CTA (17.5s - 20.0s) -->
+  <div class="scene" id="scene-5" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+    <div class="kicker" style="font-size:14px;margin-bottom:14px;">OPEN SOURCE // MIT LICENSE // ZERO SIGNUP</div>
+    <div class="h1" style="font-size:56px;max-width:920px;margin-bottom:20px;">
+      Stop drawing dead boxes.<br/><span style="color:#22d3ee;">Run your architecture.</span>
+    </div>
+    <div style="display:flex;gap:18px;margin-top:12px;">
+      <div style="background:#22d3ee;color:#08090a;font-family:'JetBrains Mono';font-weight:700;font-size:18px;padding:14px 28px;border-radius:10px;">
+        graph-flow-virid.vercel.app
+      </div>
+      <div style="background:#12151b;color:#f3f4f6;border:1px solid rgba(255,255,255,0.18);font-family:'JetBrains Mono';font-weight:600;font-size:18px;padding:14px 28px;border-radius:10px;">
+        github.com/Hanubaki/GraphFlow
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const scenes = [
+      { id: 'scene-1', start: 0.0, end: 3.3 },
+      { id: 'scene-2', start: 3.3, end: 8.7 },
+      { id: 'scene-3', start: 8.7, end: 13.6 },
+      { id: 'scene-4', start: 13.6, end: 17.5 },
+      { id: 'scene-5', start: 17.5, end: 20.5 }
+    ];
+
+    const svg = document.getElementById('sim-svg');
+    const edgeIds = ['edge-1', 'edge-2', 'edge-3', 'edge-4', 'edge-5', 'edge-6'];
+    const dots = [];
+
+    edgeIds.forEach((id, idx) => {
+      const path = document.getElementById(id);
+      for (let i = 0; i < 3; i++) {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('r', idx === 3 ? '5.5' : '4.5');
+        c.setAttribute('fill', idx === 3 ? '#ef4444' : (idx % 2 === 0 ? '#22d3ee' : '#10b981'));
+        svg.appendChild(c);
+        dots.push({ el: c, path, offset: i / 3, speed: idx === 3 ? 0.35 : 0.65 });
+      }
+    });
+
+    function renderAtTime(t) {
+      scenes.forEach(s => {
+        const el = document.getElementById(s.id);
+        if (t >= s.start && t < s.end) {
+          const local = t - s.start;
+          const fadeIn = Math.min(1, local / 0.25);
+          el.style.opacity = String(fadeIn);
+          el.style.transform = `translateY(${(1 - fadeIn) * 10}px)`;
+        } else {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(12px)';
+        }
+      });
+
+      // Animate packets along cubic Bezier paths in Scene 2
+      dots.forEach(d => {
+        const len = d.path.getTotalLength();
+        const prog = ((t * d.speed) + d.offset) % 1;
+        const pt = d.path.getPointAtLength(prog * len);
+        d.el.setAttribute('cx', pt.x);
+        d.el.setAttribute('cy', pt.y);
+      });
+    }
+
+    window.setVideoTime = renderAtTime;
+
+    let startTs = performance.now();
+    function loop(now) {
+      if (!window.__manualClock) {
+        const elapsed = ((now - startTs) / 1000) % 20.0;
+        renderAtTime(elapsed);
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

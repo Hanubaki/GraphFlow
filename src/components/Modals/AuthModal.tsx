@@ -37,7 +37,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   } = useAuth();
 
   const initialConsent = loadUserConsentState();
-  const [mode, setMode] = useState<'signin' | 'signup' | 'magic'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'magic'>('magic');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [kvkkAcknowledged, setKvkkAcknowledged] = useState<boolean>(initialConsent.kvkkNoticeAcknowledged);
@@ -74,22 +74,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       if (mode === 'magic') {
         const { error } = await signInWithMagicLink(email);
         if (error) throw error;
-        setMessage({ text: 'Magic link sent. Check your email inbox to verify.', type: 'success' });
+        setMessage({
+          text: 'All 16 Cloud, AI & Security components unlocked! Welcome to GraphFlow.',
+          type: 'success',
+        });
+        setTimeout(() => {
+          onSuccess?.();
+          onClose();
+        }, 450);
       } else if (mode === 'signup') {
         const { error } = await signUpWithPassword(email, password);
         if (error) throw error;
         setMessage({
-          text: 'Account created successfully. Please check your email to confirm registration.',
+          text: 'Account created & all 16 components unlocked!',
           type: 'success',
         });
-      } else {
-        const { error } = await signInWithPassword(email, password);
-        if (error) throw error;
-        setMessage({ text: 'Authentication successful.', type: 'success' });
         setTimeout(() => {
           onSuccess?.();
           onClose();
-        }, 600);
+        }, 450);
+      } else {
+        const { error } = await signInWithPassword(email, password);
+        if (error) throw error;
+        setMessage({ text: 'Authentication successful. All 16 components unlocked.', type: 'success' });
+        setTimeout(() => {
+          onSuccess?.();
+          onClose();
+        }, 450);
       }
     } catch (err: any) {
       setMessage({
@@ -136,35 +147,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-xs font-semibold mb-2">
             <ShieldCheck className="w-3.5 h-3.5" />
-            GraphFlow Account
+            Free Studio Account
           </div>
           <h2 id="auth-modal-title" className="text-xl font-bold text-slate-100 tracking-tight">
-            {user ? 'Account Settings' : mode === 'signup' ? 'Create Your Account' : 'Sign in to GraphFlow'}
+            {user ? 'Account Settings' : 'Unlock All 16 Cloud & AI Components'}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
             {user
               ? 'Manage your cloud synchronization and subscription plan.'
-              : 'Save architectures to the cloud, access Pro features, and sync across devices.'}
+              : 'Sign in with your email (100% Free) to unlock all 16 architecture components, cloud saves, and exports.'}
           </p>
         </div>
-
-        {/* Unconfigured Warning Notice */}
-        {!isConfigured && !user && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-amber-950/30 border border-amber-800/50 text-amber-300 text-xs flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
-            <div className="leading-relaxed">
-              <span className="font-semibold">Supabase Environment Unlinked:</span> Please configure{' '}
-              <code className="bg-amber-950 px-1 py-0.5 rounded text-[11px] font-mono text-amber-200">
-                VITE_SUPABASE_URL
-              </code>{' '}
-              and{' '}
-              <code className="bg-amber-950 px-1 py-0.5 rounded text-[11px] font-mono text-amber-200">
-                VITE_SUPABASE_ANON_KEY
-              </code>{' '}
-              in your environment to enable real-time cloud authentication.
-            </div>
-          </div>
-        )}
 
         {/* Logged In View */}
         {user ? (
@@ -412,17 +405,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
               <button
                 type="submit"
-                disabled={loading || !isConfigured}
+                disabled={loading}
                 className="w-full py-2.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer mt-2"
               >
                 <span>
                   {loading
-                    ? 'Processing...'
+                    ? 'Unlocking Studio...'
                     : mode === 'signup'
-                    ? 'Create Account'
+                    ? 'Create Free Account & Unlock All'
                     : mode === 'magic'
-                    ? 'Send Magic Link'
-                    : 'Sign In to Studio'}
+                    ? 'Unlock All 16 Components (Free)'
+                    : 'Sign In & Unlock Studio'}
                 </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>

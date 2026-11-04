@@ -32,4 +32,12 @@ describe('Node Factory Unit Tests', () => {
 
     expect(nodeA.id).not.toBe(nodeB.id);
   });
+
+  it('partitions 16 catalog components into 6 guest-accessible core nodes and 10 free email-unlocked advanced nodes', () => {
+    expect(NODE_CATALOG.length).toBe(16);
+    const guestFree = NODE_CATALOG.filter(item => !item.requiresAuth);
+    const emailUnlocked = NODE_CATALOG.filter(item => item.requiresAuth);
+    expect(guestFree.length).toBe(6);
+    expect(emailUnlocked.length).toBe(10);
+  });
 });

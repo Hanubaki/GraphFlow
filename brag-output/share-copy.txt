@@ -1,0 +1,7 @@
+What I shipped to GraphFlow this week:
+
+1. Paste Docker Compose, Terraform or OpenAPI -> 60fps topology in 1 click
+2. Live ERP/API Digital Twin stream
+3. Fixed a 2.5GP mobile SVG GPU bug + touch HUD
+
+https://graph-flow-virid.vercel.app/?template=stripe-webhook-ledger

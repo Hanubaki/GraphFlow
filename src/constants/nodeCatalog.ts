@@ -10,6 +10,7 @@ export interface CatalogItem {
   color: string;
   iconName: string;
   category: 'Clients' | 'Compute & Routing' | 'Data & Storage' | 'Async & Messaging' | 'External';
+  requiresAuth?: boolean;
 }
 
 export const NODE_CATALOG: CatalogItem[] = [
@@ -22,7 +23,8 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 120,
     color: '#38bdf8', // Sky
     iconName: 'Globe',
-    category: 'Clients'
+    category: 'Clients',
+    requiresAuth: false,
   },
   {
     type: 'client',
@@ -33,7 +35,8 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 85,
     color: '#0ea5e9', // Cyan
     iconName: 'Smartphone',
-    category: 'Clients'
+    category: 'Clients',
+    requiresAuth: true,
   },
   {
     type: 'gateway',
@@ -44,7 +47,32 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 2500,
     color: '#818cf8', // Indigo
     iconName: 'Network',
-    category: 'Compute & Routing'
+    category: 'Compute & Routing',
+    requiresAuth: false,
+  },
+  {
+    type: 'gateway',
+    title: 'Cloudflare WAF / CDN',
+    subtitle: 'Edge DDoS & TLS Shield',
+    defaultLatencyMs: 4,
+    defaultErrorRate: 0.02,
+    defaultThroughput: 12000,
+    color: '#22d3ee', // Cyan
+    iconName: 'ShieldCheck',
+    category: 'Compute & Routing',
+    requiresAuth: true,
+  },
+  {
+    type: 'gateway',
+    title: 'GraphQL Federation',
+    subtitle: 'Apollo / BFF Router',
+    defaultLatencyMs: 14,
+    defaultErrorRate: 0.15,
+    defaultThroughput: 1800,
+    color: '#6366f1', // Indigo
+    iconName: 'Layers',
+    category: 'Compute & Routing',
+    requiresAuth: true,
   },
   {
     type: 'service',
@@ -55,7 +83,20 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 650,
     color: '#a855f7', // Purple
     iconName: 'Server',
-    category: 'Compute & Routing'
+    category: 'Compute & Routing',
+    requiresAuth: false,
+  },
+  {
+    type: 'service',
+    title: 'LLM / Vector RAG Engine',
+    subtitle: 'OpenAI / Claude / Pinecone',
+    defaultLatencyMs: 140,
+    defaultErrorRate: 1.2,
+    defaultThroughput: 180,
+    color: '#c084fc', // Violet
+    iconName: 'Cpu',
+    category: 'Compute & Routing',
+    requiresAuth: true,
   },
   {
     type: 'serverless',
@@ -66,7 +107,8 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 400,
     color: '#ec4899', // Pink
     iconName: 'Zap',
-    category: 'Compute & Routing'
+    category: 'Compute & Routing',
+    requiresAuth: true,
   },
   {
     type: 'cache',
@@ -77,7 +119,8 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 8000,
     color: '#f43f5e', // Rose
     iconName: 'Cpu',
-    category: 'Data & Storage'
+    category: 'Data & Storage',
+    requiresAuth: false,
   },
   {
     type: 'database',
@@ -88,7 +131,20 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 900,
     color: '#3b82f6', // Blue
     iconName: 'Database',
-    category: 'Data & Storage'
+    category: 'Data & Storage',
+    requiresAuth: false,
+  },
+  {
+    type: 'database',
+    title: 'Search & Analytics OLAP',
+    subtitle: 'Elasticsearch / ClickHouse',
+    defaultLatencyMs: 28,
+    defaultErrorRate: 0.15,
+    defaultThroughput: 2200,
+    color: '#60a5fa', // Light Blue
+    iconName: 'Database',
+    category: 'Data & Storage',
+    requiresAuth: true,
   },
   {
     type: 'storage',
@@ -99,7 +155,8 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 350,
     color: '#14b8a6', // Teal
     iconName: 'HardDrive',
-    category: 'Data & Storage'
+    category: 'Data & Storage',
+    requiresAuth: true,
   },
   {
     type: 'queue',
@@ -110,7 +167,20 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 15000,
     color: '#f59e0b', // Amber
     iconName: 'Shuffle',
-    category: 'Async & Messaging'
+    category: 'Async & Messaging',
+    requiresAuth: false,
+  },
+  {
+    type: 'queue',
+    title: 'Dead-Letter Queue (DLQ)',
+    subtitle: 'SQS Retry / Poison Queue',
+    defaultLatencyMs: 18,
+    defaultErrorRate: 0.05,
+    defaultThroughput: 4500,
+    color: '#fbbf24', // Yellow-Amber
+    iconName: 'Shuffle',
+    category: 'Async & Messaging',
+    requiresAuth: true,
   },
   {
     type: 'external',
@@ -121,6 +191,19 @@ export const NODE_CATALOG: CatalogItem[] = [
     defaultThroughput: 100,
     color: '#10b981', // Emerald
     iconName: 'ExternalLink',
-    category: 'External'
+    category: 'External',
+    requiresAuth: true,
+  },
+  {
+    type: 'external',
+    title: 'OAuth2 / OIDC Identity',
+    subtitle: 'Keycloak / Auth0 SSO',
+    defaultLatencyMs: 22,
+    defaultErrorRate: 0.1,
+    defaultThroughput: 1400,
+    color: '#34d399', // Mint
+    iconName: 'ShieldCheck',
+    category: 'External',
+    requiresAuth: true,
   },
 ];
