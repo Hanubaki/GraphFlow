@@ -387,6 +387,14 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
                   title={node.status === 'down' ? `Service is DOWN (0 RPS active; configured ceiling: ${node.throughputRps} RPS)` : `Throughput capacity: ${node.throughputRps} RPS`}
                 >
                   <span className="text-[10px] text-slate-400">RPS</span> {node.status === 'down' ? 0 : node.throughputRps}
+                  {node.isEstimated && (
+                    <span
+                      className="px-1 rounded text-[9px] font-mono bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                      title="Heuristic default estimate (edit in Inspector or stream live metrics to mark as measured)"
+                    >
+                      est.
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="h-1 w-full rounded-full bg-slate-800/90 overflow-hidden" title={`Capacity utilization: ${utilPct}%`}>
@@ -453,6 +461,7 @@ function areNodePropsEqual(prev: NodeComponentProps, next: NodeComponentProps): 
     prev.node.latencyMs === next.node.latencyMs &&
     prev.node.errorRate === next.node.errorRate &&
     prev.node.throughputRps === next.node.throughputRps &&
+    prev.node.isEstimated === next.node.isEstimated &&
     prev.node.title === next.node.title &&
     prev.node.subtitle === next.node.subtitle &&
     prev.node.color === next.node.color &&

@@ -83,6 +83,7 @@ export function generateShareUrl(nodes: GraphNode[], edges: GraphEdge[]): string
       lat: n.latencyMs,
       err: n.errorRate,
       rps: n.throughputRps,
+      est: n.isEstimated ? 1 : undefined,
       c: n.color,
       i: n.iconName,
       s: n.status,
@@ -144,7 +145,7 @@ export function parseShareUrl(): { nodes: GraphNode[]; edges: GraphEdge[]; isEmb
         }
         const imported = parseInfrastructureToTopology(csvLines.join('\n'), 'share.csv');
         if (imported.nodes.length > 0) {
-          return { nodes: imported.nodes, edges: imported.edges, isEmbed };
+          return { nodes: imported.nodes.map(n => ({ ...n, isEstimated: true })), edges: imported.edges, isEmbed };
         }
       }
     }

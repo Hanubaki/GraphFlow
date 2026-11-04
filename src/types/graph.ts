@@ -34,6 +34,7 @@ export interface GraphNode {
   latencyMs: number;
   errorRate: number; // 0 to 100 percentage
   throughputRps: number;
+  isEstimated?: boolean;
   notes?: string;
   color: string;
   iconName: string;

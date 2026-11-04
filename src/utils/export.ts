@@ -564,7 +564,7 @@ export function generateArchitectureSvg(
     svg += `    <text x="14" y="43" fill="#64748b" font-family="system-ui, -apple-system, sans-serif" font-size="10.5">${escapeXml(n.subtitle.slice(0, 26))}</text>\n`;
     svg += `    <line x1="12" y1="58" x2="${nw - 12}" y2="58" stroke="#1e293b" stroke-width="1" />\n`;
     svg += `    <text x="14" y="75" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10">${n.latencyMs}ms • ${n.errorRate}% err</text>\n`;
-    svg += `    <text x="${nw - 14}" y="75" text-anchor="end" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600">${n.throughputRps} RPS</text>\n`;
+    svg += `    <text x="${nw - 14}" y="75" text-anchor="end" fill="#22d3ee" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600">${n.throughputRps} RPS${n.isEstimated ? ' (est.)' : ''}</text>\n`;
     svg += `  </g>\n`;
   });
 

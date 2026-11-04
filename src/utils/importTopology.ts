@@ -1589,7 +1589,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     if (nodes.length === 0) {
       throw new Error('No labeled vertex boxes found in draw.io (.drawio / mxGraphModel) file.');
     }
-    return { format: 'drawio', nodes, edges };
+    return { format: 'drawio', nodes: nodes.map(n => ({ ...n, isEstimated: true })), edges };
   }
 
   // 1. Try JSON or Excalidraw (.excalidraw / .json)
@@ -1604,7 +1604,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
       if (nodes.length === 0) {
         throw new Error('No labeled shapes or text nodes found in Excalidraw (.excalidraw) file.');
       }
-      return { format: 'excalidraw', nodes, edges };
+      return { format: 'excalidraw', nodes: nodes.map(n => ({ ...n, isEstimated: true })), edges };
     }
 
     if (
@@ -1636,7 +1636,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
   ) {
     const { nodes, edges } = parseMermaidToTopology(trimmed);
     if (nodes.length > 0) {
-      return { format: 'mermaid', nodes, edges };
+      return { format: 'mermaid', nodes: nodes.map(n => ({ ...n, isEstimated: true })), edges };
     }
   }
 
@@ -1646,7 +1646,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     if (nodes.length === 0) {
       throw new Error('No supported Terraform resources (RDS, ElastiCache, SQS, S3, ALB, ECS, Lambda) found.');
     }
-    return { format: 'terraform', nodes, edges };
+    return { format: 'terraform', nodes: nodes.map(n => ({ ...n, isEstimated: true })), edges };
   }
 
   // 3. Try OpenAPI / Swagger YAML
@@ -1661,7 +1661,7 @@ export function parseInfrastructureToTopology(rawContent: string, filename = '')
     if (nodes.length === 0) {
       throw new Error('No valid services found under the "services:" key in docker-compose.yml.');
     }
-    return { format: 'docker-compose', nodes, edges };
+    return { format: 'docker-compose', nodes: nodes.map(n => ({ ...n, isEstimated: true })), edges };
   }
 
   // 5. Try ERP / Excel CSV or TSV table (.csv, .tsv, or multi-line delimited with ; / \t / ,)

@@ -274,7 +274,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 min="1"
                 max="500"
                 value={selectedNode.latencyMs}
-                onChange={e => onUpdateNode(selectedNode.id, { latencyMs: Number(e.target.value) })}
+                onChange={e => onUpdateNode(selectedNode.id, { latencyMs: Number(e.target.value), isEstimated: false })}
                 className="w-full accent-cyan-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
@@ -314,7 +314,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 max="5000"
                 step="25"
                 value={selectedNode.throughputRps}
-                onChange={e => onUpdateNode(selectedNode.id, { throughputRps: Number(e.target.value) })}
+                onChange={e => onUpdateNode(selectedNode.id, { throughputRps: Number(e.target.value), isEstimated: false })}
                 className="w-full accent-amber-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
