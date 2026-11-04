@@ -147,4 +147,4 @@
 
 - **4 Kasım 2026 — Haftalık Büyüme & Denetim Güncellemesi:**
   - `r/softwarearchitecture` paylaşımı sonrası GitHub deposu **11 Yıldız (Star)** ve **1 Fork** seviyesine ulaştı.
-  - Topluluktan gelen `Issue #1` (`License mismatch: README claims MIT, LICENSE file is PolyForm Noncommercial 1.0.0`) doğrultusunda `README.md` rozeti ve lisans açıklaması `PolyForm Noncommercial 1.0.0` ile senkronize edildi.
+  - Topluluktan (`@AParise1217`) gelen `Issue #1` (`License mismatch: README claims MIT, LICENSE file is PolyForm Noncommercial 1.0.0`) doğrultusunda `README.md`, `package.json` (`"license": "PolyForm-Noncommercial-1.0.0"`) ve `src/components/Landing/LandingPage.tsx` içindeki kalan tüm `MIT` ifadeleri `PolyForm Noncommercial 1.0.0` ile senkronize edilip `480c769` commitiyle GitHub'a gönderildi; Issue #1 yanıtlanarak kapatıldı (`closed as completed`).
