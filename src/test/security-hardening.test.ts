@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { sanitizeLabel, escapeXml, generateMarkdownDoc } from '../utils/export';
 import { isRateLimited, clearRateLimitStore, MAX_PAYLOAD_BYTES } from '../../api/webhook';
+import { logSecurityIncident72h, canSendCommercialMessage } from '../utils/complianceAudit';
 import { GraphNode, GraphEdge } from '../types/graph';
 
 describe('Enterprise Security & Hardening Suite', () => {
@@ -149,6 +150,19 @@ describe('Enterprise Security & Hardening Suite', () => {
 
       clearRateLimitStore();
       expect(isRateLimited(testIp, 2, 10000)).toBe(false);
+    });
+
+    it('calculates 72-hour KVKK/GDPR breach notification deadline and enforces IYS consent', () => {
+      const incident = logSecurityIncident72h('unauthorized_access', 'high', '203.0.113.42', 'Test 72h alert');
+      expect(incident.incidentId).toMatch(/^INC-/);
+      expect(incident.sourceIpMasked).toBe('203.0.113.xxx');
+      const deltaHours =
+        (new Date(incident.notificationDeadline72hIso).getTime() - new Date(incident.detectedAtIso).getTime()) /
+        (1000 * 3600);
+      expect(Math.round(deltaHours)).toBe(72);
+
+      expect(canSendCommercialMessage({ commercialIysConsent: false })).toBe(false);
+      expect(canSendCommercialMessage({ commercialIysConsent: true })).toBe(true);
     });
   });
 });

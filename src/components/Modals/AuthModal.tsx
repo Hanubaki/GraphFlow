@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useEscapeToClose } from '../../hooks/useEscapeToClose';
 import { useAuth } from '../../context/AuthContext';
+import { saveUserConsentState, loadUserConsentState } from '../../utils/complianceAudit';
+import type { LegalTab } from './LegalComplianceModal';
 import {
   X,
   Mail,
@@ -19,9 +21,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  onOpenLegal?: (tab: LegalTab) => void;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onOpenLegal }) => {
   const {
     user,
     planTier,
@@ -33,9 +36,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     signOut,
   } = useAuth();
 
+  const initialConsent = loadUserConsentState();
   const [mode, setMode] = useState<'signin' | 'signup' | 'magic'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [kvkkAcknowledged, setKvkkAcknowledged] = useState<boolean>(initialConsent.kvkkNoticeAcknowledged);
+  const [explicitCloudConsent, setExplicitCloudConsent] = useState<boolean>(initialConsent.explicitCloudSyncConsent);
+  const [commercialIysConsent, setCommercialIysConsent] = useState<boolean>(initialConsent.commercialIysConsent);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -46,6 +53,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+
+    if ((mode === 'signup' || mode === 'magic') && (!kvkkAcknowledged || !explicitCloudConsent)) {
+      setMessage({
+        text: 'Devam etmek için KVKK Aydınlatma Metni okuma beyanını ve Bulut Senkronizasyonu Açık Rıza onayını ayrı ayrı işaretleyin.',
+        type: 'error',
+      });
+      return;
+    }
+
+    saveUserConsentState({
+      kvkkNoticeAcknowledged: kvkkAcknowledged,
+      explicitCloudSyncConsent: explicitCloudConsent,
+      commercialIysConsent,
+    });
+
     setLoading(true);
 
     try {
@@ -101,11 +123,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none">
-      <div className="bg-dark-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-dark-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-6 border-b border-slate-800 relative">
           <button
             onClick={onClose}
+            aria-label="Close authentication modal"
             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
@@ -145,7 +168,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         {/* Logged In View */}
         {user ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-5 overflow-y-auto">
             <div className="p-4 rounded-2xl bg-dark-950 border border-slate-800 space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-300 font-bold text-sm">
@@ -190,10 +213,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
         ) : (
           /* Sign In / Sign Up Form */
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 overflow-y-auto">
             {/* Mode Switcher Tabs */}
             <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-dark-950 border border-slate-800 text-xs font-semibold">
               <button
+                type="button"
                 onClick={() => {
                   setMode('signin');
                   setMessage(null);
@@ -205,6 +229,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 Sign In
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setMode('signup');
                   setMessage(null);
@@ -216,6 +241,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 Sign Up
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setMode('magic');
                   setMessage(null);
@@ -245,7 +271,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 disabled={loading || !isConfigured}
                 className="py-2 px-3 rounded-xl border border-slate-800 bg-dark-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -310,6 +336,62 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   </div>
                 </div>
               )}
+
+              {/* KVKK Notice & Explicitly Separated Consents */}
+              <div className="p-3 rounded-xl bg-dark-950 border border-slate-800/90 space-y-2 text-[11px] text-slate-300">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={kvkkAcknowledged}
+                    onChange={e => setKvkkAcknowledged(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400 focus:ring-cyan-400"
+                  />
+                  <span>
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.('kvkk')}
+                      className="text-cyan-400 hover:underline font-semibold"
+                    >
+                      KVKK Aydınlatma Metni
+                    </button>{' '}
+                    ve{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.('privacy')}
+                      className="text-cyan-400 hover:underline font-semibold"
+                    >
+                      Gizlilik Politikası
+                    </button>
+                    &apos;nı okudum, bilgilendirildim.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer border-t border-slate-800/70 pt-2">
+                  <input
+                    type="checkbox"
+                    checked={explicitCloudConsent}
+                    onChange={e => setExplicitCloudConsent(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400 focus:ring-cyan-400"
+                  />
+                  <span>
+                    <strong>Açık Rıza (Aydınlatmadan Ayrı):</strong> Bulut proje senkronizasyonu için verilerimin yurt
+                    dışı bulut altyapısında (`Supabase`) işlenmesine açık rıza veriyorum.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer border-t border-slate-800/70 pt-2 text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={commercialIysConsent}
+                    onChange={e => setCommercialIysConsent(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400 focus:ring-cyan-400"
+                  />
+                  <span>
+                    <em>(İsteğe Bağlı / İYS)</em> Yeni mimari şablonlar ve kampanya duyuruları için ticari elektronik
+                    ileti gönderilmesini kabul ediyorum.
+                  </span>
+                </label>
+              </div>
 
               {message && (
                 <div

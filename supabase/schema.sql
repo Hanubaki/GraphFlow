@@ -12,6 +12,9 @@ create table if not exists public.profiles (
   plan_tier text not null default 'free' check (plan_tier in ('free', 'pro', 'team')),
   lemon_customer_id text,
   lemon_subscription_id text,
+  kvkk_acknowledged_at timestamptz,
+  explicit_cloud_sync_consent boolean not null default false,
+  commercial_iys_consent boolean not null default false,
   created_at timestamptz default timezone('utc'::text, now()) not null,
   updated_at timestamptz default timezone('utc'::text, now()) not null
 );
@@ -58,6 +61,16 @@ create policy "Users can view own profile"
 drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
+  using (auth.uid() = id);
+
+drop policy if exists "Users can insert own profile" on public.profiles;
+create policy "Users can insert own profile"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
+drop policy if exists "Users can delete own profile" on public.profiles;
+create policy "Users can delete own profile"
+  on public.profiles for delete
   using (auth.uid() = id);
 
 -- Projects Policies

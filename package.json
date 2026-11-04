@@ -2,6 +2,7 @@
   "name": "graphflow",
   "private": true,
   "version": "1.0.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

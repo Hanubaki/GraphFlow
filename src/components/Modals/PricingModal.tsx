@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Check, X, ArrowRight, ShieldCheck, UserCheck, Mail } from 'lucide-react';
+import { Check, X, ArrowRight, ShieldCheck, UserCheck, Mail, AlertCircle } from 'lucide-react';
 import { soundFx } from '../../utils/sound';
 import { telemetry } from '../../utils/telemetry';
 import { buildLemonCheckoutUrl, getFirstTouchAttribution } from '../../services/billing';
+import { saveUserConsentState, loadUserConsentState } from '../../utils/complianceAudit';
+import type { LegalTab } from './LegalComplianceModal';
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenAuth?: () => void;
+  onOpenLegal?: (tab: LegalTab) => void;
 }
 
-export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onOpenAuth }) => {
+export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onOpenAuth, onOpenLegal }) => {
   const [isAnnual, setIsAnnual] = useState(true);
+  const [distanceSalesConsent, setDistanceSalesConsent] = useState<boolean>(
+    () => loadUserConsentState().preCheckoutDistanceSalesConsent
+  );
+  const [consentError, setConsentError] = useState<string | null>(null);
   const { user, isPro, planTier, refreshProfile } = useAuth();
 
   useEffect(() => {
@@ -47,6 +54,15 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
 
   const handleProClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     soundFx.playClick();
+    if (!distanceSalesConsent) {
+      e.preventDefault();
+      setConsentError('Ödeme adımına geçmeden önce Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi onay kutusunu işaretleyin.');
+      return;
+    }
+
+    setConsentError(null);
+    saveUserConsentState({ preCheckoutDistanceSalesConsent: true });
+
     const attribution = getFirstTouchAttribution();
     telemetry.track('Checkout Clicked', {
       tier: 'pro',
@@ -195,7 +211,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Markdown & Mermaid Spec Exporter</span>
+                  <span>Markdown &amp; Mermaid Spec Exporter</span>
                 </div>
               </div>
             </div>
@@ -212,20 +228,51 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                   rel="noopener noreferrer"
                   className="w-full py-1.5 px-3 rounded-xl border border-slate-700 bg-dark-950 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
                 >
-                  Manage Invoices & Billing
+                  Manage Invoices &amp; Billing
                 </a>
               </div>
             ) : (
-              <a
-                href={checkoutUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleProClick}
-                className="lemonsqueezy-button w-full mt-6 py-2 px-3 rounded-xl bg-slate-100 hover:bg-white text-slate-950 text-xs font-bold shadow-md shadow-black/30 transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900"
-              >
-                <span>{user ? 'Upgrade to Pro' : 'Sign In & Upgrade to Pro'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </a>
+              <div className="mt-4 space-y-2.5">
+                <label className="flex items-start gap-2 text-[11px] text-slate-300 cursor-pointer bg-dark-950/90 p-2.5 rounded-xl border border-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={distanceSalesConsent}
+                    onChange={e => {
+                      setDistanceSalesConsent(e.target.checked);
+                      if (e.target.checked) setConsentError(null);
+                    }}
+                    className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400 focus:ring-cyan-400"
+                  />
+                  <span className="leading-snug">
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegal?.('distance-sales')}
+                      className="text-cyan-400 hover:underline font-semibold"
+                    >
+                      Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi
+                    </button>
+                    &apos;ni okudum, kabul ediyorum.
+                  </span>
+                </label>
+
+                {consentError && (
+                  <div className="p-2 rounded-lg bg-rose-950/40 border border-rose-800/50 text-rose-300 text-[11px] flex items-start gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-400 mt-0.5" />
+                    <span>{consentError}</span>
+                  </div>
+                )}
+
+                <a
+                  href={checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleProClick}
+                  className="lemonsqueezy-button w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-white text-slate-950 text-xs font-bold shadow-md shadow-black/30 transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900"
+                >
+                  <span>{user ? 'Upgrade to Pro' : 'Sign In & Upgrade to Pro'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
             )}
           </div>
 
@@ -244,7 +291,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                 </span>
                 <span className="text-xs text-slate-400">/ month</span>
               </div>
-              <div className="text-[11px] text-slate-400">For startups & enterprise squads</div>
+              <div className="text-[11px] text-slate-400">For startups &amp; enterprise squads</div>
 
               <div className="mt-5 space-y-2.5 text-xs text-slate-300">
                 <div className="flex items-center gap-2">

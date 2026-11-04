@@ -34,12 +34,16 @@ import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
 import { ArchitectureTemplate } from '../../types/graph';
 import { buildLemonCheckoutUrl, getFirstTouchAttribution } from '../../services/billing';
 import { telemetry } from '../../utils/telemetry';
+import { saveUserConsentState, loadUserConsentState } from '../../utils/complianceAudit';
+import type { LegalTab } from '../Modals/LegalComplianceModal';
+import { BreadcrumbBar, ThankYouBanner, NotFound404Banner, PreLaunchSections20, StickyMobileCtaBar } from './LandingSections20';
 
 interface LandingPageProps {
   onEnterApp: () => void;
   onOpenPricing: () => void;
   onOpenAuth?: () => void;
   onSelectBlueprint?: (template: ArchitectureTemplate) => void;
+  onOpenLegal?: (tab: LegalTab) => void;
 }
 
 const GITHUB_URL = 'https://github.com/Hanubaki/GraphFlow';
@@ -640,10 +644,14 @@ const ControlRoomBackdrop: React.FC<{ reduced: boolean }> = ({ reduced }) => (
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth, onSelectBlueprint }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth, onSelectBlueprint, onOpenLegal }) => {
   const { user } = useAuth();
   const reduced = usePrefersReducedMotion();
   const shareUrl = useMemo(() => generateShareUrl(DEMO_NODES, DEMO_EDGES), []);
+  const [distanceSalesConsent, setDistanceSalesConsent] = useState<boolean>(() => loadUserConsentState().preCheckoutDistanceSalesConsent);
+  const [checkoutConsentError, setCheckoutConsentError] = useState<string | null>(null);
+  const [showThankYou, setShowThankYou] = useState<boolean>(() => typeof window !== 'undefined' && (window.location.hash.includes('thank-you') || window.location.search.includes('checkout=success') || window.location.search.includes('thankyou=1')));
+  const [show404, setShow404] = useState<boolean>(() => typeof window !== 'undefined' && (window.location.hash === '#404' || (window.location.pathname !== '/' && window.location.pathname !== '/index.html' && !window.location.pathname.startsWith('/api'))));
 
   return (
     <div className="relative min-h-screen w-full bg-dark-950 text-slate-200 font-sans antialiased overflow-x-hidden">
@@ -662,6 +670,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-400">
               <a href="#features" className="hover:text-slate-50 transition-colors">Features</a>
               <a href="#blueprints" className="hover:text-slate-50 transition-colors">Blueprints</a>
+              <a href="#case-studies" className="hover:text-slate-50 transition-colors">Case Studies</a>
+              <a href="#faq" className="hover:text-slate-50 transition-colors">FAQ</a>
               <a href="#export" className="hover:text-slate-50 transition-colors">Export</a>
               <a href="#pricing" className="hover:text-slate-50 transition-colors">Pricing</a>
               <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-slate-50 transition-colors">GitHub</a>
@@ -696,6 +706,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         </div>
       </nav>
 
+      {/* Breadcrumbs, 404 & Thank-You Views */}
+      <BreadcrumbBar onEnterApp={onEnterApp} />
+      {showThankYou && <ThankYouBanner onDismiss={() => setShowThankYou(false)} onEnterApp={onEnterApp} />}
+      {show404 && <NotFound404Banner path={typeof window !== "undefined" ? window.location.pathname || "#404" : "/404"} onResetHome={() => { setShow404(false); if (typeof window !== "undefined") window.history.replaceState({}, "", "/"); }} onEnterApp={onEnterApp} />}
+
       {/* Hero */}
       <header id="top" className="relative z-10 max-w-6xl mx-auto px-5 md:px-8 pt-20 md:pt-28">
         <h1 className={`${display} max-w-[13ch] text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-[4.75rem]`}>
@@ -727,7 +742,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         <div className="relative max-w-6xl mx-auto px-3 md:px-8">
           <StudioFrame />
           <p className="mt-4 px-2 md:px-0 text-[13px] text-slate-400">
-            Live, in your browser. Free and open source under MIT, nothing to install.
+            Live, in your browser. Free in your browser and source-available under PolyForm Noncommercial 1.0.0, nothing to install.
           </p>
         </div>
       </section>
@@ -969,6 +984,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                   </li>
                 ))}
               </ul>
+              <label className="mt-6 flex items-start gap-2 text-[11px] text-slate-300 cursor-pointer bg-dark-950/90 p-2.5 rounded-lg border border-slate-800">
+                <input type="checkbox" checked={distanceSalesConsent} onChange={e => { setDistanceSalesConsent(e.target.checked); if (e.target.checked) setCheckoutConsentError(null); }} className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400" />
+                <span><button type="button" onClick={() => onOpenLegal?.('distance-sales')} className="text-cyan-400 hover:underline font-semibold">Ön Bilgilendirme Formu &amp; Mesafeli Satış Sözleşmesi</button>&apos;ni okudum, onaylıyorum.</span>
+              </label>
+              {checkoutConsentError && <p className="mt-2 text-[11px] text-rose-300">{checkoutConsentError}</p>}
               <a
                 href={
                   buildLemonCheckoutUrl(user, false, 'landing_pricing') ||
@@ -976,7 +996,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => {
+                onClick={e => {
+                  if (!distanceSalesConsent) {
+                    e.preventDefault();
+                    setCheckoutConsentError('Ödeme adımına geçmeden önce Ön Bilgilendirme ve Mesafeli Satış Sözleşmesi kutusunu onaylayın.');
+                    return;
+                  }
+                  setCheckoutConsentError(null);
+                  saveUserConsentState({ preCheckoutDistanceSalesConsent: true });
                   const attribution = getFirstTouchAttribution();
                   telemetry.track('Checkout Clicked', {
                     tier: 'pro',
@@ -1020,6 +1047,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         </div>
       </section>
 
+      <PreLaunchSections20 onEnterApp={onEnterApp} onOpenPricing={onOpenPricing} onSelectBlueprint={onSelectBlueprint} onOpenLegal={onOpenLegal} />
+
       {/* Closing */}
       <section className="relative z-10 border-t border-slate-800/70 overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
@@ -1060,16 +1089,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <Cpu className="w-3 h-3 text-slate-950" aria-hidden="true" />
             </span>
             <span className="text-slate-200 font-medium">GraphFlow</span>
-            <span>© 2026 · MIT licensed</span>
+            <span>© 2026 · PolyForm Noncommercial 1.0.0</span>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-4">
             <button onClick={onEnterApp} className="hover:text-slate-50 transition-colors">Studio</button>
             <button onClick={onOpenPricing} className="hover:text-slate-50 transition-colors">Pricing</button>
+            <button type="button" onClick={() => onOpenLegal?.('kvkk')} className="hover:text-slate-50 transition-colors">KVKK Aydınlatma</button>
+            <button type="button" onClick={() => onOpenLegal?.('privacy')} className="hover:text-slate-50 transition-colors">Gizlilik Politikası</button>
+            <button type="button" onClick={() => onOpenLegal?.('distance-sales')} className="hover:text-slate-50 transition-colors">Mesafeli Satış</button>
+            <button type="button" onClick={() => onOpenLegal?.('breach-72h')} className="hover:text-slate-50 transition-colors">72s Veri İhlali</button>
+            <button type="button" onClick={() => setShowThankYou(true)} className="hover:text-slate-50 transition-colors">Teşekkür Sayfası</button>
+            <button type="button" onClick={() => setShow404(true)} className="hover:text-slate-50 transition-colors">404</button>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-slate-50 transition-colors">GitHub</a>
             <a href="mailto:berkeakdemir5855@gmail.com" className="hover:text-slate-50 transition-colors">Contact</a>
           </div>
         </div>
       </footer>
+      <StickyMobileCtaBar onEnterApp={onEnterApp} onOpenPricing={onOpenPricing} />
     </div>
   );
 };

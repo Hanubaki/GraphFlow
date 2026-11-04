@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Mona Sans';
+  src: url('/fonts/mona-sans-var.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 }
@@ -71,9 +103,7 @@ code, pre {
   }
 }
 
-/* Accessibility: selective reduced-motion path (WCAG 2.3.3).
-   Remove spatial movement and decorative loops; keep color/opacity feedback and
-   slow down (not erase) motion that carries meaning: edge flow direction and loading. */
+/* Accessibility: selective reduced-motion path (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
@@ -85,7 +115,6 @@ code, pre {
     transition-property: color, background-color, border-color, outline-color, opacity, fill, stroke !important;
   }
 
-  /* Decorative loops and entrance motion: off */
   .animate-ping,
   .animate-in,
   .animate-fadeIn,
@@ -93,13 +122,11 @@ code, pre {
     animation: none !important;
   }
 
-  /* Status pulses: static dot; the status color still carries the state */
   .animate-pulse,
   .animate-pulse-slow {
     animation: none !important;
   }
 
-  /* Meaningful motion: keep, but calmer */
   .animate-flow-dash {
     animation-duration: 6s !important;
   }

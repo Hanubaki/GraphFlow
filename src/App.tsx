@@ -18,6 +18,8 @@ const EmbedModal = React.lazy(() => import('./components/Modals/EmbedModal').the
 const AnalyticsModal = React.lazy(() => import('./components/Modals/AnalyticsModal').then(m => ({ default: m.AnalyticsModal })));
 const CommandPaletteModal = React.lazy(() => import('./components/Modals/CommandPaletteModal').then(m => ({ default: m.CommandPaletteModal })));
 const LiveTelemetryModal = React.lazy(() => import('./components/Modals/LiveTelemetryModal').then(m => ({ default: m.LiveTelemetryModal })));
+const LegalComplianceModal = React.lazy(() => import('./components/Modals/LegalComplianceModal').then(m => ({ default: m.LegalComplianceModal })));
+import type { LegalTab } from './components/Modals/LegalComplianceModal';
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
@@ -38,7 +40,7 @@ import {
   parseLiveTelemetryPayload,
 } from './services/liveTelemetry';
 
-export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | 'commandPalette' | 'liveTelemetry' | null;
+export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | 'commandPalette' | 'liveTelemetry' | 'legal' | null;
 
 export const App: React.FC = () => {
   const {
@@ -82,6 +84,11 @@ export const App: React.FC = () => {
   });
 
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [legalTab, setLegalTab] = useState<LegalTab>('kvkk');
+  const handleOpenLegal = useCallback((tab: LegalTab = 'kvkk') => {
+    setLegalTab(tab);
+    setActiveModal('legal');
+  }, []);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState<boolean>(false);
 
@@ -430,20 +437,32 @@ export const App: React.FC = () => {
           onEnterApp={() => setViewMode('studio')}
           onOpenPricing={() => setActiveModal('pricing')}
           onOpenAuth={() => setActiveModal('auth')}
+          onOpenLegal={handleOpenLegal}
           onSelectBlueprint={template => {
             handleSelectTemplate(template);
             setViewMode('studio');
           }}
         />
-        <PricingModal
-          isOpen={activeModal === 'pricing'}
-          onClose={() => setActiveModal(null)}
-          onOpenAuth={() => setActiveModal('auth')}
-        />
-        <AuthModal
-          isOpen={activeModal === 'auth'}
-          onClose={() => setActiveModal(null)}
-        />
+        <React.Suspense fallback={null}>
+          <PricingModal
+            isOpen={activeModal === 'pricing'}
+            onClose={() => setActiveModal(null)}
+            onOpenAuth={() => setActiveModal('auth')}
+            onOpenLegal={handleOpenLegal}
+          />
+          <AuthModal
+            isOpen={activeModal === 'auth'}
+            onClose={() => setActiveModal(null)}
+            onOpenLegal={handleOpenLegal}
+          />
+          {activeModal === 'legal' && (
+            <LegalComplianceModal
+              isOpen={true}
+              initialTab={legalTab}
+              onClose={() => setActiveModal(null)}
+            />
+          )}
+        </React.Suspense>
       </>
     );
   }
@@ -600,12 +619,22 @@ export const App: React.FC = () => {
             isOpen={true}
             onClose={() => setActiveModal(null)}
             onOpenAuth={() => setActiveModal('auth')}
+            onOpenLegal={handleOpenLegal}
           />
         )}
 
         {activeModal === 'auth' && (
           <AuthModal
             isOpen={true}
+            onClose={() => setActiveModal(null)}
+            onOpenLegal={handleOpenLegal}
+          />
+        )}
+
+        {activeModal === 'legal' && (
+          <LegalComplianceModal
+            isOpen={true}
+            initialTab={legalTab}
             onClose={() => setActiveModal(null)}
           />
         )}

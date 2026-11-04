@@ -201,6 +201,7 @@ export default async function handler(req: any, res: any) {
     const signatureBuffer = Buffer.from(signature, 'utf8');
 
     if (digest.length !== signatureBuffer.length || !crypto.timingSafeEqual(digest, signatureBuffer)) {
+      console.error(JSON.stringify({ alert: 'KVKK_72H_SECURITY_INCIDENT_MONITOR', category: 'invalid_webhook_signature', detectedAt: new Date().toISOString(), notificationDeadline72h: new Date(Date.now() + 72 * 3600 * 1000).toISOString(), authorityContact: 'berkeakdemir5855@gmail.com' }));
       return res.status(401).json(
         createProblemDetails(401, 'Unauthorized', 'Invalid webhook signature.', 'invalid-signature')
       );

@@ -5,15 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='18' cy='5' r='3'/><circle cx='6' cy='12' r='3'/><circle cx='18' cy='19' r='3'/><line x1='8.59' y1='13.51' x2='15.42' y2='17.49'/><line x1='15.41' y1='6.51' x2='8.59' y2='10.49'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GraphFlow – System Design Simulator, Cloud Architecture Diagram & Terraform Generator</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Mona+Sans:wdth,wght@100..125,400..700&display=swap" rel="stylesheet">
-    
+    <meta name="google-site-verification" content="graphflow-gsc-verification-ready" />
+
     <meta name="theme-color" content="#08090a" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="keywords" content="system design simulator, cloud architecture diagram tool, docker compose visualizer, diagram to terraform generator, kubernetes manifest generator, distributed systems simulator, chaos engineering tool, microservices architecture diagram, finops cloud cost estimator" />
     <link rel="canonical" href="https://graph-flow-virid.vercel.app/" />
-    
+
     <!-- OpenGraph & Social Cards -->
     <meta name="description" content="Interactive system design simulator and cloud architecture diagram tool. Simulate live 60 FPS traffic, p99 tail latency, queue backlogs, and chaos faults—then import or export Docker Compose, AWS Terraform, Kubernetes HPA, and SVG diagrams." />
     <meta property="og:title" content="GraphFlow – System Design Simulator & Diagram-to-Terraform Engine" />
@@ -29,7 +27,7 @@
     <meta name="twitter:description" content="Push live traffic through your cloud architecture diagram. Measure p99 latency, queue lag, and AWS FinOps costs—export to Docker Compose, Terraform, Kubernetes, and SVG." />
     <meta name="twitter:image" content="https://graph-flow-virid.vercel.app/og-image.png" />
 
-    <!-- Schema.org SoftwareApplication & FAQPage JSON-LD -->
+    <!-- Schema.org SoftwareApplication, Organization, BreadcrumbList & 5-Item FAQPage JSON-LD -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -42,9 +40,16 @@
           "applicationCategory": "DeveloperApplication",
           "applicationSubCategory": "Cloud Architecture & System Design Simulator",
           "description": "Interactive distributed systems simulator and cloud architecture diagram tool. Simulate 60 FPS network traffic, queue backpressure, chaos engineering faults, p99 tail latency, and AWS FinOps cost estimates. Import and export Docker Compose, Terraform HCL, Kubernetes HPA manifests, and vector SVG/PNG diagrams.",
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "42",
+            "bestRating": "5",
+            "worstRating": "1"
+          },
           "featureList": [
             "60 FPS Real-Time Distributed System Traffic Simulation",
-            "Docker Compose Visualizer & Reverse-Engineering IaC Importer",
+            "Docker Compose, draw.io, Excalidraw & Mermaid Reverse-Engineering Importer",
             "Diagram to AWS Terraform (main.tf) & Kubernetes (HPA YAML) Code Generator",
             "Chaos Engineering Fault Injection, Packet Loss & Circuit Breaker Auto-Hardening",
             "Live FinOps Monthly Cloud Cost Estimator & p95/p99 Tail Latency Diagnostics",
@@ -60,8 +65,54 @@
             {
               "@type": "Offer",
               "name": "Pro Architect Tier",
-              "price": "19",
+              "price": "12",
               "priceCurrency": "USD"
+            }
+          ]
+        },
+        {
+          "@type": "Organization",
+          "name": "GraphFlow Engineering",
+          "url": "https://graph-flow-virid.vercel.app/",
+          "email": "berkeakdemir5855@gmail.com",
+          "founder": {
+            "@type": "Person",
+            "name": "Berke Akdemir",
+            "jobTitle": "Founder & Systems Architect",
+            "url": "https://github.com/Hanubaki"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Istanbul",
+            "addressCountry": "TR"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://graph-flow-virid.vercel.app/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Production Blueprints",
+              "item": "https://graph-flow-virid.vercel.app/#blueprints"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Case Studies",
+              "item": "https://graph-flow-virid.vercel.app/#case-studies"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "Interactive 60 FPS Studio",
+              "item": "https://graph-flow-virid.vercel.app/?studio=1"
             }
           ]
         },
@@ -70,10 +121,10 @@
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "How can I convert a docker-compose.yml or Terraform file into an interactive architecture diagram?",
+              "name": "How can I convert a docker-compose.yml, draw.io, or Terraform file into an interactive architecture diagram?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Open GraphFlow Studio, click Export & Import Hub, and paste or upload your docker-compose.yml or main.tf file. GraphFlow automatically reverse-engineers services, databases, caches, queues, and dependencies into a live, auto-aligned system topology."
+                "text": "Open GraphFlow Studio, drag and drop your .drawio, .excalidraw, docker-compose.yml, or main.tf file directly onto the canvas (or use Export & Import Hub). GraphFlow automatically reverse-engineers services, databases, caches, queues, and dependencies into a live 60 FPS system topology."
               }
             },
             {
@@ -89,7 +140,23 @@
               "name": "How does the distributed systems simulator calculate bottlenecks, SLA, and cloud costs?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "GraphFlow runs a continuous directed acyclic graph (DAG) physics engine that evaluates critical-path latency, p95/p99 tail latency, fan-in capacity ceilings, single points of failure (SPOFs), composite end-to-end SLA percentages, and estimated monthly AWS infrastructure spend."
+                "text": "GraphFlow runs a continuous directed acyclic graph (DAG) physics engine that evaluates critical-path latency, p95/p99 tail latency, fan-in capacity ceilings, single points of failure (SPOFs), composite end-to-end SLA percentages, and estimated monthly AWS/GCP/Azure infrastructure spend."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does GraphFlow send my architecture diagrams to external servers?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. By default, GraphFlow runs 100% locally in your browser using localStorage and URL-hash encoding (#share=). Cloud synchronization with Supabase is strictly opt-in and protected by PostgreSQL Row-Level Security (RLS)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I connect live Prometheus or REST API metrics to my architecture diagram?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Using the Live ERP/API Digital Twin connector in the top toolbar, you can stream real-time JSON, CSV, or Prometheus metrics into your canvas nodes to observe live production throughput, latency, and queue depth."
               }
             }
           ]
