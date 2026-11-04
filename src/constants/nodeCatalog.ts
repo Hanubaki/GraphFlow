@@ -1,4 +1,23 @@
-import { NodeType } from '../types/graph';
+import { NodeType, GraphNode } from '../types/graph';
+
+/**
+ * Checks whether an existing canvas node (such as one preloaded from a template)
+ * belongs to the 10 advanced Cloud / AI / Security components that require a free email sign-in to customize.
+ */
+export function isNodeLockedForGuest(node: Pick<GraphNode, 'type' | 'iconName' | 'title'>): boolean {
+  if (node.type === 'serverless' || node.type === 'storage' || node.type === 'external') {
+    return true;
+  }
+  if (
+    node.iconName === 'Smartphone' ||
+    node.iconName === 'ShieldCheck' ||
+    node.iconName === 'Layers' ||
+    node.iconName === 'AlertTriangle'
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export interface CatalogItem {
   type: NodeType;

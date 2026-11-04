@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TEMPLATES } from '../constants/templates';
+import { isNodeLockedForGuest } from '../constants/nodeCatalog';
 
 describe('Architecture Templates Verification Suite', () => {
   it('contains at least 4 production architecture presets', () => {
@@ -46,5 +47,16 @@ describe('Architecture Templates Verification Suite', () => {
     expect(titles).toContain('Primary DB + Outbox');
     expect(titles).toContain('Kafka Event Broker');
     expect(titles).toContain('Dead-Letter Queue (DLQ)');
+  });
+
+  it('gates 4 advanced/enterprise templates and existing advanced template nodes behind free email sign-in', () => {
+    const gatedTemplates = TEMPLATES.filter(t => t.requiresAuth);
+    const starterTemplates = TEMPLATES.filter(t => !t.requiresAuth);
+    expect(starterTemplates.length).toBe(3);
+    expect(gatedTemplates.length).toBe(4);
+
+    const defaultTemplate = TEMPLATES[0];
+    const lockedNodesInDefault = defaultTemplate.nodes.filter(n => isNodeLockedForGuest(n));
+    expect(lockedNodesInDefault.length).toBeGreaterThanOrEqual(2);
   });
 });

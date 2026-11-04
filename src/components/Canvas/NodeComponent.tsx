@@ -1,7 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { GraphNode } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
-import { Power, Clock, ShieldCheck, Zap, Copy, Trash2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { isNodeLockedForGuest } from '../../constants/nodeCatalog';
+import { Power, Clock, ShieldCheck, Zap, Copy, Trash2, Lock } from 'lucide-react';
 import {
   calculateEffectiveLatency,
   calculateNodeUtilizationPercent,
@@ -38,6 +40,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
   onUpdate,
   onDuplicate,
 }) => {
+  const { user } = useAuth();
+  const isGuestLockedNode = !user && isNodeLockedForGuest(node);
   const [isDragging, setIsDragging] = useState(false);
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
@@ -314,6 +318,15 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
 
           {/* Status & Circuit Breaker Badge */}
           <div className="flex items-center gap-1.5 shrink-0" title={`Status: ${statusConfig.label}`}>
+            {isGuestLockedNode && (
+              <span
+                className="px-1 py-0.5 rounded text-[9px] font-mono font-semibold bg-cyan-950/80 text-cyan-300 border border-cyan-700/50 inline-flex items-center gap-0.5"
+                title="Sign in with email (Free) to edit & scale this advanced component"
+              >
+                <Lock className="w-2.5 h-2.5" />
+                <span>Free</span>
+              </span>
+            )}
             {node.circuitBreaker === 'open' && (
               <span className="px-1 py-0.5 rounded text-[11px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
                 CB OPEN

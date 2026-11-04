@@ -85,6 +85,7 @@ export interface ArchitectureTemplate {
   tags: string[];
   nodes: GraphNode[];
   edges: GraphEdge[];
+  requiresAuth?: boolean;
 }
 
 export interface Command {

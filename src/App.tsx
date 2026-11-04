@@ -24,9 +24,9 @@ import type { LegalTab } from './components/Modals/LegalComplianceModal';
 import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
-import { CatalogItem } from './constants/nodeCatalog';
+import { CatalogItem, isNodeLockedForGuest } from './constants/nodeCatalog';
 import { TEMPLATES } from './constants/templates';
-import { GraphNode, GraphEdge } from './types/graph';
+import { GraphNode, GraphEdge, ArchitectureTemplate } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
 import { SavedProject, parseShareUrl } from './services/projectStorage';
 import { CloudProject } from './types/auth';
@@ -86,6 +86,7 @@ export const App: React.FC = () => {
 
   const { user } = useAuth();
   const pendingCatalogItemRef = useRef<{ item: CatalogItem; x?: number; y?: number } | null>(null);
+  const pendingTemplateRef = useRef<ArchitectureTemplate | null>(null);
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [legalTab, setLegalTab] = useState<LegalTab>('kvkk');
   const handleOpenLegal = useCallback((tab: LegalTab = 'kvkk') => {
@@ -391,6 +392,31 @@ export const App: React.FC = () => {
     telemetry.track('Node Created', { type: item.type, canvasNodeCount: nodesRef.current.length });
   }, [addNode, user]);
 
+  // Gate user-initiated edits/duplications on locked template nodes behind free email sign-in
+  const handleUserUpdateNode = useCallback(
+    (id: string, updates: Partial<GraphNode>) => {
+      const target = nodesRef.current.find(n => n.id === id);
+      if (target && !user && isNodeLockedForGuest(target)) {
+        setActiveModal('auth');
+        return;
+      }
+      updateNode(id, updates);
+    },
+    [updateNode, user]
+  );
+
+  const handleUserDuplicateNode = useCallback(
+    (id: string) => {
+      const target = nodesRef.current.find(n => n.id === id);
+      if (target && !user && isNodeLockedForGuest(target)) {
+        setActiveModal('auth');
+        return;
+      }
+      duplicateNode(id);
+    },
+    [duplicateNode, user]
+  );
+
   // Delete node with audio feedback & telemetry
   const handleDeleteNode = useCallback((id: string) => {
     removeNode(id);
@@ -398,13 +424,18 @@ export const App: React.FC = () => {
     telemetry.track('Node Removed', { canvasNodeCount: Math.max(0, nodesRef.current.length) });
   }, [removeNode]);
 
-  // Load architecture template with success chime and viewport auto-fit
-  const handleSelectTemplate = useCallback((template: any) => {
+  // Load architecture template with success chime and viewport auto-fit (gates requiresAuth templates for guests)
+  const handleSelectTemplate = useCallback((template: ArchitectureTemplate) => {
+    if (template.requiresAuth && !user) {
+      pendingTemplateRef.current = template;
+      setActiveModal('auth');
+      return;
+    }
     loadTemplate(template);
     handleAutoCenter(template.nodes);
     soundFx.playSuccess();
     telemetry.track('Preset Loaded', { templateId: template.id, nodeCount: template.nodes.length });
-  }, [loadTemplate, handleAutoCenter]);
+  }, [loadTemplate, handleAutoCenter, user]);
 
   // Import JSON / IaC graph (records undo snapshot & supports 'replace' or 'merge' alongside existing canvas)
   const handleImportGraph = useCallback(
@@ -452,8 +483,8 @@ export const App: React.FC = () => {
           onOpenAuth={() => setActiveModal('auth')}
           onOpenLegal={handleOpenLegal}
           onSelectBlueprint={template => {
-            handleSelectTemplate(template);
             setViewMode('studio');
+            handleSelectTemplate(template);
           }}
         />
         <React.Suspense fallback={null}>
@@ -467,6 +498,16 @@ export const App: React.FC = () => {
             isOpen={activeModal === 'auth'}
             onClose={() => setActiveModal(null)}
             onOpenLegal={handleOpenLegal}
+            onSuccess={() => {
+              const pendingTmpl = pendingTemplateRef.current;
+              if (pendingTmpl) {
+                pendingTemplateRef.current = null;
+                loadTemplate(pendingTmpl);
+                handleAutoCenter(pendingTmpl.nodes);
+                soundFx.playSuccess();
+              }
+              setViewMode('studio');
+            }}
           />
           {activeModal === 'legal' && (
             <LegalComplianceModal
@@ -536,10 +577,8 @@ export const App: React.FC = () => {
               onDeleteEdge={removeEdge}
               onAddEdge={addEdge}
               onAddNodeAt={handleAddNodeAt}
-              onUpdateNode={updateNode}
-              onDuplicateNode={id => {
-                duplicateNode(id);
-              }}
+              onUpdateNode={handleUserUpdateNode}
+              onDuplicateNode={handleUserDuplicateNode}
               onImportGraph={handleImportGraph}
               onResetZoom={() => handleAutoCenter()}
               isMobileInspectorOpen={isMobileInspectorOpen}
@@ -553,7 +592,7 @@ export const App: React.FC = () => {
           selectedEdge={selectedEdge}
           nodes={nodes}
           edges={edges}
-          onUpdateNode={updateNode}
+          onUpdateNode={handleUserUpdateNode}
           onUpdateEdge={updateEdge}
           onDeleteNode={handleDeleteNode}
           onDeleteEdge={removeEdge}
@@ -645,6 +684,13 @@ export const App: React.FC = () => {
             onClose={() => setActiveModal(null)}
             onOpenLegal={handleOpenLegal}
             onSuccess={() => {
+              const pendingTmpl = pendingTemplateRef.current;
+              if (pendingTmpl) {
+                pendingTemplateRef.current = null;
+                loadTemplate(pendingTmpl);
+                handleAutoCenter(pendingTmpl.nodes);
+                soundFx.playSuccess();
+              }
               const pending = pendingCatalogItemRef.current;
               if (pending) {
                 pendingCatalogItemRef.current = null;

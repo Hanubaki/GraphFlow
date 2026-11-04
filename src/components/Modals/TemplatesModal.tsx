@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { TEMPLATES } from '../../constants/templates';
 import { ArchitectureTemplate } from '../../types/graph';
-import { LayoutTemplate, X, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { LayoutTemplate, X, ArrowRight, Lock } from 'lucide-react';
 
 interface TemplatesModalProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
   onClose,
   onSelectTemplate,
 }) => {
+  const { user } = useAuth();
+  const isUnlocked = Boolean(user);
+
   // Accessibility: close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,7 +45,11 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
             </div>
             <div>
               <h2 id="templates-modal-title" className="text-base font-bold text-slate-100">Architecture Templates</h2>
-              <p className="text-xs text-slate-400">Load production-grade distributed architecture presets</p>
+              <p className="text-xs text-slate-400">
+                {isUnlocked
+                  ? 'All 7 production-grade distributed architecture presets unlocked'
+                  : '3 starter templates open • Sign in with email (Free) to unlock 4 Expert & Enterprise blueprints'}
+              </p>
             </div>
           </div>
           <button
@@ -55,55 +63,71 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
 
         {/* Templates List */}
         <div className="p-4 overflow-y-auto space-y-3">
-          {TEMPLATES.map(template => (
-            <div
-              key={template.id}
-              className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 hover:border-cyan-500/50 hover:bg-slate-900/50 transition-all flex flex-col justify-between gap-3 group"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <h3 className="text-sm font-semibold text-slate-100 group-hover:text-cyan-300 transition-colors">
-                    {template.name}
-                  </h3>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800/60 text-slate-300">
-                    {template.difficulty}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                  {template.description}
-                </p>
+          {TEMPLATES.map(template => {
+            const isLocked = Boolean(template.requiresAuth && !isUnlocked);
+            return (
+              <div
+                key={template.id}
+                className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 hover:border-cyan-500/50 hover:bg-slate-900/50 transition-all flex flex-col justify-between gap-3 group"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="text-sm font-semibold text-slate-100 group-hover:text-cyan-300 transition-colors">
+                      {template.name}
+                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      {isLocked && (
+                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border border-cyan-700/50 bg-cyan-950/60 text-cyan-300 inline-flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>Free Email</span>
+                        </span>
+                      )}
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800/60 text-slate-300">
+                        {template.difficulty}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                    {template.description}
+                  </p>
 
-                {/* Tags & Component Count */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
-                    {template.nodes.length} Nodes • {template.edges.length} Connections
-                  </span>
-                  {template.tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="text-[11px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/60"
-                    >
-                      {tag}
+                  {/* Tags & Component Count */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+                      {template.nodes.length} Nodes • {template.edges.length} Connections
                     </span>
-                  ))}
+                    {template.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="text-[11px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/60"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-2 border-t border-slate-800/80 flex justify-end">
+                  <button
+                    onClick={() => {
+                      onSelectTemplate(template);
+                      onClose();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all group-hover:gap-2 ${
+                      isLocked
+                        ? 'bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/60 text-cyan-200 shadow-black/40'
+                        : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-950'
+                    }`}
+                  >
+                    {isLocked && <Lock className="w-3 h-3 text-cyan-400" />}
+                    <span>{isLocked ? 'Unlock with Email (Free)' : 'Load Preset'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
-
-              {/* Action Button */}
-              <div className="pt-2 border-t border-slate-800/80 flex justify-end">
-                <button
-                  onClick={() => {
-                    onSelectTemplate(template);
-                    onClose();
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md shadow-cyan-950 transition-all group-hover:gap-2"
-                >
-                  <span>Load Preset</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
