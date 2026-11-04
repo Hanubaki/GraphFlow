@@ -9,7 +9,7 @@ import { createBezierPath } from '../../utils/geometry';
 import { parseInfrastructureToTopology } from '../../utils/importTopology';
 import { useSimulationPackets, useSimulationControls } from '../../context/SimulationContext';
 import { useMultiplayer } from '../../context/MultiplayerContext';
-import { Maximize2, Sliders, Zap } from 'lucide-react';
+import { Maximize2, Share2, Sliders, Zap } from 'lucide-react';
 
 const EMPTY_PACKETS: DataPacket[] = [];
 
@@ -592,6 +592,37 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
               <span>Fit</span>
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={async () => {
+              const shareUrl = window.location.href;
+              try {
+                await navigator.clipboard?.writeText(shareUrl);
+              } catch {
+                // Ignore clipboard restriction on mobile webview
+              }
+              if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                try {
+                  await navigator.share({
+                    title: 'GraphFlow — Live Architecture Simulation',
+                    text: 'Open this live 60 FPS architecture topology on your desktop:',
+                    url: shareUrl,
+                  });
+                  return;
+                } catch {
+                  // Ignore share sheet cancel
+                }
+              }
+              window.location.href = `mailto:?subject=${encodeURIComponent('GraphFlow — Open Architecture on Desktop')}&body=${encodeURIComponent(`Open this live 60 FPS architecture topology on your laptop/desktop:\n\n${shareUrl}`)}`;
+            }}
+            className="h-7 px-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 text-[10px] font-semibold inline-flex items-center gap-1"
+            title="Send live topology link to your Desktop / Laptop"
+            aria-label="Send link to Desktop"
+          >
+            <Share2 className="w-3 h-3 text-cyan-400" />
+            <span>PC</span>
+          </button>
 
           {onToggleMobileInspector && (
             <button

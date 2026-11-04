@@ -480,22 +480,58 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
 export const StickyMobileCtaBar: React.FC<{
   onEnterApp: () => void;
   onOpenPricing: () => void;
-}> = ({ onEnterApp, onOpenPricing }) => (
-  <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-800 bg-dark-950/95 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-2">
-    <button
-      type="button"
-      onClick={onEnterApp}
-      className="flex-1 h-10 px-3 rounded-lg bg-slate-50 text-slate-950 text-xs font-bold inline-flex items-center justify-center gap-1.5"
-    >
-      <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
-      <span>Open 60 FPS Studio</span>
-    </button>
-    <button
-      type="button"
-      onClick={onOpenPricing}
-      className="h-10 px-3.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 text-xs font-semibold"
-    >
-      Pro / Pricing
-    </button>
-  </div>
-);
+}> = ({ onEnterApp, onOpenPricing }) => {
+  const [sentPcLink, setSentPcLink] = useState(false);
+
+  const handleSendToDesktop = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = 'GraphFlow — 60 FPS Distributed System Simulator';
+    const shareText = 'Open on desktop to import docker-compose / Terraform / draw.io and run 60 FPS chaos simulations:';
+    try {
+      await navigator.clipboard?.writeText(shareUrl);
+    } catch {
+      // Ignore clipboard failures on restricted webviews
+    }
+    setSentPcLink(true);
+    setTimeout(() => setSentPcLink(false), 3000);
+
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        return;
+      } catch {
+        // User dismissed share sheet or unsupported
+      }
+    }
+    window.location.href = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`;
+  };
+
+  return (
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-800 bg-dark-950/95 backdrop-blur-md px-3 py-2.5 flex items-center justify-between gap-2">
+      <button
+        type="button"
+        onClick={onEnterApp}
+        className="flex-1 h-10 px-3 rounded-lg bg-slate-50 text-slate-950 text-xs font-bold inline-flex items-center justify-center gap-1.5"
+      >
+        <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
+        <span>Open Studio</span>
+      </button>
+      <button
+        type="button"
+        onClick={handleSendToDesktop}
+        className="h-10 px-3 rounded-lg border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 text-xs font-semibold inline-flex items-center gap-1.5"
+        title="Send link to your Desktop / Laptop via Share or Email"
+      >
+        <Mail className="w-3.5 h-3.5" />
+        <span>{sentPcLink ? 'Link Copied!' : 'Send to PC'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onOpenPricing}
+        className="h-10 px-2.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 text-xs font-semibold"
+      >
+        Pro
+      </button>
+    </div>
+  );
+};
