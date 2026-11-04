@@ -125,3 +125,26 @@
 
 
 - **30 Ekim 2026 Güncellemesi (`#share=` Etkileşim ve Sürükleme Düzeltmesi):** Sıkıştırılmış `Electron` `.drawio` (`RFC 1951` raw DEFLATE) desteği, okunabilir `#share=Node_A~Node_B` URL yapısı ve paylaşılan `#share=` linklerinde düğüm sürükleme (`moveNode`), bileşen ekleme (`addNode`) ve silme (`removeNode`) işlemlerinin `useEffect` tarafından sıfırlanmasını önleyen `hasBootedUrlRef` + `useGraphStore` referans sabitlemesi canlıya alındı.
+
+- **30 Ekim 2026 — `draw.io` & Mikroservis Mimarisi Hedefli Birebir GitHub Canlı Topoloji Gönderimleri (5/5 Tamamlandı):**
+  1. `iancooper` (`Composite Microservice.drawio`) — Canlı `#share=` simülasyon linki ve ekran görüntüsü ile iletildi.
+  2. `darioajr/Livro-Dominando-Kafka-De-Verdade` (`cqrs-kafka-complete-architecture.drawio`) — Canlı CQRS + Kafka `#share=` linki iletildi.
+  3. `irtiza07/public_api` (`kafka-llm-processing.drawio`) — Canlı Kafka + OpenAI `#share=` linki iletildi.
+  4. `jha-captech/Go-Microservice-Template` (`Go Microservice Arch.drawio`) — Canlı API Gateway + Lambda + Go `#share=` linki iletildi.
+  5. `rezamobaraki/catalog-pipeline` (`TASK-2-KAFKA-DESIGN.drawio`) — Canlı NGINX + FastAPI + Kafka + Redis `#share=` linki iletildi.
+
+- **4 Kasım 2026 — Uzak Depo Senkronizasyonu (`a2d7f3f`):** Diğer bilgisayarda yapılan son geliştirmeler (`fix(studio): autosave canvas ahead of template URL, cascade DB down failures, and dynamic FinOps/health labels` — 7 dosya, +508/-70 satır) bu bilgisayara çekildi (`git pull origin main`), `tsc --noEmit` ve `simulationPhysics.test.ts` (10/10 test) doğrulandı.
+- **4 Kasım 2026 — Global Agent Eklenti Paketi Kurulumu (`~/.gemini/config/plugins`):** Mevcut `ponytail` eklentisine ek olarak `Graphify` (`Graphify-Labs/graphify`), Addy Osmani'nin `Agent Skills` (`addyosmani/agent-skills` — `/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`) ve `Claudex Loop` (`chaseai-yt/claudex-loop` — 4 aşamalı çapraz model plan ve kod denetimi) eklentileri bu bilgisayara kuruldu.
+- **4 Kasım 2026 — 20 Maddelik Yayına Alma Paketi & 6 Maddelik KVKK / Veri Güvenliği Denetimi ve Canlı İyileştirmeleri (`src/components/Landing/LandingSections20.tsx`, `src/components/Modals/LegalComplianceModal.tsx`, `src/utils/complianceAudit.ts`, `public/fonts/*.woff2`, `index.html`, `vercel.json`, `supabase/schema.sql`, `api/webhook.ts`):**
+  - **20 Maddelik Lansman Listesi Tamamlandı:** 404 Sayfası (`#404` & bilinmeyen rota yakalayıcı), Teşekkür Sayfası (`#thank-you` / `?checkout=success`), Sayfa İşaret Yolu (`BreadcrumbBar` + `BreadcrumbList` JSON-LD), 3 Gerçek Vaka Çalışması (`#case-studies`), Mühendis Yorumları (`#testimonials`), 5 Adet Etkileşimli SSS (`#faq` + 5 maddeli `FAQPage` JSON-LD), Mobil Sticky CTA Çubuğu (`StickyMobileCtaBar`), Google Search Console doğrulama meta etiketi, Kurucu/Takım Kartı (`alt` etiketli SVG portre) ve Google Harita / İstanbul Koordinat & İletişim Kartı eklendi.
+  - **6 Maddelik KVKK, RLS, Mesafeli Satış ve Yurt Dışı Font İzolasyonu:**
+    1. `AuthModal.tsx` içine KVKK Aydınlatma Metni linki ile **aydınlatmadan tamamen ayrı** Bulut Senkronizasyonu Açık Rıza ve **isteğe bağlı/ayrı** Ticari Elektronik İleti (İYS) onay kutuları eklendi.
+    2. `supabase/schema.sql` içinde `public.profiles` ve `public.projects` RLS politikaları (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) tamamlandı; `service_role` anahtarının yalnızca sunucu tarafı `api/webhook.ts` içinde `process.env` üzerinden okunduğu doğrulandı.
+    3. `api/webhook.ts` ve `src/utils/complianceAudit.ts` içine 72 saatlik KVKK/GDPR veri ihlali bildirim sayacı (`logSecurityIncident72h`) ve olay müdahale/başvuru ekranı (`LegalComplianceModal.tsx`) eklendi.
+    4. `PricingModal.tsx` ve `LandingPage.tsx` içine ödeme öncesi zorunlu **Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi** onay kutusu eklendi.
+    5. `Mona Sans` ve `IBM Plex Mono` fontları `public/fonts/*.woff2` altına indirilerek **kendi sunucumuzdan (self-hosted)** sunulacak şekilde `src/index.css` ve `index.html` güncellendi; Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com`) dış bağlantıları kaldırıldı.
+- **4 Kasım 2026 — Geliştirici Ortamı Kurulumu (`Python 3.12.8`, `pip 24.3.1`, `ADB v37.0.1` ve `Git 2.53.0`):** Bu bilgisayara resmi **Python 3.12.8 (64-bit)** + **pip 24.3.1** (`%LOCALAPPDATA%\Programs\Python\Python312`) ve **Google Android Platform Tools / ADB v37.0.1** (`%LOCALAPPDATA%\Android\platform-tools\adb.exe`) kuruldu; `git` ile birlikte Windows Store takma adının (`WindowsApps`) önüne geçecek şekilde kalıcı kullanıcı `PATH` ortam değişkenine tanımlandı.
+
+- **4 Kasım 2026 — Haftalık Büyüme & Denetim Güncellemesi:**
+  - `r/softwarearchitecture` paylaşımı sonrası GitHub deposu **11 Yıldız (Star)** ve **1 Fork** seviyesine ulaştı.
+  - Topluluktan gelen `Issue #1` (`License mismatch: README claims MIT, LICENSE file is PolyForm Noncommercial 1.0.0`) doğrultusunda `README.md` rozeti ve lisans açıklaması `PolyForm Noncommercial 1.0.0` ile senkronize edildi.

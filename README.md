@@ -4,7 +4,7 @@
 
 **Interactive distributed systems modeler and real-time data flow simulator.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm_Noncommercial_1.0.0-blue.svg?style=flat-square)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6.svg?style=flat-square)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg?style=flat-square)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?style=flat-square)](https://vite.dev/)
@@ -295,4 +295,4 @@ Issues and pull requests are tracked through the [GitHub issue tracker](https://
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is source-available for noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE).
