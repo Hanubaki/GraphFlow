@@ -157,7 +157,7 @@ export const App: React.FC = () => {
       if (liveStreamMode === 'url') {
         const targetUrl = liveEndpointUrl.trim();
         if (!targetUrl) {
-          setLiveStreamError('Canlı bağlantı için geçerli bir URL girin (örn. http://localhost:4040/metrics).');
+          setLiveStreamError('Enter a valid URL for live streaming (e.g. http://localhost:4040/metrics).');
           return;
         }
         try {
@@ -179,7 +179,7 @@ export const App: React.FC = () => {
           const parsed = parseLiveTelemetryPayload(rawText, currentNodes);
           if (parsed.updates.length === 0) {
             setLiveStreamError(
-              'Veri çekildi ancak tuvaldeki düğüm isimleriyle eşleşen departman/servis bulunamadı.'
+              'Telemetry fetched, but no matching service or node names were found on the canvas.'
             );
           } else {
             applyLiveMetricUpdates(parsed.updates);
@@ -188,7 +188,7 @@ export const App: React.FC = () => {
         } catch (err: any) {
           if (!cancelled) {
             setLiveStreamError(
-              `Bağlantı hatası (${targetUrl}): ${err?.message || 'Sunucuya ulaşılamadı. Logo ERP Bridge scriptinin çalıştığından emin olun.'}`
+              `Connection error (${targetUrl}): ${err?.message || 'Unable to reach endpoint. Verify your metrics server is running.'}`
             );
           }
         }

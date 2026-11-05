@@ -40,9 +40,9 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
       breachSummary.trim()
     );
     setBreachSubmitted(
-      `Olay Kaydı Oluşturuldu (${record.incidentId}). 72 Saatlik KVKK/GDPR Bildirim Son Tarihi: ${new Date(
+      `Incident Record Created (${record.incidentId}). 72-Hour GDPR/KVKK Notification Deadline: ${new Date(
         record.notificationDeadline72hIso
-      ).toLocaleString('tr-TR')}`
+      ).toUTCString()}`
     );
     setBreachSummary('');
   };
@@ -62,15 +62,15 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-[11px] font-semibold mb-1.5">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>KVKK · Gizlilik · Mesafeli Satış · 72s İhlal Prosedürü</span>
+              <span>GDPR / KVKK · Privacy · Terms of Sale · 72h Breach Response</span>
             </div>
             <h2 id="legal-modal-title" className="text-lg md:text-xl font-bold text-slate-100 tracking-tight">
-              Hukuki Metinler, Gizlilik Politikası ve Veri Güvenliği Merkezi
+              Legal Terms, Privacy Policy &amp; Data Security Center
             </h2>
           </div>
           <button
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label="Close"
             className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
@@ -80,10 +80,10 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
         {/* Navigation Tabs */}
         <div className="px-5 pt-3 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto bg-dark-950/60">
           {[
-            { id: 'kvkk' as LegalTab, label: 'KVKK Aydınlatma & Açık Rıza', icon: ShieldCheck },
-            { id: 'privacy' as LegalTab, label: 'Gizlilik Politikası (Privacy)', icon: FileText },
-            { id: 'distance-sales' as LegalTab, label: 'Ön Bilgilendirme & Mesafeli Satış', icon: Scale },
-            { id: 'breach-72h' as LegalTab, label: '72 Saat Veri İhlali & Başvuru', icon: AlertTriangle },
+            { id: 'kvkk' as LegalTab, label: 'Data Protection (GDPR / KVKK)', icon: ShieldCheck },
+            { id: 'privacy' as LegalTab, label: 'Privacy Policy', icon: FileText },
+            { id: 'distance-sales' as LegalTab, label: 'Terms of Sale & Refunds', icon: Scale },
+            { id: 'breach-72h' as LegalTab, label: '72h Breach Response & Requests', icon: AlertTriangle },
           ].map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -111,37 +111,37 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-2">
                 <h3 className="text-sm font-bold text-slate-100">
-                  1. 6698 Sayılı KVKK Kapsamında Aydınlatma Metni
+                  1. Data Protection Notice (GDPR &amp; KVKK Law No. 6698)
                 </h3>
                 <p>
-                  <strong>Veri Sorumlusu:</strong> GraphFlow Mimari Simülasyon Stüdyosu — Berke Akdemir
-                  (<code className="text-cyan-300">berkeakdemir5855@gmail.com</code>, İstanbul / Türkiye).
+                  <strong>Data Controller:</strong> GraphFlow Architecture Simulation Studio — Berke Akdemir
+                  (<code className="text-cyan-300">berkeakdemir5855@gmail.com</code>, Istanbul, Turkey).
                 </p>
                 <p>
-                  <strong>İşlenen Kişisel Veriler ve Amaç:</strong> Bulut senkronizasyonu ve hesap oluşturma özelliğini
-                  kullandığınızda e-posta adresiniz, kullanıcı kimliğiniz (`UUID`), abonelik kademeniz (`free/pro/team`)
-                  ve kaydettiğiniz sistem mimarisi diyagramları; sözleşmenin kurulması ve ifası (KVKK m.5/2-c) ile veri
-                  sorumlusunun meşru menfaati (m.5/2-f) hukuki sebeplerine dayanarak işlenmektedir.
+                  <strong>Processed Personal Data &amp; Purpose:</strong> When you create an account or enable cloud
+                  synchronization, your email address, user ID (`UUID`), subscription tier (`free/pro/team`), and saved
+                  system architecture topologies are processed strictly for contract execution and legitimate service
+                  operation.
                 </p>
                 <p>
-                  <strong>Yerel Çalışma Garantisi:</strong> Hesap açmadan stüdyoyu kullandığınızda çizimleriniz yalnızca
-                  tarayıcınızın yerel belleğinde (`localStorage`) tutulur ve sunucularımıza gönderilmez.
+                  <strong>Local-First Guarantee:</strong> When you use the studio without signing into cloud sync, your
+                  diagrams remain 100% in your browser&apos;s local storage (`localStorage`) and URL hash (`#share=`)
+                  and are never transmitted to external servers.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-2">
                 <h3 className="text-sm font-bold text-slate-100">
-                  2. Aydınlatmadan Bağımsız Açık Rıza Beyanı (Yurt Dışı Aktarım & İYS)
+                  2. Explicit Cloud Sync &amp; Optional Communications Consent
                 </h3>
                 <p>
-                  KVKK m.9 kapsamında bulut proje yedekleme (`Supabase Cloud`), küresel ödeme altyapısı (`Lemon Squeezy`)
-                  ve isteğe bağlı yapay zeka sentezleme (`Google Gemini API`) servislerinin yurt dışı sunucularında
-                  barındırılması nedeniyle, bulut hesap senkronizasyonu <strong>aydınlatma metninden ayrı olarak</strong>{' '}
-                  alınan açık rızanıza tabidir.
+                  Because cloud project backup (`Supabase Cloud`), global payment processing (`Lemon Squeezy`), and
+                  optional AI synthesis (`Google Gemini API`) operate on distributed global cloud infrastructure, cloud
+                  account synchronization requires your separate explicit consent.
                 </p>
                 <p>
-                  Ticari elektronik ileti (kampanya/bülten) onayı ise üyelik için zorunlu değildir; varsayılan olarak
-                  kapalıdır ve tamamen isteğe bağlı ayrı bir onay kutusuyla yönetilir.
+                  Product update and newsletter emails are strictly optional, disabled by default, and managed via a
+                  separate opt-in checkbox.
                 </p>
               </div>
             </div>
@@ -151,7 +151,7 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-2">
                 <h3 className="text-sm font-bold text-slate-100">
-                  Privacy Policy & Self-Hosted Zero-Leak Architecture
+                  Privacy Policy &amp; Self-Hosted Zero-Leak Architecture
                 </h3>
                 <p>
                   GraphFlow is engineered with a <strong>Privacy-by-Design</strong> architecture:
@@ -178,33 +178,34 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-2">
                 <h3 className="text-sm font-bold text-slate-100">
-                  1. Ön Bilgilendirme Formu (Pre-Information Form)
+                  1. Pre-Information &amp; Service Summary
                 </h3>
                 <p>
-                  <strong>Satıcı / Sağlayıcı:</strong> GraphFlow (Berke Akdemir — İletişim:{' '}
-                  <code className="text-cyan-300">berkeakdemir5855@gmail.com</code>, İstanbul, Türkiye) | Merchant of
+                  <strong>Provider:</strong> GraphFlow (Berke Akdemir — Contact:{' '}
+                  <code className="text-cyan-300">berkeakdemir5855@gmail.com</code>, Istanbul, Turkey) | Merchant of
                   Record: <strong>Lemon Squeezy, LLC</strong>.
                 </p>
                 <p>
-                  <strong>Hizmetin Temel Nitelikleri ve Fiyatı:</strong> GraphFlow Pro Dijital SaaS Aboneliği (Sınırsız
-                  bulut mimari projesi, AWS Terraform & Kubernetes HPA kod üretimi, AI mimari sentezleyici ve Canlı
-                  ERP/API telemetri akışı). Fiyat: Aylık planda <strong>$12/ay</strong>, Yıllık planda{' '}
-                  <strong>$99/yıl</strong> ($9/ay eşdeğeri) + yerel vergi oranları.
+                  <strong>Service Scope &amp; Pricing:</strong> GraphFlow Pro Digital SaaS Subscription (Unlimited cloud
+                  architecture projects, AWS Terraform &amp; Kubernetes HPA code generation, AI architecture synthesizer,
+                  and live API/ERP telemetry streaming). Pricing: <strong>$12/month</strong> on monthly billing or{' '}
+                  <strong>$99/year</strong> ($9/month equivalent) on annual billing + applicable local taxes.
                 </p>
                 <p>
-                  <strong>Teslimat ve İfa:</strong> Ödeme onaylandığı anda (`webhook` doğrulaması ile) dijital abonelik
-                  hakları elektronik ortamda derhal aktifleşir.
+                  <strong>Delivery &amp; Activation:</strong> Digital subscription entitlements activate immediately upon
+                  payment confirmation via signed webhook verification.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-2">
                 <h3 className="text-sm font-bold text-slate-100">
-                  2. Mesafeli Satış Sözleşmesi & İptal/İade Koşulları
+                  2. Terms of Sale &amp; Cancellation / Refund Policy
                 </h3>
                 <p>
-                  Kullanıcı, dilediği zaman tek tıkla <strong>&ldquo;Manage Invoices &amp; Billing&rdquo;</strong> portalı
-                  üzerinden veya <code className="text-cyan-300">berkeakdemir5855@gmail.com</code> adresine e-posta
-                  göndererek aboneliğini bir sonraki dönem için kesintisiz iptal edebilir.
+                  You can cancel your subscription at any time in one click via the{' '}
+                  <strong>&ldquo;Manage Invoices &amp; Billing&rdquo;</strong> portal or by emailing{' '}
+                  <code className="text-cyan-300">berkeakdemir5855@gmail.com</code> to stop future billing cycles
+                  immediately.
                 </p>
               </div>
             </div>
@@ -214,25 +215,25 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-dark-950 border border-slate-800 space-y-2">
                 <h3 className="text-sm font-bold text-slate-100">
-                  KVKK m.12 / GDPR m.33 — 72 Saat İçinde Veri İhlali Bildirim ve Müdahale Prosedürü
+                  GDPR Art. 33 / KVKK Art. 12 — 72-Hour Security Incident Notification &amp; Response Procedure
                 </h3>
                 <p>
-                  Olası bir yetkisiz erişim, webhook imza ihlali (`401`) veya veri sızıntısı tespit edildiğinde sistem
-                  otomatik olarak <code className="text-cyan-300">KVKK_72H_SECURITY_INCIDENT_MONITOR</code> kaydı
-                  oluşturur, <code className="text-cyan-300">detectedAt + 72 saat</code> yasal bildirim son tarihini
-                  hesaplar ve Veri Sorumlusu İrtibat Kişisine (<code className="text-cyan-300">berkeakdemir5855@gmail.com</code>)
-                  acil eskalasyon uyarısı üretir.
+                  If an unauthorized access attempt, webhook signature violation (`401`), or suspected data leak is
+                  detected, the system automatically creates a{' '}
+                  <code className="text-cyan-300">KVKK_72H_SECURITY_INCIDENT_MONITOR</code> audit record, computes the{' '}
+                  <code className="text-cyan-300">detectedAt + 72 hours</code> statutory notification deadline, and
+                  escalates to the Data Controller (<code className="text-cyan-300">berkeakdemir5855@gmail.com</code>).
                 </p>
 
                 <form onSubmit={handleReportIncident} className="pt-2 space-y-2.5">
                   <label className="block text-[11px] font-semibold text-slate-300">
-                    Güvenlik Zaafiyeti / Veri İhlali veya KVKK m.11 Veri Sahibi Başvurusu Kaydet:
+                    Log a Security Vulnerability, Data Breach Report, or Data Subject Request (Deletion / Access):
                   </label>
                   <textarea
                     rows={2}
                     value={breachSummary}
                     onChange={e => setBreachSummary(e.target.value)}
-                    placeholder="Şüpheli erişim, güvenlik bildirimi veya veri silme/erişim talebinizi yazın..."
+                    placeholder="Describe any suspected security issue, vulnerability report, or data deletion/access request..."
                     className="w-full rounded-xl bg-dark-900 border border-slate-800 p-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400"
                   />
                   <div className="flex flex-wrap items-center gap-2">
@@ -240,14 +241,14 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
                       type="submit"
                       className="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-colors"
                     >
-                      72s Olay Kaydı Oluştur & Bildir
+                      Log 72h Incident &amp; Notify
                     </button>
                     <a
-                      href="mailto:berkeakdemir5855@gmail.com?subject=ACIL%20KVKK%2072s%20Veri%20Güvenliği%20/%20Veri%20Sahibi%20Başvurusu"
+                      href="mailto:berkeakdemir5855@gmail.com?subject=URGENT%2072h%20Security%20Report%20/%20Data%20Subject%20Request"
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-200 font-semibold text-xs transition-colors"
                     >
                       <Mail className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Veri Sorumlusuna Doğrudan E-Posta</span>
+                      <span>Email Data Controller Directly</span>
                     </a>
                   </div>
                 </form>
@@ -261,11 +262,11 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
 
                 {recentIncidents.length > 0 && (
                   <div className="pt-2">
-                    <div className="text-[11px] font-mono text-slate-400 mb-1">Son Güvenlik / 72s İhlal Kayıtları:</div>
+                    <div className="text-[11px] font-mono text-slate-400 mb-1">Recent Security / 72h Incident Logs:</div>
                     <div className="space-y-1 font-mono text-[11px]">
                       {recentIncidents.slice(-3).map(inc => (
                         <div key={inc.incidentId} className="p-2 rounded bg-dark-900 border border-slate-800 text-slate-300">
-                          [{inc.incidentId}] {inc.category} | Son Bildirim: {inc.notificationDeadline72hIso}
+                          [{inc.incidentId}] {inc.category} | Deadline: {inc.notificationDeadline72hIso}
                         </div>
                       ))}
                     </div>
@@ -278,13 +279,13 @@ export const LegalComplianceModal: React.FC<LegalComplianceModalProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-3.5 border-t border-slate-800 bg-dark-950 flex items-center justify-between text-xs text-slate-400">
-          <span>Veri Sorumlusu İrtibat: berkeakdemir5855@gmail.com</span>
+          <span>Data Controller Contact: berkeakdemir5855@gmail.com</span>
           <button
             type="button"
             onClick={onClose}
             className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold transition-colors"
           >
-            Tamam
+            Done
           </button>
         </div>
       </div>

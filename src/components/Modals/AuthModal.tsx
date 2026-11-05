@@ -56,7 +56,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
     if ((mode === 'signup' || mode === 'magic') && (!kvkkAcknowledged || !explicitCloudConsent)) {
       setMessage({
-        text: 'Devam etmek için KVKK Aydınlatma Metni okuma beyanını ve Bulut Senkronizasyonu Açık Rıza onayını ayrı ayrı işaretleyin.',
+        text: 'Please acknowledge the Data Protection Notice and explicitly consent to Cloud Synchronization to continue.',
         type: 'error',
       });
       return;
@@ -345,17 +345,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       onClick={() => onOpenLegal?.('kvkk')}
                       className="text-cyan-400 hover:underline font-semibold"
                     >
-                      KVKK Aydınlatma Metni
+                      Data Protection Notice
                     </button>{' '}
-                    ve{' '}
+                    and{' '}
                     <button
                       type="button"
                       onClick={() => onOpenLegal?.('privacy')}
                       className="text-cyan-400 hover:underline font-semibold"
                     >
-                      Gizlilik Politikası
-                    </button>
-                    &apos;nı okudum, bilgilendirildim.
+                      Privacy Policy
+                    </button>{' '}
+                    acknowledged.
                   </span>
                 </label>
 
@@ -367,8 +367,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400 focus:ring-cyan-400"
                   />
                   <span>
-                    <strong>Açık Rıza (Aydınlatmadan Ayrı):</strong> Bulut proje senkronizasyonu için verilerimin yurt
-                    dışı bulut altyapısında (`Supabase`) işlenmesine açık rıza veriyorum.
+                    <strong>Explicit Cloud Consent:</strong> I consent to processing my project data on cloud
+                    infrastructure (`Supabase`) for project synchronization.
                   </span>
                 </label>
 
@@ -380,8 +380,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400 focus:ring-cyan-400"
                   />
                   <span>
-                    <em>(İsteğe Bağlı / İYS)</em> Yeni mimari şablonlar ve kampanya duyuruları için ticari elektronik
-                    ileti gönderilmesini kabul ediyorum.
+                    <em>(Optional)</em> I agree to receive product updates and new architecture blueprint
+                    announcements.
                   </span>
                 </label>
               </div>

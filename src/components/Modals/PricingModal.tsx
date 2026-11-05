@@ -56,7 +56,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
     soundFx.playClick();
     if (!distanceSalesConsent) {
       e.preventDefault();
-      setConsentError('Ödeme adımına geçmeden önce Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi onay kutusunu işaretleyin.');
+      setConsentError('Please accept the Terms of Sale & Pre-Information Agreement before proceeding to checkout.');
       return;
     }
 
@@ -249,9 +249,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onO
                       onClick={() => onOpenLegal?.('distance-sales')}
                       className="text-cyan-400 hover:underline font-semibold"
                     >
-                      Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi
-                    </button>
-                    &apos;ni okudum, kabul ediyorum.
+                      Terms of Sale &amp; Pre-Information Agreement
+                    </button>{' '}
+                    accepted.
                   </span>
                 </label>
 

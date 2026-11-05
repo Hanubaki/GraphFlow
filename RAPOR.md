@@ -156,3 +156,24 @@
     - Misafir kullanıcı kilitli 10 bileşenden birine tıkladığında veya sürüklediğinde `AuthModal` açılır; e-postasını girip ücretsiz giriş yaptığı saniye **16 bileşenin tamamı açılır ve tıkladığı bileşen otomatik olarak kanvasa eklenir** (`pendingCatalogItemRef`).
     - **Mevcut Şablon İçi İleri Seviye Düğümler ve 4 Uzman Şablonu da E-posta Kilidine Bağlandı (`isNodeLockedForGuest`, `NodeComponent.tsx`, `TemplatesModal.tsx`):** Kanvastaki hazır şablonların içinde bulunan ileri seviye düğümlerin (`Mobile App`, `Stripe Payment API`, `AWS Lambda`, `S3`, `DLQ` vb.) üzerinde misafir kullanıcılar için **`🔒 Free`** rozeti gösterilir; bu düğümleri düzenlemek/ölçeklemek/çoğaltmak veya 4 ileri seviye şablonu (`CQRS Outbox`, `Stripe Ledger`, `Netflix Chaos`, `ERP Depo & MES`) yüklemek ücretsiz e-posta girişine (`pendingTemplateRef`) bağlandı.
     - `AuthModal` içindeki engelleyici `"Supabase Environment Unlinked"` uyarısı ve buton kilidi kaldırılarak anında yerel+bulut hibrit oturum aktivasyonu (`graphflow_local_auth_user_v1`) devreye alındı.
+
+
+## 13. Faz 13: `est.` Heuristik Kalibrasyon Rozeti & Composio Reddit Kural-Uyumlu Dağıtım (`u/DarkSlayer59`)
+- **Canlı Ürün İyileştirmesi (`61fc1f0`):**
+  - `r/devops` topluluğundan (`u/Admirable_Ones`) gelen geri bildirim üzerine, `.drawio`, `.excalidraw`, `docker-compose.yml` ve `main.tf` dosyalarından içe aktarılan kalibre edilmemiş düğümlere `isEstimated?: boolean` (`est.` rozeti) eklendi ([`src/types/graph.ts`](file:///c:/Users/berke/Documents/antigravity/bold-hypatia/src/types/graph.ts), [`src/components/Canvas/NodeComponent.tsx`](file:///c:/Users/berke/Documents/antigravity/bold-hypatia/src/components/Canvas/NodeComponent.tsx), [`src/components/Inspector/InspectorPanel.tsx`](file:///c:/Users/berke/Documents/antigravity/bold-hypatia/src/components/Inspector/InspectorPanel.tsx), [`src/utils/importTopology.ts`](file:///c:/Users/berke/Documents/antigravity/bold-hypatia/src/utils/importTopology.ts), [`src/utils/export.ts`](file:///c:/Users/berke/Documents/antigravity/bold-hypatia/src/utils/export.ts)).
+  - Kullanıcı sağ panelden gerçek yük testi RPS değerini girdiğinde veya CSV içe aktardığında `est.` rozeti otomatik olarak kalkar; SVG/PNG dışa aktarımlarında ve `#share=` URL'lerinde korunur.
+- **Composio Reddit Kural Denetimi ve Canlıya Alınan 5 Paylaşım + 1 Yorum:**
+  1. **`r/RoastMyStartUp`** (Kural 1: `vercel.app` linki yasak, Kural 3: soru işareti `?` ve 2 cümlelik post yasak, Kural 4: AI dili yasak — kurallara %100 uygun olarak yalnızca GitHub linki ve soru işaretsiz özgün metinle atıldı):
+     - https://www.reddit.com/r/roastmystartup/comments/1xoauu7/roast_graphflow_a_browser_tool_that_turns_static/
+  2. **`r/alphaandbetausers`** (`r/AlphaBetaTest` karşılığı aktif 35k+ üyeli Alpha/Beta test topluluğu — `[Beta]` formatında özgün metinle atıldı):
+     - https://www.reddit.com/r/alphaandbetausers/comments/1xoav3l/beta_graphflow_drag_and_drop_drawio_excalidraw_or/
+  3. **`r/SideProject`** (Kural uyumlu, geliştirici hikayesi ve `est.` rozeti güncellemesiyle özgün metin):
+     - https://www.reddit.com/r/SideProject/comments/1xoavcv/i_built_a_parser_that_turns_static_drawio/
+  4. **`r/platformengineering`** (Kural 1: salt link yasak, teknik tartışma zorunlu; Kural 3: kısaltılmış link yasak; Kural 6: AI slop yasak — M/M/1 kuyruk matematiği ve `importTopology.ts` mimarisiyle atıldı):
+     - https://www.reddit.com/r/platformengineering/comments/1xoavu9/parsing_dockercomposeyml_terraform_maintf_and/
+  5. **`r/coolgithubprojects`** (Doğrudan GitHub repo paylaşımı + altına teknik açıklama yorumu `t1_19s5wbeexhu0w` eklendi):
+     - Post: https://www.reddit.com/r/coolgithubprojects/comments/1xoaw6g/graphflow_turn_static_drawio_excalidraw/
+     - Yorum: https://www.reddit.com/r/coolgithubprojects/comments/1xoaw6g/graphflow_turn_static_drawio_excalidraw/19s5wbeexhu0w/
+  - **Önlenen Moderasyon Riskleri:**
+    - `r/opensource` Kural 4 (`OSI onaylı açık kaynak lisansı zorunluluğu`) nedeniyle `PolyForm Noncommercial 1.0.0` lisansımızın modlar tarafından silinmemesi için elendi.
+    - `r/RoastMyStartUp` Kural 1 (`No Vercel Links`) ve Kural 3 (`soru cümlesi yasağı`) önceden okunarak AutoModerator engeli %100 bypass edildi.

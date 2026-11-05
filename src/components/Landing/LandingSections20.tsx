@@ -64,11 +64,11 @@ export const ThankYouBanner: React.FC<{
         <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
         <div>
           <h2 className="text-sm font-bold text-slate-50">
-            Teşekkürler — İşleminiz &amp; Talebiniz Başarıyla Alındı (Thank You)
+            Thank You — Your Order &amp; Request Have Been Confirmed
           </h2>
           <p className="text-xs text-slate-300 mt-1">
-            GraphFlow Pro / Mimari Simülasyon talebiniz kaydedildi. Doğrudan 60 FPS stüdyoya geçerek AWS Terraform,
-            Kubernetes HPA ve Canlı ERP/API özelliklerini kullanmaya başlayabilirsiniz.
+            Your GraphFlow Pro architecture simulation access is active. Jump directly into the 60 FPS studio to generate
+            AWS Terraform, Kubernetes HPA manifests, and stream live telemetry.
           </p>
         </div>
       </div>
@@ -78,7 +78,7 @@ export const ThankYouBanner: React.FC<{
           onClick={onEnterApp}
           className="px-3.5 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
         >
-          <span>Stüdyoyu Aç</span>
+          <span>Open Studio</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
         <button
@@ -86,7 +86,7 @@ export const ThankYouBanner: React.FC<{
           onClick={onDismiss}
           className="px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-colors"
         >
-          Kapat
+          Dismiss
         </button>
       </div>
     </div>
@@ -109,11 +109,11 @@ export const NotFound404Banner: React.FC<{
           <span>HTTP 404 // ROUTE_NOT_FOUND</span>
         </div>
         <h2 className="text-2xl font-bold text-slate-50 tracking-tight">
-          Aradığınız Sayfa Bulunamadı ({path})
+          Page Not Found ({path})
         </h2>
         <p className="text-sm text-slate-400 max-w-xl">
-          Bu uç nokta topolojide mevcut değil veya taşınmış. Ana sayfaya dönebilir ya da doğrudan 60 FPS mimari
-          simülasyon stüdyosunu başlatabilirsiniz.
+          This endpoint does not exist in the topology or has been moved. Return to the home page or launch the 60 FPS
+          architecture simulator directly.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -130,7 +130,7 @@ export const NotFound404Banner: React.FC<{
           onClick={onResetHome}
           className="h-10 px-4 rounded-lg border border-slate-800 hover:bg-slate-900 text-slate-200 text-sm font-medium transition-colors"
         >
-          Ana Sayfaya Dön
+          Back to Home
         </button>
       </div>
     </div>
@@ -211,24 +211,24 @@ const TESTIMONIALS = [
 
 const FAQ_ITEMS = [
   {
-    q: '1. Mevcut docker-compose.yml, .drawio, .excalidraw veya Terraform dosyamı nasıl canlı diyagrama çeviririm?',
-    a: 'Stüdyoyu açıp bilgisayarınızdaki .drawio, .excalidraw, docker-compose.yml veya main.tf dosyasını doğrudan tuvalin üzerine sürükleyip bırakmanız yeterlidir. GraphFlow servisleri, veritabanlarını, kuyrukları ve bağlantıları saniyeler içinde 60 FPS canlı topolojiye dönüştürür.',
+    q: '1. How do I convert an existing docker-compose.yml, .drawio, .excalidraw, or Terraform file into a live simulation?',
+    a: 'Open the studio and drag and drop your .drawio (including compressed desktop XML), .excalidraw, Mermaid, docker-compose.yml, or main.tf file directly onto the canvas. GraphFlow automatically parses services, databases, queues, and dependency edges into a 60 FPS interactive topology.',
   },
   {
-    q: '2. Çizdiğim mimariden doğrudan çalışır AWS Terraform ve Kubernetes (HPA) kodu alabilir miyim?',
-    a: 'Evet. Export & Import Hub üzerinden tek tıkla docker-compose.yml, Mermaid.js (GitHub PR), SVG/PNG diyagramı, AWS Terraform (RDS, ElastiCache, SQS, ECS, ALB) ve Kubernetes HPA manifest dosyalarını indirebilirsiniz.',
+    q: '2. Can I export runnable AWS Terraform and Kubernetes HPA manifests from my diagram?',
+    a: 'Yes. Through the Export & Import Hub, you can download runnable docker-compose.yml files, Mermaid.js markdown for GitHub PRs, high-resolution SVG/PNG diagrams, AWS Terraform (RDS, ElastiCache, SQS, ECS, ALB), and Kubernetes HPA manifests in one click.',
   },
   {
-    q: '3. Simülatör darboğazları (bottleneck), p99 gecikmesini ve aylık AWS/GCP/Azure maliyetini nasıl hesaplıyor?',
-    a: 'GraphFlow, yönlü çevrimsiz graf (DAG) fizik motoruyla her düğümün gelen trafik yükünü (fan-in RPS), kapasite tavanını, kuyruk birikimini (queue lag), tekil hata noktalarını (SPOF), bileşik SLA yüzdesini ve AWS/GCP/Azure aylık tahmini bulut maliyetini gerçek zamanlı hesaplar.',
+    q: '3. How does the simulator calculate bottlenecks, p99 tail latency, and monthly cloud costs?',
+    a: 'GraphFlow runs a directed acyclic graph (DAG) queueing engine at 60 FPS. It evaluates fan-in RPS per node, capacity ceilings, M/M/1 queue buildup, circuit breaker transitions, single points of failure (SPOFs), composite end-to-end SLA percentages, and estimated monthly AWS/GCP/Azure infrastructure spend. Imported nodes display an "est." badge until calibrated with real benchmark numbers.',
   },
   {
-    q: '4. Mimari diyagramlarım dış sunuculara gönderiliyor mu? KVKK ve veri gizliliği nasıl korunuyor?',
-    a: 'Varsayılan olarak tüm çizimleriniz %100 tarayıcınızın yerel belleğinde (localStorage) ve paylaşılan URL (#share=) içinde çalışır; sunucuya gönderilmez. Bulut kayıt (Supabase) tamamen isteğe bağlıdır, PostgreSQL Row-Level Security (RLS) ile korunur ve fontlar kendi sunucumuzdan (self-hosted) yüklenir.',
+    q: '4. Are my architecture diagrams sent to external servers?',
+    a: 'No. By default, your diagrams run 100% locally in your browser using localStorage and stateless URL-hash encoding (#share=). Cloud synchronization with Supabase is strictly opt-in, protected by PostgreSQL Row-Level Security (RLS), and all fonts are self-hosted with zero third-party IP tracking.',
   },
   {
-    q: '5. Canlı üretim (Prometheus / REST API / ERP) metriklerini diyagramıma bağlayabilir miyim?',
-    a: 'Evet. Üst araç çubuğundaki "Live ERP/API" butonuyla gerçek zamanlı JSON, CSV veya Prometheus metrik uç noktanızı bağlayarak üretimdeki anlık RPS, gecikme ve hata oranlarını canlı diyagram üzerinde izleyebilirsiniz.',
+    q: '5. Can I connect live Prometheus, REST API, or CSV benchmark metrics to my diagram?',
+    a: 'Yes. Using the Live ERP/API Digital Twin connector in the top toolbar or CSV import, you can stream real-time JSON, CSV, or Prometheus metrics into your canvas nodes to observe live throughput, latency, and error rates.',
   },
 ];
 
@@ -241,7 +241,7 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
 
   return (
     <>
-      {/* 1. Vaka Çalışmaları (Case Studies) */}
+      {/* 1. Case Studies */}
       <section id="case-studies" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-28">
           <div className="grid md:grid-cols-2 gap-6 md:gap-16 mb-12">
@@ -309,7 +309,7 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
         </div>
       </section>
 
-      {/* 2. Müşteri & Mühendis Yorumları (Testimonials) */}
+      {/* 2. Testimonials */}
       <section id="testimonials" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-28">
           <div className="mb-12">
@@ -344,21 +344,21 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
         </div>
       </section>
 
-      {/* 3. 5 Adet SSS (5 Interactive FAQs) */}
+      {/* 3. 5 Interactive FAQs */}
       <section id="faq" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-28">
           <div className="grid md:grid-cols-[1fr_1.5fr] gap-8 md:gap-16">
             <div>
               <div className="inline-flex items-center gap-1.5 font-mono text-xs text-cyan-400 mb-2">
                 <HelpCircle className="w-3.5 h-3.5" />
-                <span>FREQUENTLY ASKED QUESTIONS (5 SSS)</span>
+                <span>FREQUENTLY ASKED QUESTIONS</span>
               </div>
               <h2 className="font-semibold tracking-[-0.035em] text-slate-50 text-3xl md:text-4xl leading-tight">
-                Sıkça Sorulan Sorular &amp; Teknik Detaylar
+                Technical FAQ &amp; Architecture Details
               </h2>
               <p className="mt-3 text-sm text-slate-400 leading-relaxed">
-                Mimari içe aktarma, Terraform/K8s kod üretimi, veri gizliliği ve canlı telemetri hakkında en çok
-                sorulan 5 temel soru.
+                Common questions about diagram and IaC file imports, Terraform/Kubernetes code generation, local-first
+                privacy, and live telemetry streaming.
               </p>
             </div>
 
@@ -392,7 +392,7 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
         </div>
       </section>
 
-      {/* 4. Takım Fotoğrafı / Kurucu Mühendis & Google Harita / Adres Kartı */}
+      {/* 4. Founder / Engineering Team & HQ Card */}
       <section id="team" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-20 md:py-24">
           <div className="grid md:grid-cols-2 gap-6">
@@ -437,17 +437,17 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
               </div>
             </div>
 
-            {/* Address, Google Maps Link & KVKK Data Controller Hub */}
+            {/* Address, Google Maps Link & Data Protection Hub */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 flex flex-col justify-between gap-4">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-1.5 font-mono text-[11px] text-emerald-400">
                   <MapPin className="w-3.5 h-3.5" />
-                  <span>ENGINEERING HQ &amp; KVKK VERİ SORUMLUSU ADRESİ</span>
+                  <span>ENGINEERING HQ &amp; DATA CONTROLLER</span>
                 </div>
-                <h3 className="text-base font-bold text-slate-50">İstanbul, Türkiye · Global Cloud Edge</h3>
+                <h3 className="text-base font-bold text-slate-50">Istanbul, Turkey · Global Cloud Edge</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Koordinatlar: <code className="text-slate-200">41.0082° N, 28.9784° E</code> (İstanbul / Türkiye) ·
-                  7/24 KVKK &amp; Güvenlik İrtibat: <code className="text-cyan-300">berkeakdemir5855@gmail.com</code>
+                  Coordinates: <code className="text-slate-200">41.0082° N, 28.9784° E</code> (Istanbul, Turkey) ·
+                  24/7 Security &amp; Privacy Contact: <code className="text-cyan-300">berkeakdemir5855@gmail.com</code>
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2.5 pt-2">
@@ -458,7 +458,7 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
                   className="px-3 py-2 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-200 inline-flex items-center gap-1.5 transition-colors"
                 >
                   <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Google Haritalar&apos;da Aç</span>
+                  <span>Open in Google Maps</span>
                 </a>
                 <button
                   type="button"
@@ -466,7 +466,7 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
                   className="px-3 py-2 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-200 inline-flex items-center gap-1.5 transition-colors"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>KVKK &amp; Gizlilik Merkezi</span>
+                  <span>Privacy &amp; Legal Center</span>
                 </button>
               </div>
             </div>

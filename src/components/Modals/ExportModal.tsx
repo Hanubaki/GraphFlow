@@ -293,7 +293,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       }}
                       className="text-[11px] font-mono text-amber-400 hover:text-amber-300 underline cursor-pointer font-semibold"
                     >
-                      Try Sample ERP / Üretim CSV
+                      Try Sample ERP / CSV
                     </button>
                     <button
                       type="button"

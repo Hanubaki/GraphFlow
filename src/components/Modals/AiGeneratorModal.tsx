@@ -63,7 +63,7 @@ function incrementDailyAiUsageCount(): number {
 }
 
 const PRESET_PROMPTS = [
-  'ERP Depo Giriş/Çıkış (Inbound/Outbound), Ar-Ge, Kalite Kontrol, Üretim ve Bakım Departmanları Akışı',
+  'ERP Warehouse (Inbound/Outbound), R&D, Quality Control, MES Production, and Maintenance Workflow',
   'E-Commerce with Redis cache, Kafka events, and Stripe checkout',
   'On-demand food delivery with courier live tracking and database',
   'High-scale video streaming platform with CDN and S3 chunks',
@@ -171,7 +171,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Describe software systems or ERP / factory departments (Ar-Ge, Kalite, Üretim, Depo)
+                Describe cloud software systems, microservices, or ERP / warehouse workflows
               </p>
             </div>
           </div>
@@ -191,7 +191,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="text-xs text-amber-200">
-                  {aiEntitlement.reason} (veya aşağıya kendi ücretsiz Google Gemini API anahtarınızı girerek sınırsız kullanın)
+                  {aiEntitlement.reason} (or enter your own free Google Gemini API key below for unlimited generation)
                 </span>
               </div>
               {onOpenPricing && (
@@ -219,7 +219,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
               rows={3}
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
-              placeholder="e.g. ERP Depo Giriş (Inbound), Ar-Ge (BOM), Kalite Kontrol (IQC), Üretim (MES), Bakım (MRO) ve Depo Çıkış (Outbound) iş akışı..."
+              placeholder="e.g. Multi-region checkout with API Gateway, Redis cache, Kafka order events, and Postgres primary..."
               className="w-full select-text bg-dark-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/50 transition-colors resize-none"
             />
           </div>

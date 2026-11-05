@@ -986,7 +986,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               </ul>
               <label className="mt-6 flex items-start gap-2 text-[11px] text-slate-300 cursor-pointer bg-dark-950/90 p-2.5 rounded-lg border border-slate-800">
                 <input type="checkbox" checked={distanceSalesConsent} onChange={e => { setDistanceSalesConsent(e.target.checked); if (e.target.checked) setCheckoutConsentError(null); }} className="mt-0.5 rounded border-slate-700 bg-dark-900 text-cyan-400" />
-                <span><button type="button" onClick={() => onOpenLegal?.('distance-sales')} className="text-cyan-400 hover:underline font-semibold">Ön Bilgilendirme Formu &amp; Mesafeli Satış Sözleşmesi</button>&apos;ni okudum, onaylıyorum.</span>
+                <span>I have read and agree to the <button type="button" onClick={() => onOpenLegal?.('distance-sales')} className="text-cyan-400 hover:underline font-semibold">Terms of Sale &amp; Pre-Information Agreement</button>.</span>
               </label>
               {checkoutConsentError && <p className="mt-2 text-[11px] text-rose-300">{checkoutConsentError}</p>}
               <a
@@ -999,7 +999,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
                 onClick={e => {
                   if (!distanceSalesConsent) {
                     e.preventDefault();
-                    setCheckoutConsentError('Ödeme adımına geçmeden önce Ön Bilgilendirme ve Mesafeli Satış Sözleşmesi kutusunu onaylayın.');
+                    setCheckoutConsentError('Please accept the Terms of Sale & Pre-Information Agreement before proceeding to checkout.');
                     return;
                   }
                   setCheckoutConsentError(null);
@@ -1094,11 +1094,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           <div className="flex flex-wrap items-center gap-4">
             <button onClick={onEnterApp} className="hover:text-slate-50 transition-colors">Studio</button>
             <button onClick={onOpenPricing} className="hover:text-slate-50 transition-colors">Pricing</button>
-            <button type="button" onClick={() => onOpenLegal?.('kvkk')} className="hover:text-slate-50 transition-colors">KVKK Aydınlatma</button>
-            <button type="button" onClick={() => onOpenLegal?.('privacy')} className="hover:text-slate-50 transition-colors">Gizlilik Politikası</button>
-            <button type="button" onClick={() => onOpenLegal?.('distance-sales')} className="hover:text-slate-50 transition-colors">Mesafeli Satış</button>
-            <button type="button" onClick={() => onOpenLegal?.('breach-72h')} className="hover:text-slate-50 transition-colors">72s Veri İhlali</button>
-            <button type="button" onClick={() => setShowThankYou(true)} className="hover:text-slate-50 transition-colors">Teşekkür Sayfası</button>
+            <button type="button" onClick={() => onOpenLegal?.('kvkk')} className="hover:text-slate-50 transition-colors">Data Protection</button>
+            <button type="button" onClick={() => onOpenLegal?.('privacy')} className="hover:text-slate-50 transition-colors">Privacy Policy</button>
+            <button type="button" onClick={() => onOpenLegal?.('distance-sales')} className="hover:text-slate-50 transition-colors">Terms of Sale</button>
+            <button type="button" onClick={() => onOpenLegal?.('breach-72h')} className="hover:text-slate-50 transition-colors">72h Security Notice</button>
+            <button type="button" onClick={() => setShowThankYou(true)} className="hover:text-slate-50 transition-colors">Order Confirmation</button>
             <button type="button" onClick={() => setShow404(true)} className="hover:text-slate-50 transition-colors">404</button>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hover:text-slate-50 transition-colors">GitHub</a>
             <a href="mailto:berkeakdemir5855@gmail.com" className="hover:text-slate-50 transition-colors">Contact</a>

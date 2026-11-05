@@ -353,7 +353,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
           {activeTab === 'snapshot' && (
             <div className="space-y-3">
               <p className="text-xs text-slate-400">
-                Paste a real-time JSON payload, an ERP CSV status export (<code className="text-cyan-300 font-mono">Departman;RPS;Sure_ms;Hata_Orani;Durum</code>), or Prometheus text metrics to immediately update the live canvas nodes:
+                Paste a real-time JSON payload, a CSV status export (<code className="text-cyan-300 font-mono">Service;RPS;Latency_ms;Error_Rate;Status</code>), or Prometheus text metrics to immediately update the live canvas nodes:
               </p>
               <textarea
                 rows={9}
