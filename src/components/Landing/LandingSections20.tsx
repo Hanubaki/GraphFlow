@@ -9,7 +9,6 @@ import {
   Terminal,
   AlertTriangle,
   HelpCircle,
-  Quote,
   Github,
   Mail,
 } from 'lucide-react';
@@ -38,7 +37,7 @@ export const BreadcrumbBar: React.FC<{ onEnterApp: () => void }> = ({ onEnterApp
     </a>
     <ChevronRight className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
     <a href="#case-studies" className="hover:text-slate-100 transition-colors">
-      Case Studies
+      Scenarios
     </a>
     <ChevronRight className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
     <button
@@ -140,7 +139,7 @@ export const NotFound404Banner: React.FC<{
 const CASE_STUDIES = [
   {
     id: 'cs-fintech-ledger',
-    badge: 'CASE STUDY 01 // FINTECH PAYMENTS',
+    badge: 'SCENARIO 01 // FINTECH PAYMENTS',
     title: 'Idempotent Webhook & Double-Entry Ledger Under 5x Flash Surge',
     problem:
       'Synchronous PostgreSQL writes on incoming payment webhooks caused connection pool exhaustion and 840ms p99 spikes during flash checkout events.',
@@ -155,7 +154,7 @@ const CASE_STUDIES = [
   },
   {
     id: 'cs-ai-rag',
-    badge: 'CASE STUDY 02 // AI RAG PIPELINE',
+    badge: 'SCENARIO 02 // AI RAG PIPELINE',
     title: 'Semantic Vector Cache & LLM Circuit Breaker Hardening',
     problem:
       'Unthrottled LLM API calls drove monthly inference spend above $3,200/mo and cascaded 504 timeouts whenever upstream token latency spiked.',
@@ -170,7 +169,7 @@ const CASE_STUDIES = [
   },
   {
     id: 'cs-global-edge',
-    badge: 'CASE STUDY 03 // GLOBAL STREAMING',
+    badge: 'SCENARIO 03 // GLOBAL STREAMING',
     title: 'Multi-Region Edge CDN & Read-Replica Bottleneck Elimination',
     problem:
       'Single-region database fan-in saturated at 2,400 RPS during regional traffic failover drills.',
@@ -182,30 +181,6 @@ const CASE_STUDIES = [
       { label: 'IaC Export Time', value: '< 30 sec' },
     ],
     templateIndex: 2,
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    quote:
-      'The fan-in queue saturation and p99 cliff-edge simulation matches real production incidents we hit when downstream workers fall behind Kafka.',
-    author: 'Staff SRE & Distributed Systems Engineer',
-    role: 'r/sre Community Verification · Production Infrastructure',
-    metric: 'Verified Queue Physics',
-  },
-  {
-    quote:
-      'Dragging a legacy .drawio or docker-compose.yml file onto the canvas and immediately seeing where the bottleneck chokes under a 3x load surge saved our architecture review two days.',
-    author: 'Principal Cloud Architect',
-    role: 'FinTech Platform Team · AWS & Terraform Workflow',
-    metric: 'draw.io → Terraform in 1 Click',
-  },
-  {
-    quote:
-      'Having Prometheus/JSON live metrics stream into the same diagram we use for RFCs and exporting Grafana k6 + OpenShift-compatible configs is a game changer.',
-    author: 'Platform Engineering Lead',
-    role: 'Kubernetes & OpenShift Hybrid Cloud',
-    metric: 'Live Digital Twin + k6',
   },
 ];
 
@@ -246,14 +221,14 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
         <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-28">
           <div className="grid md:grid-cols-2 gap-6 md:gap-16 mb-12">
             <div>
-              <div className="font-mono text-xs text-cyan-400 mb-2">ENGINEERING CASE STUDIES // VERIFIED ROI</div>
+              <div className="font-mono text-xs text-cyan-400 mb-2">EXAMPLE SCENARIOS // SIMULATED</div>
               <h2 className="font-semibold tracking-[-0.035em] text-slate-50 text-3xl md:text-5xl leading-[1.06]">
-                Real bottlenecks caught before deploy
+                Bottlenecks you can reproduce in the simulator
               </h2>
             </div>
             <p className="max-w-[46ch] text-[16px] leading-relaxed text-slate-400 md:pt-4">
-              How engineering teams use GraphFlow to stress-test queue backpressure, eliminate single points of failure,
-              and cut monthly cloud spend before writing production infrastructure code.
+              Illustrative scenarios built from the bundled templates. Numbers are simulation outputs, not customer results. Open one to stress-test queue backpressure, find single points of failure,
+              and compare estimated cloud spend.
             </p>
           </div>
 
@@ -298,48 +273,13 @@ export const PreLaunchSections20: React.FC<LandingSectionsProps> = ({
                       }}
                       className="w-full h-9 px-3 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-100 text-xs font-medium inline-flex items-center justify-between transition-colors"
                     >
-                      <span>Simulate this case study</span>
+                      <span>Run this scenario</span>
                       <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
                     </button>
                   </div>
                 </article>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Testimonials */}
-      <section id="testimonials" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
-        <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-28">
-          <div className="mb-12">
-            <div className="font-mono text-xs text-cyan-400 mb-2">COMMUNITY &amp; ARCHITECT FEEDBACK</div>
-            <h2 className="font-semibold tracking-[-0.035em] text-slate-50 text-3xl md:text-4xl leading-tight">
-              Trusted by SREs and systems architects
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((t, idx) => (
-              <blockquote
-                key={idx}
-                className="rounded-xl border border-slate-800 bg-slate-950/90 p-5 flex flex-col justify-between gap-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Quote className="w-4 h-4 text-cyan-400" aria-hidden="true" />
-                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-emerald-400">
-                      {t.metric}
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-slate-200 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                </div>
-                <footer className="pt-3 border-t border-slate-800/80">
-                  <div className="text-xs font-semibold text-slate-100">{t.author}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{t.role}</div>
-                </footer>
-              </blockquote>
-            ))}
           </div>
         </div>
       </section>

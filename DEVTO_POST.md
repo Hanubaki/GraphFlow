@@ -4,7 +4,7 @@ Then two weeks later traffic spikes 3x, `Redis` is chilling at 2ms, `Postgres` i
 
 The problem with static diagrams is that a 2,500 RPS cache and a 400 RPS database look like the exact same box on a screen. Boxes don't have queues. Lines don't drop packets.
 
-Over the past few weeks I've been building **[GraphFlow](https://graph-flow-virid.vercel.app)** to fix that. It's an open-source system design canvas where the diagram actually runs in your browser.
+Over the past few weeks I've been building **[GraphFlow](https://graph-flow-virid.vercel.app)** to fix that. It's a source-available system design canvas where the diagram actually runs in your browser.
 
 ![GraphFlow live simulation](https://graph-flow-virid.vercel.app/graphflow-stripe-demo.gif)
 
@@ -76,7 +76,7 @@ Once you find your bottleneck—or use the **Pin Baseline** and **Auto-Harden** 
 
 ### Give it a spin
 
-The core simulator is MIT licensed and open source.
+The source is public and free to use for noncommercial purposes under PolyForm Noncommercial 1.0.0 (source-available, not OSI open source).
 
 - **Live app:** [https://graph-flow-virid.vercel.app](https://graph-flow-virid.vercel.app)
 - **GitHub repo:** [https://github.com/Hanubaki/GraphFlow](https://github.com/Hanubaki/GraphFlow)

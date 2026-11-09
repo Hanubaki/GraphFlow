@@ -37,11 +37,11 @@ The diagram runs. Static tools (draw.io, Lucidchart, Excalidraw, Miro) draw iner
 - Editing: undo/redo history, keyboard navigation, touch pinch/pan, multiplayer presence.
 - Tiers: Free and Pro (Lemon Squeezy checkout wired in code), with a Team tier described in pricing copy. The commercial launch state is not confirmed. Treat pricing as configured, not as proof of paying customers.
 - Terminology: nodes, edges/connections, packets, topology, archetypes/templates, chaos, surge, DLQ, circuit breaker. Use engineering vocabulary precisely.
-- Landing claims ("60 FPS", "< 75 KB", "0 canvas dependencies", open core) are considered technically accurate by the owner but have no published benchmark. Do not inflate them or add new numeric claims without measurement.
+- Landing claims ("60 FPS", "< 75 KB", "0 canvas dependencies", source-available) are considered technically accurate by the owner but have no published benchmark. Do not inflate them or add new numeric claims without measurement.
 
 ## Brand Commitments
 
-- Name: GraphFlow. Open-source repository at github.com/Hanubaki/GraphFlow under the MIT license.
+- Name: GraphFlow. Source-available repository at github.com/Hanubaki/GraphFlow under PolyForm Noncommercial 1.0.0 (not OSI open source; do not call it MIT or open source).
 - Voice: direct, technical, precise. Write for engineers, without hype or filler.
 - The existing visual system (recorded separately in DESIGN.md via `/impeccable document`) is the incumbent identity. Refinement preserves it.
 
@@ -57,7 +57,7 @@ The diagram runs. Static tools (draw.io, Lucidchart, Excalidraw, Miro) draw iner
 2. Respect engineers' time. Get to a running topology in seconds, keep density high, and keep chrome quiet.
 3. Truthful claims only. Every number and capability statement must be verifiable in the product or the code.
 4. Shareable by default. A model only matters if it reaches the team, so share, embed, and export stay first-class paths.
-5. Light and open. Runs in the browser with no install, keeps a small payload, and remains open core.
+5. Light and open. Runs in the browser with no install, keeps a small payload, and keeps the source public.
 
 ## Accessibility & Inclusion
 

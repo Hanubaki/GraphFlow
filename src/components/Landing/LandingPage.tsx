@@ -670,7 +670,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
             <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-400">
               <a href="#features" className="hover:text-slate-50 transition-colors">Features</a>
               <a href="#blueprints" className="hover:text-slate-50 transition-colors">Blueprints</a>
-              <a href="#case-studies" className="hover:text-slate-50 transition-colors">Case Studies</a>
+              <a href="#case-studies" className="hover:text-slate-50 transition-colors">Scenarios</a>
               <a href="#faq" className="hover:text-slate-50 transition-colors">FAQ</a>
               <a href="#export" className="hover:text-slate-50 transition-colors">Export</a>
               <a href="#pricing" className="hover:text-slate-50 transition-colors">Pricing</a>
