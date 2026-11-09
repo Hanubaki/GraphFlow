@@ -157,7 +157,7 @@ export default async function handler(req: any, res: any) {
     );
   }
 
-  const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+  const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET || process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -299,7 +299,7 @@ export default async function handler(req: any, res: any) {
   } catch (error: any) {
     console.error('Webhook processing exception:', error);
     return res.status(500).json(
-      createProblemDetails(500, 'Internal Server Error', error?.message || 'Internal server error', 'internal-error')
+      createProblemDetails(500, 'Internal Server Error', 'Internal server error', 'internal-error')
     );
   }
 }

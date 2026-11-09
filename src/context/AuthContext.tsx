@@ -74,6 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [isLoading, setIsLoading] = useState(true);
   const [devTierOverride, setDevTierOverride] = useState<PlanTier | null>(() => {
+    // Dev-only: in production a localStorage edit must never unlock Pro.
+    if (!import.meta.env.DEV) return null;
     try {
       const stored = localStorage.getItem('graphflow_dev_plan_override');
       return (stored as PlanTier) || null;
@@ -138,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadUserProfile]);
 
   const setDevPlanTierOverride = useCallback((tier: PlanTier | null) => {
+    if (!import.meta.env.DEV) return;
     setDevTierOverride(tier);
     if (tier) {
       localStorage.setItem('graphflow_dev_plan_override', tier);

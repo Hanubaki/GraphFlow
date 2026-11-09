@@ -30,6 +30,16 @@ describe('Auth & Supabase Database Schema Verification', () => {
     expect(sql).toContain('on_auth_user_created');
   });
 
+  it('blocks clients from self-upgrading plan_tier via RLS-permitted profile updates', () => {
+    const sql = fs.readFileSync(schemaPath, 'utf-8');
+    expect(sql).toContain('create trigger protect_profile_billing_fields');
+    expect(sql).toContain('before insert or update on public.profiles');
+    expect(sql).toMatch(/current_user in \('anon', 'authenticated'\)/);
+    expect(sql).toContain('new.plan_tier := old.plan_tier');
+    // Security definer functions must pin search_path
+    expect(sql).toMatch(/security definer set search_path = public/);
+  });
+
   it('validates dynamic Lemon Squeezy checkout query parameters formatting', () => {
     const baseCheckoutUrl = 'https://graphflow.lemonsqueezy.com/checkout/buy/171c3132-5464-46eb-a519-b95c1e4bca8a?embed=1';
     const mockUserId = 'usr_1029384756';

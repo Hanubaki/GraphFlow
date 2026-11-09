@@ -28,12 +28,40 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- 3b. Billing Field Guard
+-- RLS lets users update their own profile row, which would otherwise include
+-- plan_tier. Client roles (anon / authenticated) can never set billing fields;
+-- only the Lemon Squeezy webhook (service_role) and internal triggers can.
+-- Security invoker on purpose: current_user must be the calling role.
+create or replace function public.protect_profile_billing_fields()
+returns trigger as $$
+begin
+  if current_user in ('anon', 'authenticated') then
+    if tg_op = 'INSERT' then
+      new.plan_tier := 'free';
+      new.lemon_customer_id := null;
+      new.lemon_subscription_id := null;
+    else
+      new.plan_tier := old.plan_tier;
+      new.lemon_customer_id := old.lemon_customer_id;
+      new.lemon_subscription_id := old.lemon_subscription_id;
+    end if;
+  end if;
+  return new;
+end;
+$$ language plpgsql set search_path = public;
+
+drop trigger if exists protect_profile_billing_fields on public.profiles;
+create trigger protect_profile_billing_fields
+  before insert or update on public.profiles
+  for each row execute procedure public.protect_profile_billing_fields();
 
 -- 4. Cloud Architecture Projects Table
 create table if not exists public.projects (
@@ -61,7 +89,8 @@ create policy "Users can view own profile"
 drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
-  using (auth.uid() = id);
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 
 drop policy if exists "Users can insert own profile" on public.profiles;
 create policy "Users can insert own profile"
@@ -87,7 +116,8 @@ create policy "Users can insert own projects"
 drop policy if exists "Users can update own projects" on public.projects;
 create policy "Users can update own projects"
   on public.projects for update
-  using (auth.uid() = user_id);
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 drop policy if exists "Users can delete own projects" on public.projects;
 create policy "Users can delete own projects"
