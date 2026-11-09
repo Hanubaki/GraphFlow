@@ -123,12 +123,25 @@ function isInternalHost(host: string): boolean {
   );
 }
 
+/** Returns true the first time it is called per tab session (survives reloads); true every time if storage is unavailable. */
+function claimOnce(key: string): boolean {
+  const store = safeStorage();
+  try {
+    if (store?.getItem(key)) return false;
+    store?.setItem(key, '1');
+  } catch {
+    // storage unavailable: fall back to the in-memory guards
+  }
+  return true;
+}
+
 let engagedEmitted = false;
 
 /** Marks the session as engaged once (first real interaction). Safe to call repeatedly. */
 export function markEngaged(action: string): void {
   if (engagedEmitted) return;
   engagedEmitted = true;
+  if (!claimOnce('gf_funnel_engaged')) return;
   telemetry.track('Studio Engaged', { action });
 }
 
@@ -183,6 +196,9 @@ export function startFunnel(): void {
     });
   }
 
-  // Tracked last so the sink above already receives it
-  telemetry.track('Session Started', { entry: ctx.entry });
+  // Once per tab session: `started` resets on reload, the sessionStorage flag does not.
+  if (claimOnce('gf_funnel_started')) {
+    // Tracked last so the sink above already receives it
+    telemetry.track('Session Started', { entry: ctx.entry });
+  }
 }
