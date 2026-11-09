@@ -58,7 +58,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
               <span className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 Component Palette
               </span>
-              {isUnlocked ? (
+              {isUnlocked || freeCount === totalCount ? (
                 <span className="text-[10px] text-emerald-300 font-mono bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
                   {totalCount}/{totalCount} Unlocked
                 </span>
@@ -190,7 +190,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
       </div>
 
       {/* Bottom Free Email Unlock Banner for Guests */}
-      {!isCollapsed && !isUnlocked && (
+      {!isCollapsed && !isUnlocked && freeCount < totalCount && (
         <div className="p-2.5 border-t border-slate-800 bg-dark-950/90">
           <div className="p-2.5 rounded-xl border border-cyan-500/30 bg-cyan-950/20 space-y-2">
             <div className="flex items-center justify-between text-[11px]">

@@ -394,7 +394,7 @@ export const TEMPLATES: ArchitectureTemplate[] = [
     name: 'Transactional Outbox & CQRS Event Sourcing',
     description: 'Resilient event-driven architecture with CQRS separation, transactional outbox pattern, Kafka streaming, and dead-letter queue (DLQ) fault isolation.',
     difficulty: 'Expert',
-    requiresAuth: true,
+    requiresAuth: false,
     tags: ['CQRS', 'Outbox Pattern', 'Kafka', 'PostgreSQL', 'DLQ', 'Redis'],
     nodes: [
       {
@@ -542,7 +542,7 @@ export const TEMPLATES: ArchitectureTemplate[] = [
     name: 'Stripe Idempotent Webhook & Ledger Engine',
     description: 'Zero-data-loss financial payment ledger with Redis idempotency locking, Kafka event durability, double-entry PostgreSQL ledger, and exponential retry workers.',
     difficulty: 'Expert',
-    requiresAuth: true,
+    requiresAuth: false,
     tags: ['FinTech', 'Idempotency', 'Kafka', 'Redis', 'PostgreSQL'],
     nodes: [
       {
@@ -672,7 +672,7 @@ export const TEMPLATES: ArchitectureTemplate[] = [
     name: 'Netflix Chaos-Resilient Global Edge Stream',
     description: 'High-availability video control plane with OpenConnect CDN offload, Zuul API gateway, Hystrix circuit breakers, EVCache session state, and telemetry stream.',
     difficulty: 'Advanced',
-    requiresAuth: true,
+    requiresAuth: false,
     tags: ['Chaos Engineering', 'CDN', 'Circuit Breaker', 'Kafka', 'Cache'],
     nodes: [
       {
@@ -787,7 +787,7 @@ export const TEMPLATES: ArchitectureTemplate[] = [
     name: 'ERP Depo (Inbound/Outbound) & Üretim (MES) Akışı',
     description: 'Satın alma (PO), barkod mal kabul (Inbound), Ar-Ge (BOM), Kalite Kontrol (IQC), Üretim (MES), Bakım (MRO), FIFO/LIFO stok ve sevkiyat (Outbound) entegrasyonu.',
     difficulty: 'Intermediate',
-    requiresAuth: true,
+    requiresAuth: false,
     tags: ['ERP', 'Inbound / Outbound', 'MES / Üretim', 'Kalite Kontrol', 'FIFO Stok'],
     nodes: [
       {

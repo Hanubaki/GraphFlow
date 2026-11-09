@@ -49,14 +49,10 @@ describe('Architecture Templates Verification Suite', () => {
     expect(titles).toContain('Dead-Letter Queue (DLQ)');
   });
 
-  it('gates 4 advanced/enterprise templates and existing advanced template nodes behind free email sign-in', () => {
-    const gatedTemplates = TEMPLATES.filter(t => t.requiresAuth);
-    const starterTemplates = TEMPLATES.filter(t => !t.requiresAuth);
-    expect(starterTemplates.length).toBe(3);
-    expect(gatedTemplates.length).toBe(4);
-
-    const defaultTemplate = TEMPLATES[0];
-    const lockedNodesInDefault = defaultTemplate.nodes.filter(n => isNodeLockedForGuest(n));
-    expect(lockedNodesInDefault.length).toBeGreaterThanOrEqual(2);
+  it('does not gate any template or template node behind sign-in for guests', () => {
+    expect(TEMPLATES.filter(t => t.requiresAuth).length).toBe(0);
+    for (const t of TEMPLATES) {
+      expect(t.nodes.filter(n => isNodeLockedForGuest(n)).length).toBe(0);
+    }
   });
 });

@@ -46,8 +46,8 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
             <div>
               <h2 id="templates-modal-title" className="text-base font-bold text-slate-100">Architecture Templates</h2>
               <p className="text-xs text-slate-400">
-                {isUnlocked
-                  ? 'All 7 production-grade distributed architecture presets unlocked'
+                {isUnlocked || !TEMPLATES.some(t => t.requiresAuth)
+                  ? `${TEMPLATES.length} production-grade distributed architecture presets, no sign-in needed`
                   : '3 starter templates open • Sign in with email (Free) to unlock 4 Expert & Enterprise blueprints'}
               </p>
             </div>

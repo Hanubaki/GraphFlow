@@ -4,7 +4,10 @@ import { NodeType, GraphNode } from '../types/graph';
  * Checks whether an existing canvas node (such as one preloaded from a template)
  * belongs to the 10 advanced Cloud / AI / Security components that require a free email sign-in to customize.
  */
+export const GUEST_GATING_ENABLED = false;
+
 export function isNodeLockedForGuest(node: Pick<GraphNode, 'type' | 'iconName' | 'title'>): boolean {
+  if (!GUEST_GATING_ENABLED) return false;
   if (node.type === 'serverless' || node.type === 'storage' || node.type === 'external') {
     return true;
   }
@@ -55,7 +58,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#0ea5e9', // Cyan
     iconName: 'Smartphone',
     category: 'Clients',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'gateway',
@@ -79,7 +82,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#22d3ee', // Cyan
     iconName: 'ShieldCheck',
     category: 'Compute & Routing',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'gateway',
@@ -91,7 +94,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#6366f1', // Indigo
     iconName: 'Layers',
     category: 'Compute & Routing',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'service',
@@ -115,7 +118,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#c084fc', // Violet
     iconName: 'Cpu',
     category: 'Compute & Routing',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'serverless',
@@ -127,7 +130,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#ec4899', // Pink
     iconName: 'Zap',
     category: 'Compute & Routing',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'cache',
@@ -163,7 +166,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#60a5fa', // Light Blue
     iconName: 'Database',
     category: 'Data & Storage',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'storage',
@@ -175,7 +178,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#14b8a6', // Teal
     iconName: 'HardDrive',
     category: 'Data & Storage',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'queue',
@@ -199,7 +202,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#fbbf24', // Yellow-Amber
     iconName: 'Shuffle',
     category: 'Async & Messaging',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'external',
@@ -211,7 +214,7 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#10b981', // Emerald
     iconName: 'ExternalLink',
     category: 'External',
-    requiresAuth: true,
+    requiresAuth: false,
   },
   {
     type: 'external',
@@ -223,6 +226,6 @@ export const NODE_CATALOG: CatalogItem[] = [
     color: '#34d399', // Mint
     iconName: 'ShieldCheck',
     category: 'External',
-    requiresAuth: true,
+    requiresAuth: false,
   },
 ];
