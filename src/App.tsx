@@ -25,6 +25,7 @@ import { EmbedView } from './components/Embed/EmbedView';
 import { LandingPage } from './components/Landing/LandingPage';
 import { OnboardingTour, TOUR_STORAGE_KEY } from './components/Onboarding/OnboardingTour';
 import { CatalogItem, isNodeLockedForGuest } from './constants/nodeCatalog';
+import { SaveTopologyPrompt } from './components/Onboarding/SaveTopologyPrompt';
 import { TEMPLATES } from './constants/templates';
 import { GraphNode, GraphEdge, ArchitectureTemplate } from './types/graph';
 import { GeneratedArchitecture } from './services/aiGenerator';
@@ -561,6 +562,7 @@ export const App: React.FC = () => {
 
           {/* Center: Interactive Graph Canvas */}
           <div className="flex-1 relative h-full">
+            <SaveTopologyPrompt onOpenAuth={() => setActiveModal('auth')} />
             <GraphCanvas
               nodes={nodes}
               edges={edges}

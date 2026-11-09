@@ -168,7 +168,26 @@
     <script defer src="/_vercel/insights/script.js"></script>
   </head>
   <body class="bg-[#08090a] text-slate-100 font-sans antialiased">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Crawler-visible fallback; replaced as soon as the React app mounts. -->
+      <main style="max-width:720px;margin:0 auto;padding:48px 20px;font-family:system-ui,sans-serif;line-height:1.6">
+        <h1 style="font-size:28px;margin:0 0 12px">GraphFlow: system design diagrams that run</h1>
+        <p>GraphFlow is a browser-based distributed systems modeler with a live simulation. Draw services, queues, caches and databases, then send simulated traffic through them and watch utilization, p95/p99 latency, backpressure, circuit breakers and failures happen in real time. No install and no sign-in needed to try it.</p>
+        <h2 style="font-size:20px;margin:24px 0 8px">What you can do</h2>
+        <ul>
+          <li>Model an architecture and stress it with a load slider and per-node fault injection.</li>
+          <li>Import docker-compose.yml, Terraform, draw.io, Excalidraw and Mermaid diagrams.</li>
+          <li>Export Mermaid, SVG/PNG, Terraform, Kubernetes manifests and k6 load-test scripts (some exports are Pro).</li>
+        </ul>
+        <h2 style="font-size:20px;margin:24px 0 8px">Try a live example</h2>
+        <ul>
+          <li><a href="/?template=stripe-webhook-ledger">Stripe-style webhook and double-entry ledger</a></li>
+          <li><a href="/?template=netflix-chaos-streaming">Edge streaming under chaos</a></li>
+          <li><a href="/?template=resilient-cqrs-outbox">CQRS with a Kafka outbox</a></li>
+        </ul>
+        <p>Source: <a href="https://github.com/Hanubaki/GraphFlow">github.com/Hanubaki/GraphFlow</a> (PolyForm Noncommercial 1.0.0, source-available).</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

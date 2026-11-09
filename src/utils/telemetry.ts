@@ -12,7 +12,10 @@ export type TelemetryEventName =
   | 'Architecture Imported'
   | 'Preset Loaded'
   | 'Modal Opened'
-  | 'Checkout Clicked';
+  | 'Checkout Clicked'
+  | 'Signup Prompt Shown'
+  | 'Signup Prompt Clicked'
+  | 'Signup Prompt Dismissed';
 
 export interface TelemetryPayload {
   name: TelemetryEventName;
@@ -54,6 +57,13 @@ class TelemetryService {
         console.warn('[Telemetry] Subscriber execution error:', err);
       }
     });
+
+    // Vercel Web Analytics custom event (no-op if the script is blocked or the plan does not record events)
+    try {
+      (window as any).va?.('event', { name, data: sanitizedProps });
+    } catch {
+      // Analytics must never disrupt the UI
+    }
 
     // Optional beacon dispatch if endpoint configured
     if (typeof window !== 'undefined' && (window as any).__GRAPHFLOW_TELEMETRY_URL__) {
