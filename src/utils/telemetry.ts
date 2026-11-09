@@ -15,7 +15,12 @@ export type TelemetryEventName =
   | 'Checkout Clicked'
   | 'Signup Prompt Shown'
   | 'Signup Prompt Clicked'
-  | 'Signup Prompt Dismissed';
+  | 'Signup Prompt Dismissed'
+  | 'Session Started'
+  | 'Studio Opened'
+  | 'Studio Engaged'
+  | 'Pricing Opened'
+  | 'Locale Changed';
 
 export interface TelemetryPayload {
   name: TelemetryEventName;

@@ -9,6 +9,7 @@ import { createBezierPath } from '../../utils/geometry';
 import { parseInfrastructureToTopology } from '../../utils/importTopology';
 import { useSimulationPackets, useSimulationControls } from '../../context/SimulationContext';
 import { useMultiplayer } from '../../context/MultiplayerContext';
+import { markEngaged } from '../../utils/funnel';
 import { Maximize2, Share2, Sliders, Zap } from 'lucide-react';
 
 const EMPTY_PACKETS: DataPacket[] = [];
@@ -160,6 +161,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
   // Canvas pan with mouse drag
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    markEngaged('canvas_mouse');
     // Only pan on background left click or middle click
     if (e.target !== containerRef.current && !(e.target as HTMLElement).classList.contains('canvas-background')) {
       return;
@@ -248,6 +250,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
   // Mobile multi-touch gesture handlers: pinch-to-zoom, two-finger/single-finger pan, and touch port connecting
   const handleTouchStart = (e: React.TouchEvent) => {
+    markEngaged('canvas_touch');
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
 

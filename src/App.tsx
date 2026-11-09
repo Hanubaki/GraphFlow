@@ -34,6 +34,7 @@ import { CloudProject } from './types/auth';
 import { calculateAutoCenter } from './utils/viewportMath';
 import { createNodeFromCatalog } from './utils/nodeFactory';
 import { telemetry } from './utils/telemetry';
+import { getFunnelContext } from './utils/funnel';
 import { autoHardenTopology, autoLayoutTopology } from './utils/simulationPhysics';
 import { captureFirstTouchAttribution } from './services/billing';
 import {
@@ -230,6 +231,23 @@ export const App: React.FC = () => {
     }
     return 'landing';
   });
+
+  // Funnel: studio entry (via = how the visitor got in) and pricing views
+  const studioOpenCountRef = useRef(0);
+  useEffect(() => {
+    if (viewMode !== 'studio') return;
+    const first = studioOpenCountRef.current === 0;
+    studioOpenCountRef.current += 1;
+    const entry = getFunnelContext().entry;
+    telemetry.track('Studio Opened', {
+      via: !first ? 'return' : entry === 'landing' ? 'cta' : 'deeplink',
+    });
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (activeModal === 'pricing') telemetry.track('Pricing Opened', { from: viewMode });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModal]);
 
   // Auto-open interactive onboarding tour on first studio entry
   useEffect(() => {
