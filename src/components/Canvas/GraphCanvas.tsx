@@ -450,6 +450,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onMouseLeave={handleMouseLeave}
+      data-graph-canvas
       className={`relative w-full h-full overflow-hidden bg-dark-950 canvas-background touch-none ${
         isPanning ? 'cursor-grabbing' : 'cursor-default'
       }`}

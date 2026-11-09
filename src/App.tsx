@@ -44,6 +44,18 @@ import {
 
 export type ActiveModal = 'templates' | 'export' | 'embed' | 'aiGen' | 'projects' | 'pricing' | 'auth' | 'analytics' | 'commandPalette' | 'liveTelemetry' | 'legal' | null;
 
+/** Fit nodes using the real canvas container size when mounted (falls back to window size). */
+function fitToViewport(targetNodes: GraphNode[]) {
+  const canvasEl = document.querySelector<HTMLElement>('[data-graph-canvas]');
+  const rect = canvasEl?.getBoundingClientRect();
+  return calculateAutoCenter(
+    targetNodes,
+    window.innerWidth,
+    window.innerHeight,
+    rect && rect.width > 0 && rect.height > 0 ? { width: rect.width, height: rect.height } : undefined
+  );
+}
+
 export const App: React.FC = () => {
   const {
     nodes,
@@ -250,7 +262,7 @@ export const App: React.FC = () => {
         setEdges(shared.edges);
         const centered =
           typeof window !== 'undefined'
-            ? calculateAutoCenter(shared.nodes, window.innerWidth, window.innerHeight)
+            ? fitToViewport(shared.nodes)
             : null;
         if (centered) {
           setZoom(centered.zoom);
@@ -290,7 +302,7 @@ export const App: React.FC = () => {
 
         if (shouldRestoreUserAutosave && autosaved) {
           nodesRef.current = autosaved.nodes;
-          const centered = calculateAutoCenter(autosaved.nodes, window.innerWidth, window.innerHeight);
+          const centered = fitToViewport(autosaved.nodes);
           if (centered) {
             setZoom(centered.zoom);
             setPan(centered.pan);
@@ -303,7 +315,7 @@ export const App: React.FC = () => {
           if (matchedTemplate) {
             nodesRef.current = matchedTemplate.nodes;
             loadTemplate(matchedTemplate, true);
-            const centered = calculateAutoCenter(matchedTemplate.nodes, window.innerWidth, window.innerHeight);
+            const centered = fitToViewport(matchedTemplate.nodes);
             if (centered) {
               setZoom(centered.zoom);
               setPan(centered.pan);
@@ -334,7 +346,7 @@ export const App: React.FC = () => {
 
   const handleAutoCenter = useCallback((targetNodes = nodesRef.current) => {
     if (typeof window === 'undefined' || targetNodes.length === 0) return;
-    const result = calculateAutoCenter(targetNodes, window.innerWidth, window.innerHeight);
+    const result = fitToViewport(targetNodes);
     if (result) {
       setZoom(result.zoom);
       setPan(result.pan);

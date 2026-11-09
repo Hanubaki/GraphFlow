@@ -49,6 +49,30 @@ describe('Test-Driven Verification: Auto-Centering Math & Responsive Viewport', 
     expect(result.zoom).toBeLessThan(0.45);
   });
 
+  it('keeps text readable on a measured phone canvas: zoom >= 0.5 and graph start anchored inside the canvas', () => {
+    // Real canvas container on a 384x701 phone portrait: width minus palette, height minus top bar
+    const result = calculateAutoCenter(defaultNodes, 384, 701, { width: 327, height: 600 });
+    expect(result).not.toBeNull();
+    if (!result) return;
+
+    const minX = Math.min(...defaultNodes.map(n => n.x));
+    expect(result.zoom).toBeGreaterThanOrEqual(0.5);
+    // Pan is container-relative: leftmost node must start inside the canvas with a small margin (no sidebar offset)
+    const leftmostScreenX = result.pan.x + minX * result.zoom;
+    expect(leftmostScreenX).toBeGreaterThanOrEqual(0);
+    expect(leftmostScreenX).toBeLessThanOrEqual(40);
+  });
+
+  it('fits the whole graph when the measured canvas is large enough', () => {
+    const result = calculateAutoCenter(defaultNodes, 1920, 1080, { width: 1344, height: 1000 });
+    expect(result).not.toBeNull();
+    if (!result) return;
+    const minX = Math.min(...defaultNodes.map(n => n.x));
+    const maxX = Math.max(...defaultNodes.map(n => n.x + n.width));
+    expect(result.pan.x + minX * result.zoom).toBeGreaterThanOrEqual(0);
+    expect(result.pan.x + maxX * result.zoom).toBeLessThanOrEqual(1344);
+  });
+
   it('preserves near-native ~0.96x zoom and centers graph on a 1920x1080 desktop display', () => {
     const result = calculateAutoCenter(defaultNodes, 1920, 1080);
     expect(result).not.toBeNull();
