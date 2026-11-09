@@ -399,8 +399,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
               </div>
               <div className="h-1 w-full rounded-full bg-slate-800/90 overflow-hidden" title={`Capacity utilization: ${utilPct}%`}>
                 <div
-                  className={`h-full transition-all duration-200 ${barColor}`}
-                  style={{ width: `${Math.min(100, Math.max(node.status === 'down' ? 0 : 6, utilPct))}%` }}
+                  className={`h-full w-full origin-left transition-transform duration-200 ${barColor}`}
+                  style={{ transform: `scaleX(${Math.min(100, Math.max(node.status === 'down' ? 0 : 6, utilPct)) / 100})` }}
                 />
               </div>
             </div>

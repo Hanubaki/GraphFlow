@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SimulationMetrics } from '../../types/graph';
 import {
+  MoreHorizontal,
   Play,
   Pause,
   Zap,
@@ -151,8 +152,55 @@ export const TopBar: React.FC<TopBarProps> = ({
     onOpenPricing();
   };
 
+  // Phones: secondary actions live in a "more" menu so the bar never overflows horizontally
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const close = (e: Event) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [isMenuOpen]);
+
+  const menuItems: { key: string; icon: React.ElementType; label: string; onClick?: () => void; danger?: boolean }[] = [
+    { key: 'projects', icon: FolderKanban, label: 'Projects', onClick: onOpenProjects },
+    { key: 'embed', icon: Code2, label: 'Embed', onClick: onOpenEmbed },
+    { key: 'analytics', icon: Activity, label: 'Analytics', onClick: onOpenAnalytics },
+    ...(onOpenLiveTelemetry
+      ? [{ key: 'live', icon: Radio, label: isLiveStreaming ? 'Live: ON' : 'Live ERP/API', onClick: onOpenLiveTelemetry }]
+      : []),
+    ...(onOpenCommandPalette
+      ? [{ key: 'cmd', icon: Terminal, label: 'Command palette', onClick: onOpenCommandPalette }]
+      : []),
+    { key: 'pro', icon: Crown, label: isPro ? t('topbar.pro') : t('topbar.upgrade'), onClick: handleOpenPricing },
+    { key: 'account', icon: UserIcon, label: user ? (user.email ?? 'Account') : t('topbar.signIn'), onClick: onOpenAuth },
+    {
+      key: 'lang',
+      icon: Languages,
+      label: locale === 'en' ? 'Türkçe' : 'English',
+      onClick: () => {
+        const nextLocale = locale === 'en' ? 'tr' : 'en';
+        setLocale(nextLocale);
+        telemetry.track('Locale Changed' as any, { locale: nextLocale });
+      },
+    },
+    ...(onOpenTour
+      ? [{ key: 'tour', icon: HelpCircle, label: locale === 'tr' ? 'Stüdyo rehberi' : 'Studio tour', onClick: onOpenTour }]
+      : []),
+    { key: 'clear', icon: Trash2, label: t('topbar.clear'), onClick: onClearGraph, danger: true },
+  ];
+
   return (
-    <header className="h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-2 sm:px-3 md:px-4 z-30 select-none gap-1 sm:gap-2 w-full max-w-full">
+    <header className="relative h-14 bg-dark-900/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-2 sm:px-3 md:px-4 z-30 select-none gap-1 sm:gap-2 w-full max-w-full">
       {/* Brand Logo & Title */}
       <button
         onClick={onOpenHome}
@@ -183,7 +231,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       {/* Right Controls Container (Horizontally scrollable on narrow mobile screens) */}
-      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 overflow-x-auto max-w-full py-1">
+      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 overflow-x-auto max-md:overflow-visible max-w-full py-1">
         {/* Play/Pause + Speed + Stress Load + Spike Group */}
         <div data-tour="sim-controls" className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
@@ -201,10 +249,10 @@ export const TopBar: React.FC<TopBarProps> = ({
               <span className="hidden 3xl:inline">{isRunning ? t('topbar.pause') : t('topbar.start')}</span>
             </button>
 
-            <div className="h-4 w-px bg-slate-800 mx-1" />
+            <div className="h-4 w-px bg-slate-800 mx-1 max-md:hidden" />
 
             {/* Speed toggles */}
-            <div className="flex gap-0.5" role="group" aria-label="Simulation speed">
+            <div className="flex gap-0.5 max-md:hidden" role="group" aria-label="Simulation speed">
               {[0.5, 1, 2].map(s => (
                 <button
                   key={s}
@@ -370,6 +418,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="hidden 3xl:inline">AI Gen</span>
           </button>
 
+          <div className="contents max-md:hidden">
           <div className="h-3.5 w-px bg-slate-800" />
 
           {/* Projects */}
@@ -444,11 +493,12 @@ export const TopBar: React.FC<TopBarProps> = ({
               </button>
             </>
           )}
+          </div>
         </div>
 
         {/* Real-time Multiplayer Collaborators Stack */}
         <div
-          className="flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 shrink-0 text-xs font-mono"
+          className="max-md:hidden flex items-center gap-1.5 h-8 px-2 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 shrink-0 text-xs font-mono"
           title={`Active Collaborators (${totalCollaborators}): You (${myPresence.name})${peers.map(p => `, ${p.name}`).join('')}`}
         >
           <span className="relative flex h-2 w-2">
@@ -493,6 +543,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <span className="hidden sm:inline">Import / {t('topbar.export')}</span>
         </button>
 
+        <div className="contents max-md:hidden">
         {/* Pro Upgrade Pill */}
         <button
           onClick={handleOpenPricing}
@@ -569,6 +620,60 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
+        </div>
+
+        {/* Phone-only "more" menu */}
+        <div ref={menuRef} className="md:hidden shrink-0">
+          <button
+            onClick={() => setIsMenuOpen(o => !o)}
+            className="w-8 h-8 rounded-lg border border-slate-800 bg-dark-950 text-slate-300 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+            aria-label="More actions"
+            aria-expanded={isMenuOpen}
+            aria-haspopup="menu"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          {isMenuOpen && (
+            <div
+              role="menu"
+              className="absolute right-2 top-full mt-1 w-64 max-h-[75vh] overflow-y-auto rounded-xl border border-slate-700 bg-dark-900 shadow-2xl z-50 p-1.5"
+            >
+              <div className="flex items-center gap-2 px-2.5 py-1.5" role="group" aria-label="Simulation speed">
+                <span className="text-[11px] text-slate-400 mr-auto">Speed</span>
+                {[0.5, 1, 2].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => onSetSpeed(s)}
+                    className={`min-w-[44px] h-11 rounded-lg text-xs font-mono ${
+                      speedMultiplier === s ? 'bg-cyan-500/20 text-cyan-400 font-bold' : 'bg-dark-950 text-slate-300'
+                    }`}
+                  >
+                    {s}x
+                  </button>
+                ))}
+              </div>
+              {menuItems.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    role="menuitem"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      item.onClick?.();
+                    }}
+                    className={`w-full flex items-center gap-3 min-h-[44px] px-2.5 rounded-lg text-sm text-left hover:bg-slate-800 ${
+                      item.danger ? 'text-rose-300' : 'text-slate-200'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-rose-400' : 'text-cyan-400'}`} />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

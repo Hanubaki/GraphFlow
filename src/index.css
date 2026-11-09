@@ -95,11 +95,11 @@ code, pre {
 
 /* Touch ergonomics: expand compact controls to a 44x44px hit area on coarse pointers (WCAG 2.5.8) */
 @media (pointer: coarse) {
-  :is(button, a, [role='button'], [role='tab']):is([class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='w-6'], [class~='w-7']):not([class~='absolute']):not([class~='fixed']) {
+  :is(button, a, [role='button'], [role='tab']):is([class~='h-5'], [class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='h-9'], [class~='h-10'], [class~='w-4'], [class~='w-5'], [class~='w-6'], [class~='w-7'], [class~='w-8'], [class~='w-9'], [class~='w-10']):not([class~='absolute']):not([class~='fixed']) {
     position: relative;
   }
 
-  :is(button, a, [role='button'], [role='tab']):is([class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='w-6'], [class~='w-7'])::after {
+  :is(button, a, [role='button'], [role='tab']):is([class~='h-5'], [class~='h-6'], [class~='h-7'], [class~='h-8'], [class~='h-9'], [class~='h-10'], [class~='w-4'], [class~='w-5'], [class~='w-6'], [class~='w-7'], [class~='w-8'], [class~='w-9'], [class~='w-10'])::after {
     content: '';
     position: absolute;
     top: 50%;

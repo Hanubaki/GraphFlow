@@ -538,7 +538,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       <div
         onMouseDown={e => e.stopPropagation()}
         onTouchStart={e => e.stopPropagation()}
-        className="md:hidden absolute left-16 right-2 bottom-2.5 z-20 flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl bg-dark-900/95 border border-slate-800 shadow-xl font-mono text-[11px]"
+        className="md:hidden absolute left-2 right-2 bottom-2.5 z-20 flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl bg-dark-900/95 border border-slate-800 shadow-xl font-mono text-[11px]"
       >
         {/* Live RPS & Latency */}
         <div className="flex items-center gap-2 min-w-0">

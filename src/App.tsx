@@ -234,6 +234,8 @@ export const App: React.FC = () => {
   // Auto-open interactive onboarding tour on first studio entry
   useEffect(() => {
     if (viewMode !== 'studio' || typeof window === 'undefined') return;
+    // On phones the 6-step tour covers half the screen; it stays available from the "more" menu instead.
+    if (window.matchMedia?.('(max-width: 767px)').matches) return;
     try {
       const completed = localStorage.getItem(TOUR_STORAGE_KEY);
       if (!completed) {

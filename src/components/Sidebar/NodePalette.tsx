@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NODE_CATALOG, CatalogItem } from '../../constants/nodeCatalog';
 import { NodeIcon } from '../Common/NodeIcon';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +17,23 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
   );
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Phones: the palette is a drawer opened from a floating button instead of a permanent rail
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches === true
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 767px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, []);
+
+  const handleAdd = (item: CatalogItem) => {
+    onAddNode(item);
+    if (isMobile) setIsCollapsed(true);
+  };
+
   const freeCount = NODE_CATALOG.filter(i => !i.requiresAuth).length;
   const totalCount = NODE_CATALOG.length;
 
@@ -34,12 +51,30 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
     e.dataTransfer.effectAllowed = 'copy';
   };
 
+  if (isMobile && isCollapsed) {
+    return (
+      <button
+        data-tour="palette"
+        onClick={() => setIsCollapsed(false)}
+        className="absolute left-2 top-2 z-30 h-11 px-3.5 rounded-full bg-cyan-500 text-slate-950 text-xs font-bold shadow-lg shadow-black/40 inline-flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:outline-none"
+        aria-label="Add components"
+      >
+        <Plus className="w-4 h-4" />
+        <span>Add</span>
+      </button>
+    );
+  }
+
   return (
+    <>
+    {isMobile && (
+      <div className="absolute inset-0 z-30 bg-black/50" onClick={() => setIsCollapsed(true)} aria-hidden="true" />
+    )}
     <div
       data-tour="palette"
       className={`relative z-20 flex flex-col h-full bg-dark-900/95 border-r border-slate-800 backdrop-blur-xl transition-all duration-300 ${
         isCollapsed ? 'w-14' : 'w-72'
-      }`}
+      } ${isMobile ? '!absolute inset-y-0 left-0 !z-40 shadow-2xl !w-[min(18rem,85vw)]' : ''}`}
     >
       {/* Collapse Toggle Pin */}
       <button
@@ -111,7 +146,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
                       key={item.title}
                       draggable
                       onDragStart={e => handleDragStart(e, item)}
-                      onClick={() => onAddNode(item)}
+                      onClick={() => handleAdd(item)}
                       className={`group relative flex items-center gap-2.5 p-2 rounded-lg border transition-all select-none ${
                         isLockedForGuest
                           ? 'border-slate-800/70 bg-dark-950/40 hover:bg-slate-900/80 hover:border-cyan-500/40 cursor-pointer'
@@ -172,7 +207,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
                           <button
                             onClick={e => {
                               e.stopPropagation();
-                              onAddNode(item);
+                              handleAdd(item);
                             }}
                             className="opacity-0 group-hover:opacity-100 w-6 h-6 text-slate-400 hover:text-white rounded-md bg-slate-800/80 hover:bg-cyan-600 flex items-center justify-center transition-all shrink-0"
                             title="Add to Canvas"
@@ -215,5 +250,6 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
         </div>
       )}
     </div>
+    </>
   );
 };

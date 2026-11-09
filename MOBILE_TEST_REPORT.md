@@ -141,11 +141,26 @@ B denemesi ters tepti: `will-change` paket katmanlarını küçük tutuyormuş, 
 
 Ölçüm notu: tek cihaz, Wi-Fi, ~35 °C. Aynı derlemede turlar arası ±5 fps oynama var, ama C ile A/B arasındaki fark her turda aynı yönde.
 
+## İkinci tur düzeltmeler (2026-11-09)
+
+Hepsi gerçek telefonda doğrulandı (üretim derlemesi, LAN üzerinden).
+
+| Madde | Yapılan | Sonuç |
+|---|---|---|
+| #3 Tur | Telefonda (<768 px) ilk girişte otomatik açılmıyor, "⋯" menüsündeki "Studio tour"dan açılıyor | Stüdyoya girince ekran temiz |
+| #4 TopBar | Telefonda yalnızca oynat, spike, ses, Presets, AI Gen, Export ve "⋯" kalıyor. Projects, Embed, Analytics, Live, komut paleti, Pro, giriş, dil, tur, temizle ve hız seçimi 44 px'lik satırlarla "⋯" menüsünde. Dokunma alanı sahte elemanlarının yarattığı yatay kaydırma çubuğu kaldırıldı | Bar taşmıyor, tüm eylemler erişilebilir |
+| #5 Palet | Telefonda sabit 56 px'lik ray yerine yüzen "+ Add" düğmesi ve soldan açılan çekmece (arkası kararıyor, bileşen ekleyince kapanıyor). Alt HUD tüm genişliği kullanıyor | Kanvas tam genişlik |
+| #6 Dokunma hedefleri | [`index.css`](src/index.css) 44 px kuralı `h-5/9/10`, `w-4/5/8/9/10` sınıflarını da kapsıyor | Görsel boyut aynı, dokunma alanı 44 px |
+| İlerleme çubukları | `width` yerine `transform: scaleX` ([`NodeComponent.tsx`](src/components/Canvas/NodeComponent.tsx)) | Ana thread layout maliyeti yok |
+
+Ölçüm (stripe-webhook-ledger, zoom 0.5): boşta **58.8 fps**, pan **64 fps** (p90 25 ms). Önceki tur 56.5 / 51.7, ilk test 58.4 / 51.2 (zoom 0.22).
+Not: "görsel olarak 40 px altı" sayısı 45'ten 31'e indi, kalanlar 44 px dokunma alanı alan 28–32 px'lik düğmeler.
+
 ## Kalan işler
 
-- Sol palet bottom sheet, TopBar sadeleştirme, turun isteğe bağlı olması, 44 px dokunma hedefleri, landing alt çubuğu (#3–#8) yapılmadı.
-- Düğümlerdeki ilerleme çubukları `transition-all duration-200` ile `width` animasyonu yapıyor (trace'te 10 sn'de ~150 kez). Ana thread layout/boyama maliyeti, `transform: scaleX` ile compositor'a alınabilir. Henüz ölçülmedi.
-- Pinch zoom, düğüm sürükleme ve diğer şablonlar hâlâ test edilmedi.
+- Landing alt sabit çubuğu ve breadcrumb (#7, #8) yapılmadı.
+- iOS Safari test edilmedi (ziyaretçilerin %37'si iOS).
+- Pinch zoom, düğüm sürükleme ve diğer şablonlar test edilmedi.
 
 ## Önerilen sıra
 
