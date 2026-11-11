@@ -1,8 +1,12 @@
 # GraphFlow - Claude Code kuralları
 
-## Skill kullanım bildirimi
-Bir skill kullandığında cevabın ilk cümlesinde hangi skill(ler)i kullandığını söyle
-(örnek: "git-ninja ve vitest-tdd skill'lerini kullandım, ...").
+## Çalışma sırası (her istekte)
+1. Cevap vermeden veya iş yapmadan önce isteğe uyan skill(leri) belirle (`.claude/skills/`).
+2. O skill'leri Skill aracıyla yükle ve uygula. Token tüketimini azaltmak için
+   `token-optimization` her istekte varsayılan olarak kullanılır.
+3. Sonra cevabı ver / kodu yaz / işi yap.
+4. Cevabın ilk cümlesinde hangi skill(ler)i kullandığını söyle
+   (örnek: "token-optimization ve git-ninja skill'lerini kullandım, ...").
 
 ## Ponytail (her cevapta)
 Her kodlama görevinde (yazma, düzeltme, refactor, review) `ponytail` skill'ini yükle ve uygula
