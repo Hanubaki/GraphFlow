@@ -37,3 +37,5 @@ mcp_config.json
 # Impeccable Engine Binaries & Local State
 **/skills/impeccable/scripts/bin/
 .impeccable/
+
+demo-out/
