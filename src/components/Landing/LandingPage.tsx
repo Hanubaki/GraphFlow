@@ -11,6 +11,7 @@ import {
   Layers,
   Database,
   Mail,
+  Upload,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -31,7 +32,8 @@ import { generateDockerCompose, generateKubernetesManifests, generateMarkdownDoc
 import { generateShareUrl } from '../../services/projectStorage';
 import { TEMPLATES } from '../../constants/templates';
 import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
-import { ArchitectureTemplate } from '../../types/graph';
+import { ArchitectureTemplate, GraphEdge, GraphNode } from '../../types/graph';
+import { parseInfrastructureToTopology } from '../../utils/importTopology';
 import { buildLemonCheckoutUrl, getFirstTouchAttribution } from '../../services/billing';
 import { telemetry } from '../../utils/telemetry';
 import { saveUserConsentState, loadUserConsentState } from '../../utils/complianceAudit';
@@ -45,6 +47,8 @@ interface LandingPageProps {
   onOpenAuth?: () => void;
   onSelectBlueprint?: (template: ArchitectureTemplate) => void;
   onOpenLegal?: (tab: LegalTab) => void;
+  /** Called with a parsed diagram (draw.io, docker-compose, Terraform, Mermaid, JSON...) picked on the landing page. */
+  onImportDiagram?: (nodes: GraphNode[], edges: GraphEdge[]) => void;
 }
 
 const GITHUB_URL = 'https://github.com/Hanubaki/GraphFlow';
@@ -59,6 +63,21 @@ const ring =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-950';
 const btnPrimary = `inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-slate-50 hover:bg-white text-slate-950 text-sm font-medium transition-colors ${ring}`;
 const btnSecondary = `inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg border border-slate-800 hover:bg-slate-900 text-slate-200 text-sm font-medium transition-colors ${ring}`;
+
+const useIsPhone = () => {
+  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches === true);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 767px)');
+    if (!mq) return;
+    const onChange = () => setPhone(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return phone;
+};
+
+const IMPORT_ACCEPT = '.drawio,.xml,.json,.yml,.yaml,.tf,.mmd,.mermaid,.excalidraw,.csv,.svg';
+const IMPORT_MAX_BYTES = 2 * 1024 * 1024;
 
 const usePrefersReducedMotion = () => {
   const [reduced, setReduced] = useState(false);
@@ -645,9 +664,30 @@ const ControlRoomBackdrop: React.FC<{ reduced: boolean }> = ({ reduced }) => (
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth, onSelectBlueprint, onOpenLegal }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPricing, onOpenAuth, onSelectBlueprint, onOpenLegal, onImportDiagram }) => {
   const { user } = useAuth();
   const reduced = usePrefersReducedMotion();
+  const isPhone = useIsPhone();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImportError(null);
+    if (file.size > IMPORT_MAX_BYTES) {
+      setImportError('That file is over 2 MB. Open the studio and import it there.');
+      return;
+    }
+    try {
+      const result = parseInfrastructureToTopology(await file.text(), file.name);
+      if (result.nodes.length === 0) throw new Error('empty');
+      onImportDiagram?.(result.nodes, result.edges);
+    } catch {
+      setImportError('Could not read that file. Supported: .drawio, docker-compose.yml, Terraform, Mermaid, Excalidraw and GraphFlow JSON.');
+    }
+  };
   const shareUrl = useMemo(() => generateShareUrl(DEMO_NODES, DEMO_EDGES), []);
   const [distanceSalesConsent, setDistanceSalesConsent] = useState<boolean>(() => loadUserConsentState().preCheckoutDistanceSalesConsent);
   const [checkoutConsentError, setCheckoutConsentError] = useState<string | null>(null);
@@ -726,12 +766,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
               <span>Open the studio</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </button>
+            {onImportDiagram && (
+              <>
+                <input ref={importInputRef} type="file" accept={IMPORT_ACCEPT} onChange={handleImportFile} className="hidden" aria-label="Import a diagram file" />
+                <button type="button" onClick={() => importInputRef.current?.click()} className={btnSecondary}>
+                  <Upload className="w-4 h-4" aria-hidden="true" />
+                  <span>Import your diagram</span>
+                </button>
+              </>
+            )}
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" className={btnSecondary}>
               <Github className="w-4 h-4" aria-hidden="true" />
               <span>View source</span>
             </a>
           </div>
         </div>
+        {importError && (
+          <p role="alert" className="mt-4 text-[13px] text-rose-300">
+            {importError}
+          </p>
+        )}
       </header>
 
       {/* Product */}
@@ -741,7 +795,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-white/[0.025] to-transparent"
         />
         <div className="relative max-w-6xl mx-auto px-3 md:px-8">
-          <StudioFrame />
+          {isPhone ? (
+            <video
+              src="/graphflow-launch-demo.mp4"
+              className="w-full rounded-xl border border-slate-800"
+              autoPlay={!reduced}
+              muted
+              loop
+              playsInline
+              controls
+              preload="metadata"
+              aria-label="Screen recording of GraphFlow: a traffic surge, a slowed database and a node taken down, then recovery"
+            />
+          ) : (
+            <StudioFrame />
+          )}
           <p className="mt-4 px-2 md:px-0 text-[13px] text-slate-400">
             Live, in your browser. Free in your browser and source-available under PolyForm Noncommercial 1.0.0, nothing to install.
           </p>

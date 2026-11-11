@@ -519,6 +519,10 @@ export const App: React.FC = () => {
             setViewMode('studio');
             handleSelectTemplate(template);
           }}
+          onImportDiagram={(importedNodes, importedEdges) => {
+            setViewMode('studio');
+            handleImportGraph(importedNodes, importedEdges);
+          }}
         />
         <React.Suspense fallback={null}>
           <PricingModal
