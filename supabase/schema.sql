@@ -35,6 +35,9 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Only the trigger should run this SECURITY DEFINER function, never /rest/v1/rpc callers.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
 -- 3b. Billing Field Guard
 -- RLS lets users update their own profile row, which would otherwise include
 -- plan_tier. Client roles (anon / authenticated) can never set billing fields;
@@ -84,45 +87,45 @@ alter table public.projects enable row level security;
 drop policy if exists "Users can view own profile" on public.profiles;
 create policy "Users can view own profile"
   on public.profiles for select
-  using (auth.uid() = id);
+  using ((select auth.uid()) =id);
 
 drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
-  using (auth.uid() = id)
-  with check (auth.uid() = id);
+  using ((select auth.uid()) =id)
+  with check ((select auth.uid()) =id);
 
 drop policy if exists "Users can insert own profile" on public.profiles;
 create policy "Users can insert own profile"
   on public.profiles for insert
-  with check (auth.uid() = id);
+  with check ((select auth.uid()) =id);
 
 drop policy if exists "Users can delete own profile" on public.profiles;
 create policy "Users can delete own profile"
   on public.profiles for delete
-  using (auth.uid() = id);
+  using ((select auth.uid()) =id);
 
 -- Projects Policies
 drop policy if exists "Users can view own or public projects" on public.projects;
 create policy "Users can view own or public projects"
   on public.projects for select
-  using (auth.uid() = user_id or is_public = true);
+  using ((select auth.uid()) =user_id or is_public = true);
 
 drop policy if exists "Users can insert own projects" on public.projects;
 create policy "Users can insert own projects"
   on public.projects for insert
-  with check (auth.uid() = user_id);
+  with check ((select auth.uid()) =user_id);
 
 drop policy if exists "Users can update own projects" on public.projects;
 create policy "Users can update own projects"
   on public.projects for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) =user_id)
+  with check ((select auth.uid()) =user_id);
 
 drop policy if exists "Users can delete own projects" on public.projects;
 create policy "Users can delete own projects"
   on public.projects for delete
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) =user_id);
 
 -- 6. Anonymous funnel events (written by src/utils/funnel.ts, insert-only for the public anon key)
 create table if not exists public.funnel_events (
