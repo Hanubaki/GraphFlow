@@ -133,6 +133,14 @@
     </script>
 
     <!-- Lemon Squeezy Checkout Overlay Script -->
+    <style>
+      body { background: #08090a; }
+      /* Crawler-visible fallback. It stays in the HTML, but people never see it flash before the app mounts:
+         it is invisible for 1.5 s and only appears if the app is still loading after that. */
+      .gf-fallback { max-width: 720px; margin: 0 auto; padding: 48px 20px; font-family: system-ui, sans-serif; line-height: 1.6; color: #e1e3e6; opacity: 0; animation: gf-reveal 0s 1.5s forwards; }
+      .gf-fallback a { color: #22d3ee; }
+      @keyframes gf-reveal { to { opacity: 1; } }
+    </style>
     <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
 
     <!-- Vercel Web Analytics (queue stub so events fired before the script loads are not lost) -->
@@ -144,7 +152,7 @@
   <body class="bg-[#08090a] text-slate-100 font-sans antialiased">
     <div id="root">
       <!-- Crawler-visible fallback; replaced as soon as the React app mounts. -->
-      <main style="max-width:720px;margin:0 auto;padding:48px 20px;font-family:system-ui,sans-serif;line-height:1.6">
+      <main class="gf-fallback">
         <h1 style="font-size:28px;margin:0 0 12px">GraphFlow: system design diagrams that run</h1>
         <p>GraphFlow is a browser-based distributed systems modeler with a live simulation. Draw services, queues, caches and databases, then send simulated traffic through them and watch utilization, p95/p99 latency, backpressure, circuit breakers and failures happen in real time. No install and no sign-in needed to try it.</p>
         <h2 style="font-size:20px;margin:24px 0 8px">What you can do</h2>
