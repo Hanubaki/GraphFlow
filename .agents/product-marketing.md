@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v2
+**Document version:** v3
 **Last updated:** 2026-11-11
 
 Drafted from PRODUCT.md, README.md and the landing page. Items marked TODO need the owner's input. Nothing here is invented: no testimonials, customers or numbers exist yet.
@@ -42,6 +42,7 @@ Secondary, not confirmed as targets: system design interview candidates, educato
 
 ## Competitive Landscape
 **Direct:** Few browser tools simulate topologies live. TODO: research current ones.
+**Adjacent (seen 2026-11-11):** Diagrm (diagrm.com), per its cofounder's own r/devops comment: model an AWS architecture, enter expected workloads, estimate costs and spot design issues before deploying; public beta, offering free pilots to teams. Focus is cost and AWS, not live failure behavior. Not verified beyond that comment.
 **Secondary:** draw.io, Lucidchart, Excalidraw, Miro, Mermaid: draw only, no simulation.
 **Indirect:** Spreadsheets, whiteboard back-of-envelope math, load tests (k6, Locust) on real systems.
 
@@ -114,5 +115,6 @@ TODO: no interviews yet. Collect verbatim phrases from the first users.
 | | | | | |
 
 ## Changelog
+- v3 (2026-11-11) — Added Diagrm as an adjacent competitor spotted in the r/devops thread.
 - v2 (2026-11-11) — Goal set to paying customers; recorded real pricing and that Pro checkout is live.
 - v1 (2026-11-11) — Initial context auto-drafted from PRODUCT.md, README and landing page.
