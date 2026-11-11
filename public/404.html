@@ -4,17 +4,73 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>Page not found – GraphFlow</title>
+    <meta name="theme-color" content="#08090a" />
+    <title>404 – This node isn't in the graph | GraphFlow</title>
     <style>
-      body { margin: 0; background: #08090a; color: #e2e8f0; font-family: system-ui, sans-serif; }
-      main { max-width: 480px; margin: 0 auto; padding: 96px 20px; }
-      a { color: #06b6d4; }
+      @font-face { font-family: "Mona Sans"; src: url("/fonts/mona-sans-var.woff2") format("woff2"); font-weight: 200 900; font-display: swap; }
+      @font-face { font-family: "IBM Plex Mono"; src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+      :root { --floor: #08090a; --panel: #0f1012; --border: #24262a; --hair: #35373c; --bright: #f7f8f8; --body: #c8cbd0; --muted: #9a9ea6; --cyan: #22d3ee; --cyan-solid: #06b6d4; --error: #fb7185; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--floor); color: var(--body); font-family: "Mona Sans", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; }
+      main { width: 100%; max-width: 640px; }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .request { margin: 0 0 20px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+      .request b { color: var(--error); font-weight: 400; }
+      h1 { margin: 0; font-size: clamp(72px, 22vw, 140px); line-height: 1; font-weight: 700; letter-spacing: -0.04em; color: var(--bright); }
+      h2 { margin: 8px 0 12px; font-size: clamp(22px, 5vw, 28px); font-weight: 600; color: var(--bright); }
+      p.lead { margin: 0 0 28px; max-width: 52ch; }
+      .graph { margin: 0 0 28px; padding: 16px 12px 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
+      .graph svg { display: block; width: 100%; height: auto; }
+      .node rect { fill: #1c1d21; stroke: var(--hair); }
+      .node text { fill: var(--body); font-size: 11px; text-anchor: middle; }
+      .node.lost rect { fill: rgba(251, 113, 133, 0.08); stroke: var(--error); stroke-dasharray: 4 3; }
+      .node.lost text { fill: var(--error); }
+      .edge { stroke: var(--hair); stroke-width: 1.5; fill: none; }
+      .edge.flow { stroke: var(--cyan-solid); stroke-dasharray: 5 5; animation: flow 1.2s linear infinite; }
+      .edge.broken { stroke: var(--error); stroke-dasharray: 3 5; opacity: 0.8; }
+      @keyframes flow { to { stroke-dashoffset: -20; } }
+      .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; padding: 0; list-style: none; }
+      .stats li { padding: 4px 10px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; }
+      .stats li span { color: var(--error); }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+      .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid var(--hair); color: var(--bright); }
+      .btn.primary { background: var(--cyan-solid); border-color: var(--cyan-solid); color: #08090a; }
+      .btn:hover { border-color: var(--cyan); }
+      .btn.primary:hover { background: var(--cyan); }
+      .btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+      @media (prefers-reduced-motion: reduce) { .edge.flow { animation: none; } }
     </style>
   </head>
   <body>
     <main>
-      <h1>Page not found</h1>
-      <p>This address does not exist. <a href="/">Go to GraphFlow</a>.</p>
+      <p class="request mono">GET <span id="path">/</span> &rarr; <b>404 Not Found</b></p>
+      <h1>404</h1>
+      <h2>This node isn't in the graph.</h2>
+      <p class="lead">The address you followed doesn't match any page. The link may have moved or have a typo. The rest of GraphFlow is up and running.</p>
+
+      <div class="graph" aria-hidden="true">
+        <svg viewBox="0 0 520 96" role="presentation">
+          <path class="edge flow" d="M82 48 H134" />
+          <path class="edge flow" d="M222 48 H274" />
+          <path class="edge broken" d="M362 48 H414" />
+          <g class="node mono"><rect x="4" y="30" width="78" height="36" rx="8" /><text x="43" y="52">client</text></g>
+          <g class="node mono"><rect x="134" y="30" width="88" height="36" rx="8" /><text x="178" y="52">gateway</text></g>
+          <g class="node mono"><rect x="274" y="30" width="88" height="36" rx="8" /><text x="318" y="52">router</text></g>
+          <g class="node mono lost"><rect x="414" y="30" width="102" height="36" rx="8" /><text x="465" y="52">this page</text></g>
+        </svg>
+      </div>
+
+      <ul class="stats mono">
+        <li>status <span>404</span></li>
+        <li>p99 <span>&infin;</span></li>
+        <li>error rate <span>100%</span></li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn primary" href="/">Back to GraphFlow</a>
+        <a class="btn" href="/?studio=1">Open the studio</a>
+      </div>
     </main>
+    <script>document.getElementById("path").textContent = location.pathname.slice(0, 120);</script>
   </body>
 </html>
