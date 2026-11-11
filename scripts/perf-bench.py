@@ -8,6 +8,8 @@ Baseline recorded 2026-11-11 (ecommerce-distributed template, 1832x904, 6x throt
     simulation running  idle: about 8-12 fps
     simulation paused   idle: about 48-58 fps
 Node drag (--drag), simulation running, 6x throttle: before the drag fix about 8 fps, after about 15 fps
+Noise: the same build varies by roughly +-30% between runs, so compare variants interleaved and over many runs.
+Tried without a measurable gain (2026-11-11): moving packets out of React state (imperative transform writes).
 """
 import argparse
 
@@ -36,9 +38,13 @@ def one_run(a):
             pg.add_style_tag(content=a.css)
         if a.pause:
             pg.get_by_label('Pause Traffic').click()
-        pg.context.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate', {'rate': a.throttle})
+        cdp = pg.context.new_cdp_session(pg)
+        cdp.send('Emulation.setCPUThrottlingRate', {'rate': a.throttle})
+        cdp.send('Performance.enable')
         pg.wait_for_timeout(800)
         pg.evaluate(RAF)
+        before = {m['name']: m['value'] for m in cdp.send('Performance.getMetrics')['metrics']}
+        t0 = before['Timestamp']
         if a.drag:
             # canvas nodes are absolutely positioned; the first plain cursor-grab match is a palette item
             box = pg.locator('[class*=absolute][class*=cursor-grab]').first.bounding_box()
@@ -51,9 +57,13 @@ def one_run(a):
             pg.mouse.up()
         else:
             pg.wait_for_timeout(3500)
+        after = {m['name']: m['value'] for m in cdp.send('Performance.getMetrics')['metrics']}
         ft = pg.evaluate('() => { window.__run = false; return window.__ft; }')[5:]
         b.close()
-    return 1000 / (sum(ft) / len(ft))
+    wall = after['Timestamp'] - t0
+    # main-thread busy share per wall second, split by kind (script / style recalc / layout)
+    share = {k: (after[k] - before[k]) / wall * 100 for k in ('TaskDuration', 'ScriptDuration', 'RecalcStyleDuration', 'LayoutDuration')}
+    return 1000 / (sum(ft) / len(ft)), share
 
 
 def main():
@@ -68,9 +78,12 @@ def main():
     ap.add_argument('--no-blur', action='store_true', help='experiment: disable backdrop-filter everywhere')
     ap.add_argument('--chrome', default=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
     a = ap.parse_args()
-    fps = [one_run(a) for _ in range(a.runs)]
+    runs = [one_run(a) for _ in range(a.runs)]
+    fps = [r[0] for r in runs]
     mode = ('paused' if a.pause else 'running') + (', drag' if a.drag else ', idle')
     print(f'simulation {mode}, {a.throttle}x throttle: ' + ' / '.join(f'{f:.1f}' for f in fps) + ' fps')
+    avg = {k: sum(r[1][k] for r in runs) / len(runs) for k in runs[0][1]}
+    print('main thread busy %: ' + ', '.join(f'{k.replace("Duration", "")} {v:.0f}' for k, v in avg.items()))
 
 
 if __name__ == '__main__':
