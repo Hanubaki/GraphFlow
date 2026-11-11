@@ -147,10 +147,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     onOpenExport();
   };
 
-  const handleOpenPricing = () => {
-    telemetry.track('Checkout Clicked', { tier: 'pro', source: 'topbar_upgrade_pill' });
-    onOpenPricing();
-  };
+  // "Pricing Opened" is tracked in App.tsx; "Checkout Clicked" is reserved for the real checkout buttons.
+  const handleOpenPricing = () => onOpenPricing();
 
   // Phones: secondary actions live in a "more" menu so the bar never overflows horizontally
   const [isMenuOpen, setIsMenuOpen] = useState(false);

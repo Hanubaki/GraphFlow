@@ -123,6 +123,15 @@ function isInternalHost(host: string): boolean {
   );
 }
 
+/** Owner opt-out so your own visits stay out of the funnel: run localStorage.setItem('gf_no_track','1') once in your browser. */
+function isOptedOut(): boolean {
+  try {
+    return window.localStorage.getItem('gf_no_track') === '1';
+  } catch {
+    return false;
+  }
+}
+
 /** Returns true the first time it is called per tab session (survives reloads); true every time if storage is unavailable. */
 function claimOnce(key: string): boolean {
   const store = safeStorage();
@@ -189,7 +198,8 @@ export function startFunnel(): void {
     if (ENGAGEMENT_EVENTS.has(event.name)) markEngaged(event.name);
   });
 
-  const sinkEnabled = import.meta.env.PROD && isSupabaseConfigured && !isInternalHost(window.location.hostname);
+  const sinkEnabled =
+    import.meta.env.PROD && isSupabaseConfigured && !isInternalHost(window.location.hostname) && !isOptedOut();
   if (sinkEnabled) {
     telemetry.subscribe(event => {
       if (SINK_EVENTS.has(event.name)) postEvent(event);
