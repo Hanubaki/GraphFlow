@@ -56,9 +56,24 @@ Rules every post follows: say you are the author, say the license is source-avai
 
 Read each subreddit's sidebar and rules the day you post. Moderators enforce self-promotion rules strictly and rules change.
 
-- **r/devops:** has a weekly self-promotion thread. Post there instead of a standalone post unless the current rules allow project posts.
+- **r/devops (rules confirmed from the sidebar, 2026-11-11):** self-promotion goes only in the pinned "Weekly Self Promotion Thread", not in a standalone post. Any personal affiliation with a product must be disclosed at the top of the post or comment. No editorialized titles. Use the thread comment below, not the standalone post.
+
+**r/devops thread comment (post as a top-level comment in the Weekly Self Promotion Thread):**
+
+> Disclosure: I'm the author of GraphFlow.
+>
+> GraphFlow is a browser tool that runs an architecture diagram. You draw services, queues and databases (or import docker-compose.yml), push simulated traffic through them, then slow a node, raise an error rate or throw a surge at the edge, and watch queues back up, breakers trip and messages hit the DLQ.
+>
+> It is a model with numbers you set per node, so it shows behavior under your assumptions, not your real system. Free to try, no sign-in. Source-available (PolyForm Noncommercial, not OSI open source). Some exports and unlimited saved projects are Pro.
+>
+> https://graph-flow-virid.vercel.app/
+>
+> What failure modes would you want to test that I haven't modeled?
+
 - **r/softwarearchitecture:** rules not verified. Read them first.
 - Never post the same text in several subreddits on the same day.
+
+**Standalone post for other subreddits only (not r/devops).** Check each sidebar first.
 
 **Title:** `I built a browser tool that simulates traffic and failures through an architecture diagram (feedback wanted)`
 
