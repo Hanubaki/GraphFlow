@@ -127,9 +127,9 @@ export function useGraphStore(options?: GraphStoreOptions) {
     });
   }, [recordSnapshot]);
 
-  const moveNode = useCallback((id: string, x: number, y: number) => {
-    const snappedX = Math.round(x / 10) * 10;
-    const snappedY = Math.round(y / 10) * 10;
+  const moveNode = useCallback((id: string, x: number, y: number, snap = true) => {
+    const snappedX = snap ? Math.round(x / 10) * 10 : x;
+    const snappedY = snap ? Math.round(y / 10) * 10 : y;
     setNodes(prev => {
       const next = prev.map(n => (n.id === id ? { ...n, x: snappedX, y: snappedY } : n));
       nodesRef.current = next;

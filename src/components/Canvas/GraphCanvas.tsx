@@ -32,7 +32,7 @@ interface GraphCanvasProps {
   setZoom: (zoom: number | ((prev: number) => number)) => void;
   onSelectNode: (id: string | null) => void;
   onSelectEdge: (id: string | null) => void;
-  onMoveNode: (id: string, x: number, y: number) => void;
+  onMoveNode: (id: string, x: number, y: number, snap?: boolean) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
   onAddEdge: (edge: GraphEdge) => void;

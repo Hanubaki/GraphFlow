@@ -7,6 +7,7 @@ Run (needs Python with Playwright and a local Chrome):
 Baseline recorded 2026-11-11 (ecommerce-distributed template, 1832x904, 6x throttle):
     simulation running  idle: about 8-12 fps
     simulation paused   idle: about 48-58 fps
+Node drag (--drag), simulation running, 6x throttle: before the drag fix about 8 fps, after about 15 fps
 """
 import argparse
 
@@ -33,7 +34,8 @@ def one_run(a):
         pg.wait_for_timeout(800)
         pg.evaluate(RAF)
         if a.drag:
-            box = pg.locator('[class*=cursor-grab]').first.bounding_box()
+            # canvas nodes are absolutely positioned; the first plain cursor-grab match is a palette item
+            box = pg.locator('[class*=absolute][class*=cursor-grab]').first.bounding_box()
             cx, cy = box['x'] + box['width'] / 2, box['y'] + 20
             pg.mouse.move(cx, cy)
             pg.mouse.down()

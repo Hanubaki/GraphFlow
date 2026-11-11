@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { GraphNode, GraphEdge, DataPacket, SimulationMetrics } from '../types/graph';
 import { soundFx } from '../utils/sound';
+import { dragState } from '../utils/dragState';
 import {
   findIngressEdges,
   findDownstreamEdges,
@@ -289,7 +290,7 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({
     let lastTimestamp = performance.now();
 
     const loop = (timestamp: number) => {
-      if (typeof document !== 'undefined' && document.hidden) {
+      if (dragState.active || (typeof document !== 'undefined' && document.hidden)) {
         lastTimestamp = timestamp;
         animFrameRef.current = requestAnimationFrame(loop);
         return;

@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { GraphNode } from '../../types/graph';
 import { NodeIcon } from '../Common/NodeIcon';
 import { useAuth } from '../../context/AuthContext';
+import { dragState } from '../../utils/dragState';
 import { isNodeLockedForGuest } from '../../constants/nodeCatalog';
 import { Power, Clock, ShieldCheck, Zap, Copy, Trash2, Lock } from 'lucide-react';
 import {
@@ -17,7 +18,7 @@ interface NodeComponentProps {
   trafficLoadMultiplier?: number;
   isSpikeMode?: boolean;
   onSelect: (id: string) => void;
-  onMove: (id: string, x: number, y: number) => void;
+  onMove: (id: string, x: number, y: number, snap?: boolean) => void;
   onStartConnect: (nodeId: string, startPos: { x: number; y: number }) => void;
   onEndConnect: (nodeId: string) => void;
   onDelete: (id: string) => void;
@@ -53,6 +54,27 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
     nodeY: node.y,
   });
 
+  // Drag moves are applied once per frame and stay smooth; the node snaps to the grid on release
+  const dragRaf = useRef<number | null>(null);
+  const dragTarget = useRef<{ x: number; y: number } | null>(null);
+  const queueMove = useCallback((x: number, y: number) => {
+    dragTarget.current = { x, y };
+    if (dragRaf.current !== null) return;
+    dragRaf.current = requestAnimationFrame(() => {
+      dragRaf.current = null;
+      if (dragTarget.current) onMove(node.id, dragTarget.current.x, dragTarget.current.y, false);
+    });
+  }, [node.id, onMove]);
+  const finishMove = useCallback(() => {
+    dragState.active = false;
+    if (dragRaf.current !== null) {
+      cancelAnimationFrame(dragRaf.current);
+      dragRaf.current = null;
+    }
+    if (dragTarget.current) onMove(node.id, dragTarget.current.x, dragTarget.current.y, true);
+    dragTarget.current = null;
+  }, [node.id, onMove]);
+
   // Mouse Drag Handler
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -65,16 +87,19 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
       nodeX: node.x,
       nodeY: node.y,
     };
+    dragTarget.current = null;
+    dragState.active = true;
     setIsDragging(true);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentZoom = zoomRef.current;
       const dx = (moveEvent.clientX - dragStartPos.current.mouseX) / currentZoom;
       const dy = (moveEvent.clientY - dragStartPos.current.mouseY) / currentZoom;
-      onMove(node.id, Math.round(dragStartPos.current.nodeX + dx), Math.round(dragStartPos.current.nodeY + dy));
+      queueMove(Math.round(dragStartPos.current.nodeX + dx), Math.round(dragStartPos.current.nodeY + dy));
     };
 
     const handleMouseUp = () => {
+      finishMove();
       setIsDragging(false);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -82,7 +107,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [node.id, node.x, node.y, onMove, onSelect]);
+  }, [node.id, node.x, node.y, onSelect, queueMove, finishMove]);
 
   // Mobile Touch Drag Handler
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -97,6 +122,8 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
       nodeX: node.x,
       nodeY: node.y,
     };
+    dragTarget.current = null;
+    dragState.active = true;
     setIsDragging(true);
 
     const handleTouchMove = (moveEvent: TouchEvent) => {
@@ -106,10 +133,11 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
       const currentZoom = zoomRef.current;
       const dx = (currentTouch.clientX - dragStartPos.current.mouseX) / currentZoom;
       const dy = (currentTouch.clientY - dragStartPos.current.mouseY) / currentZoom;
-      onMove(node.id, Math.round(dragStartPos.current.nodeX + dx), Math.round(dragStartPos.current.nodeY + dy));
+      queueMove(Math.round(dragStartPos.current.nodeX + dx), Math.round(dragStartPos.current.nodeY + dy));
     };
 
     const handleTouchEnd = () => {
+      finishMove();
       setIsDragging(false);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
@@ -119,7 +147,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
-  }, [node.id, node.x, node.y, onMove, onSelect]);
+  }, [node.id, node.x, node.y, onSelect, queueMove, finishMove]);
 
   const handleOutputPortMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
