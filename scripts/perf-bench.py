@@ -28,6 +28,12 @@ def one_run(a):
         if skip.count():
             skip.first.click()
             pg.wait_for_timeout(400)
+        if a.no_dash:
+            pg.add_style_tag(content='.animate-flow-dash{animation:none!important}')
+        if a.no_blur:
+            pg.add_style_tag(content='*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}')
+        if a.css:
+            pg.add_style_tag(content=a.css)
         if a.pause:
             pg.get_by_label('Pause Traffic').click()
         pg.context.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate', {'rate': a.throttle})
@@ -57,6 +63,9 @@ def main():
     ap.add_argument('--runs', type=int, default=3)
     ap.add_argument('--pause', action='store_true', help='pause the simulation first (upper bound)')
     ap.add_argument('--drag', action='store_true', help='drag a node instead of idling')
+    ap.add_argument('--no-dash', action='store_true', help='experiment: disable the edge dash animation')
+    ap.add_argument('--css', default='', help='experiment: extra CSS injected before measuring')
+    ap.add_argument('--no-blur', action='store_true', help='experiment: disable backdrop-filter everywhere')
     ap.add_argument('--chrome', default=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
     a = ap.parse_args()
     fps = [one_run(a) for _ in range(a.runs)]
