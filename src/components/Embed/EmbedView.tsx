@@ -113,7 +113,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
           {/* Play / Pause */}
           <button
             onClick={togglePlay}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
               isRunning ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-950' : 'bg-emerald-600 text-white'
             }`}
             title={isRunning ? 'Pause' : 'Play'}
@@ -140,7 +140,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
           <button
             onClick={triggerSpike}
             disabled={isSpikeMode}
-            className={`h-7 px-2 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
+            className={`h-7 px-2 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors ${
               isSpikeMode
                 ? 'bg-amber-500 text-slate-950 animate-pulse'
                 : 'bg-dark-950 border border-slate-800 text-slate-300 hover:border-amber-500/40 hover:text-amber-400'
@@ -218,7 +218,7 @@ export const EmbedView: React.FC<EmbedViewProps> = ({
           href={fullStudioUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-dark-900/90 border border-cyan-500/40 hover:border-cyan-400 shadow-xl shadow-cyan-950/50 backdrop-blur-xl transition-all hover:scale-105"
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-dark-900/90 border border-cyan-500/40 hover:border-cyan-400 shadow-xl shadow-cyan-950/50 backdrop-blur-xl transition-[background-color,border-color,color,opacity,transform] hover:scale-105"
         >
           <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
           <span className="text-[11px] font-semibold text-slate-200 group-hover:text-white">

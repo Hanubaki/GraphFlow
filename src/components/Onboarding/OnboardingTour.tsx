@@ -281,7 +281,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose 
             width: `${rect.width}px`,
             height: `${rect.height}px`,
           }}
-          className="fixed pointer-events-none rounded-[10px] border-2 border-cyan-400 shadow-[0_0_0_4px_rgba(34,211,238,0.15),0_0_24px_rgba(34,211,238,0.35)] transition-all duration-200"
+          className="fixed pointer-events-none rounded-[10px] border-2 border-cyan-400 shadow-[0_0_0_4px_rgba(34,211,238,0.15),0_0_24px_rgba(34,211,238,0.35)] transition-[top,left,width,height,transform,opacity] duration-200"
         >
           {/* Corner CAD crosshairs */}
           <span className="absolute -top-1.5 -left-1.5 w-2.5 h-2.5 border-t-2 border-l-2 border-cyan-300" />
@@ -295,7 +295,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose 
       <div
         style={cardStyle}
         onClick={e => e.stopPropagation()}
-        className="fixed w-[calc(100vw-32px)] max-w-[360px] rounded-xl bg-[#0f1012] border border-slate-700/90 shadow-[0_24px_60px_rgba(0,0,0,0.85)] p-4 text-slate-100 transition-all duration-200"
+        className="fixed w-[calc(100vw-32px)] max-w-[360px] rounded-xl bg-[#0f1012] border border-slate-700/90 shadow-[0_24px_60px_rgba(0,0,0,0.85)] p-4 text-slate-100 transition-[top,left,width,height,transform,opacity] duration-200"
       >
         {/* Top Metadata Bar */}
         <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
@@ -346,7 +346,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose 
                 key={s.id}
                 onClick={() => setStepIndex(idx)}
                 aria-label={`Go to step ${idx + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
+                className={`h-1.5 rounded-full transition-[width,background-color] ${
                   idx === stepIndex
                     ? 'w-5 bg-cyan-400'
                     : idx < stepIndex

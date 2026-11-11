@@ -210,7 +210,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <button
                       key={status}
                       onClick={() => onUpdateNode(selectedNode.id, { status })}
-                      className={`h-8 rounded-lg border text-xs font-semibold capitalize flex items-center justify-center transition-all ${
+                      className={`h-8 rounded-lg border text-xs font-semibold capitalize flex items-center justify-center transition-colors ${
                         isActive
                           ? config.active
                           : 'bg-dark-950 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -247,7 +247,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     <button
                       key={cb}
                       onClick={() => onUpdateNode(selectedNode.id, { circuitBreaker: cb })}
-                      className={`h-7 rounded-lg border text-[11px] font-semibold flex items-center justify-center transition-all ${
+                      className={`h-7 rounded-lg border text-[11px] font-semibold flex items-center justify-center transition-colors ${
                         isActive
                           ? config.active
                           : 'bg-dark-950 border-slate-800 text-slate-400 hover:border-slate-700'

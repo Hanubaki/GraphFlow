@@ -17,6 +17,13 @@ Stack: React + Tailwind v3 (`plugins: []`), no animation library, motion is CSS 
 | 7 | LOW | Cohesion | repo-wide | No motion tokens. Easing and duration are Tailwind defaults plus one hand-typed `cubic-bezier(0.4, 0, 0.6, 1)`; durations mix 150, 200 and 300 ms. | Add `--ease-out` and `--duration-*` tokens in `index.css` and use them for #1. |
 | 8 | LOW | Accessibility | `EmbedView:221`, `NodeComponent` ports and delete button | `hover:scale-*` and `group-hover:opacity-100` are not gated by `@media (hover: hover)`. Touch devices fire false hovers. | Gate with `@media (hover: hover) and (pointer: fine)`. Verify on a real phone first. |
 
+## Status
+
+- #1 fixed: `gf-modal-in` and `gf-fade-in` keyframes plus the `--ease-out` token in `index.css`; the command palette backdrop no longer animates.
+- #2 fixed: all 24 `transition-all` replaced with the properties each element changes (colors, opacity, transform, width, tour position).
+- #3 fixed: the edge dash overlay pauses when the simulation is paused (`data-sim` on the canvas SVG).
+- #4 to #8 open.
+
 ## Missed opportunities
 
 - Selecting a node swaps the right panel from "System Overview" to "Service Inspector" instantly. A 150 ms crossfade would explain the change.

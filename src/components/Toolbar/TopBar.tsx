@@ -235,7 +235,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="flex items-center rounded-lg border border-slate-800 bg-dark-950 p-0.5 h-8 shrink-0">
             <button
               onClick={handleTogglePlay}
-              className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
+              className={`flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-md text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
                 isRunning
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                   : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
@@ -303,7 +303,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={handleTriggerSpike}
             disabled={!isRunning}
-            className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
+            className={`flex items-center gap-1 h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
               isSpikeMode
                 ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
                 : 'border-slate-800 bg-dark-950 text-slate-300 hover:border-amber-500/50 hover:text-amber-400'

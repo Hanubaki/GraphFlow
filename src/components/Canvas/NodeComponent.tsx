@@ -413,7 +413,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         onMouseUp={handleInputPortMouseUp}
         onTouchEnd={handleInputPortMouseUp}
         title="Connect input here"
-        className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-all flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
+        className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
       >
         <div className="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover:bg-cyan-300" />
       </div>
@@ -423,7 +423,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         onMouseDown={handleOutputPortMouseDown}
         onTouchStart={handleOutputPortTouchStart}
         title="Drag to connect output"
-        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-all flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
+        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
       >
         <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
       </div>
@@ -435,7 +435,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
             e.stopPropagation();
             onDelete(node.id);
           }}
-          className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all shadow-md z-20 after:absolute after:-inset-2 after:content-['']"
+          className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-[background-color,border-color,color,opacity,transform] shadow-md z-20 after:absolute after:-inset-2 after:content-['']"
           title="Delete Component"
         >
           ×

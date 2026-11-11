@@ -83,6 +83,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const trafficLoadMultiplier = simControls?.trafficLoadMultiplier ?? 1;
   const isSpikeMode = simControls?.isSpikeMode ?? false;
   const metrics = simControls?.metrics;
+  const isSimRunning = simControls?.isRunning ?? true;
 
   // O(1) node lookup map (recomputes only when nodes array changes, not on packet ticks)
   const nodeMap = useMemo(() => {
@@ -472,7 +473,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         <PeerCursorLayer peers={peers} />
 
         {/* SVG Layer for Connections & Animated Packets (w-full h-full with overflow-visible avoids 50000px GPU backing store allocation on mobile) */}
-        <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
+        <svg data-sim={isSimRunning ? 'running' : 'paused'} className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
           <defs>
             <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#38bdf8" />

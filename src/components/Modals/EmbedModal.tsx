@@ -88,7 +88,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
                 <button
                   key={h}
                   onClick={() => setSelectedHeight(h)}
-                  className={`h-7 px-3 rounded-md font-mono text-xs font-semibold transition-all ${
+                  className={`h-7 px-3 rounded-md font-mono text-xs font-semibold transition-colors ${
                     selectedHeight === h
                       ? 'bg-cyan-500 text-slate-950 shadow-sm font-bold'
                       : 'text-slate-400 hover:text-slate-200'
@@ -115,7 +115,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({
               />
               <button
                 onClick={handleCopySnippet}
-                className="absolute top-2 right-2 h-7 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-[11px] flex items-center gap-1.5 transition-all shadow-md shadow-cyan-950"
+                className="absolute top-2 right-2 h-7 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-[11px] flex items-center gap-1.5 transition-colors shadow-md shadow-cyan-950"
               >
                 {copiedSnippet ? (
                   <>

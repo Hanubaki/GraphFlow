@@ -68,7 +68,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
             return (
               <div
                 key={template.id}
-                className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 hover:border-cyan-500/50 hover:bg-slate-900/50 transition-all flex flex-col justify-between gap-3 group"
+                className="p-4 rounded-xl border border-slate-800 bg-dark-950/60 hover:border-cyan-500/50 hover:bg-slate-900/50 transition-colors flex flex-col justify-between gap-3 group"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -114,7 +114,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
                       onSelectTemplate(template);
                       onClose();
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all group-hover:gap-2 ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-colors group-hover:gap-2 ${
                       isLocked
                         ? 'bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/60 text-cyan-200 shadow-black/40'
                         : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-950'

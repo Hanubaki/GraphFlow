@@ -318,7 +318,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                     {(activeTab === 'cloud' ? cloudProjects : localProjects).map((proj: any) => (
                       <div
                         key={proj.id}
-                        className="p-3.5 rounded-xl border border-slate-800 bg-dark-950/80 hover:border-slate-700 transition-all flex items-center justify-between gap-3 group"
+                        className="p-3.5 rounded-xl border border-slate-800 bg-dark-950/80 hover:border-slate-700 transition-colors flex items-center justify-between gap-3 group"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="text-xs font-semibold text-slate-100 truncate group-hover:text-cyan-300 transition-colors">

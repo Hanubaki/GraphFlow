@@ -72,7 +72,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
     )}
     <div
       data-tour="palette"
-      className={`relative z-20 flex flex-col h-full bg-dark-900/95 border-r border-slate-800 backdrop-blur-xl transition-all duration-300 ${
+      className={`relative z-20 flex flex-col h-full bg-dark-900/95 border-r border-slate-800 backdrop-blur-xl transition-[width] duration-300 ${
         isCollapsed ? 'w-14' : 'w-72'
       } ${isMobile ? '!absolute inset-y-0 left-0 !z-40 shadow-2xl !w-[min(18rem,85vw)]' : ''}`}
     >
@@ -147,7 +147,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
                       draggable
                       onDragStart={e => handleDragStart(e, item)}
                       onClick={() => handleAdd(item)}
-                      className={`group relative flex items-center gap-2.5 p-2 rounded-lg border transition-all select-none ${
+                      className={`group relative flex items-center gap-2.5 p-2 rounded-lg border transition-colors select-none ${
                         isLockedForGuest
                           ? 'border-slate-800/70 bg-dark-950/40 hover:bg-slate-900/80 hover:border-cyan-500/40 cursor-pointer'
                           : 'border-slate-800/80 bg-dark-950/60 hover:bg-slate-800/60 hover:border-slate-700 cursor-grab active:cursor-grabbing'
@@ -209,7 +209,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
                               e.stopPropagation();
                               handleAdd(item);
                             }}
-                            className="opacity-0 group-hover:opacity-100 w-6 h-6 text-slate-400 hover:text-white rounded-md bg-slate-800/80 hover:bg-cyan-600 flex items-center justify-center transition-all shrink-0"
+                            className="opacity-0 group-hover:opacity-100 w-6 h-6 text-slate-400 hover:text-white rounded-md bg-slate-800/80 hover:bg-cyan-600 flex items-center justify-center transition-[background-color,color,opacity] shrink-0"
                             title="Add to Canvas"
                           >
                             <Plus className="w-3.5 h-3.5" />

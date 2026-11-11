@@ -187,14 +187,14 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
                   </button>
                   <button
                     onClick={() => controls?.togglePlay()}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
                   >
                     {isRunning ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
                     {isRunning ? 'Pause' : 'Resume'}
                   </button>
                   <button
                     onClick={() => controls?.resetSimulation()}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
                     title="Reset Metrics Counter"
                   >
                     <RotateCcw className="w-4 h-4" />

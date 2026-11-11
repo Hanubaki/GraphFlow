@@ -104,7 +104,7 @@ const ConnectionWire = React.memo<ConnectionWireProps>(({
               e.stopPropagation();
               onDelete(edgeId);
             }}
-            className={`w-4 h-4 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center text-xs font-bold transition-all shrink-0 ${
+            className={`w-4 h-4 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center text-xs font-bold transition-[background-color,opacity] shrink-0 ${
               isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
             }`}
             title="Remove Connection"
