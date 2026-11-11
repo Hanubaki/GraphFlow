@@ -76,14 +76,44 @@ export function clearRateLimitStore(): void {
   rateLimitStore.clear();
 }
 
-export function checkAndStoreIdempotency(key: string): boolean {
-  const now = Date.now();
+export function isEventProcessed(key: string): boolean {
   const existing = idempotencyStore.get(key);
-  if (existing && now - existing.receivedAt < IDEMPOTENCY_TTL_MS) {
-    return true; // Already processed
-  }
-  idempotencyStore.set(key, { receivedAt: now, status: 'processed' });
+  return !!existing && Date.now() - existing.receivedAt < IDEMPOTENCY_TTL_MS;
+}
+
+// shortcut: per-instance memory, not shared across serverless instances; safe because the profile updates are idempotent, move to a DB event_id column if replay order ever matters.
+export function checkAndStoreIdempotency(key: string): boolean {
+  if (isEventProcessed(key)) return true; // Already processed
+  idempotencyStore.set(key, { receivedAt: Date.now(), status: 'processed' });
   return false;
+}
+
+/** Maps a Lemon Squeezy event to the plan tier it should set; null means "leave the profile untouched". */
+export function resolvePlanTier(
+  eventName: string | undefined,
+  attributes: Record<string, any> = {},
+  now: number = Date.now()
+): 'pro' | 'free' | null {
+  const status = attributes.status;
+  const endsAt = attributes.ends_at ? new Date(attributes.ends_at).getTime() : NaN;
+  const hasTimeLeft = Number.isFinite(endsAt) && endsAt > now;
+
+  switch (eventName) {
+    case 'subscription_created':
+    case 'subscription_updated':
+      if (status === 'active' || status === 'on_trial') return 'pro';
+      // Cancelled subscriptions stay paid until the period they already bought ends.
+      if (status === 'cancelled' && hasTimeLeft) return 'pro';
+      return 'free';
+    case 'subscription_cancelled':
+      return hasTimeLeft ? null : 'free';
+    case 'subscription_expired':
+      return 'free';
+    case 'order_created':
+      return status === 'paid' ? 'pro' : null;
+    default:
+      return null;
+  }
 }
 
 export function clearIdempotencyStore(): void {
@@ -222,14 +252,13 @@ export default async function handler(req: any, res: any) {
       ''
     );
 
-    if (eventId && checkAndStoreIdempotency(eventId)) {
+    if (eventId && isEventProcessed(eventId)) {
       return res.status(200).json({ received: true, idempotent: true });
     }
 
     const attributes = payload.data?.attributes || {};
     const customerId = String(attributes.customer_id || '');
     const subscriptionId = String(payload.data?.id || '');
-    const status = attributes.status;
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -253,47 +282,35 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ warning: 'User not found in payload', received: true, attribution });
     }
 
-    // Process subscription events
-    if (
-      eventName === 'subscription_created' ||
-      eventName === 'subscription_updated' ||
-      eventName === 'order_created'
-    ) {
-      const isPaid = status === 'active' || status === 'paid' || eventName === 'order_created';
+    const planTier = resolvePlanTier(eventName, attributes);
 
-      await supabaseAdmin
+    if (planTier) {
+      // supabase-js returns {error} instead of throwing: surface it as a 500 so Lemon Squeezy retries.
+      const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
-          plan_tier: isPaid ? 'pro' : 'free',
-          lemon_customer_id: customerId || undefined,
-          lemon_subscription_id: subscriptionId || undefined,
+          plan_tier: planTier,
+          ...(planTier === 'pro'
+            ? { lemon_customer_id: customerId || undefined, lemon_subscription_id: subscriptionId || undefined }
+            : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('id', targetUserId);
+      if (updateError) throw updateError;
 
       console.log(
         JSON.stringify({
           event: 'lemon_squeezy_conversion_attribution',
           userId: targetUserId,
           eventName,
-          planTier: isPaid ? 'pro' : 'free',
+          planTier,
           ...attribution,
         })
       );
-    } else if (
-      eventName === 'subscription_cancelled' ||
-      eventName === 'subscription_expired'
-    ) {
-      await supabaseAdmin
-        .from('profiles')
-        .update({
-          plan_tier: 'free',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', targetUserId);
-
-      console.log(`Downgraded user ${targetUserId} to free tier upon cancellation.`);
     }
+
+    // Only mark the event as handled once the write succeeded, so a failed attempt can be retried.
+    if (eventId) checkAndStoreIdempotency(eventId);
 
     return res.status(200).json({ received: true, attribution });
   } catch (error: any) {

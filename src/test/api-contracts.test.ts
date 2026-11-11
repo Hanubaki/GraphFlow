@@ -8,6 +8,8 @@ import {
   checkAndStoreIdempotency,
   clearIdempotencyStore,
   extractConversionAttribution,
+  isEventProcessed,
+  resolvePlanTier,
 } from '../../api/webhook';
 
 describe('API Design & Security Contracts Suite', () => {
@@ -128,6 +130,45 @@ describe('API Design & Security Contracts Suite', () => {
       expect(attr.billingCycle).toBe('annual');
       expect(attr.utmSource).toBe('twitter');
       expect(attr.referrer).toBe('t.co');
+    });
+  });
+
+  describe('5. Lemon Squeezy plan mapping & retry safety', () => {
+    const now = Date.parse('2026-11-11T00:00:00Z');
+    const future = '2026-12-11T00:00:00Z';
+    const past = '2026-10-11T00:00:00Z';
+
+    it('grants Pro for active and trial subscriptions', () => {
+      expect(resolvePlanTier('subscription_created', { status: 'active' }, now)).toBe('pro');
+      expect(resolvePlanTier('subscription_updated', { status: 'on_trial' }, now)).toBe('pro');
+    });
+
+    it('keeps a cancelled subscription on Pro until the paid period ends', () => {
+      expect(resolvePlanTier('subscription_updated', { status: 'cancelled', ends_at: future }, now)).toBe('pro');
+      expect(resolvePlanTier('subscription_cancelled', { ends_at: future }, now)).toBeNull();
+      expect(resolvePlanTier('subscription_cancelled', { ends_at: past }, now)).toBe('free');
+      expect(resolvePlanTier('subscription_expired', {}, now)).toBe('free');
+    });
+
+    it('downgrades lapsed subscriptions', () => {
+      for (const status of ['paused', 'past_due', 'unpaid', 'expired']) {
+        expect(resolvePlanTier('subscription_updated', { status }, now)).toBe('free');
+      }
+    });
+
+    it('only upgrades on paid orders and ignores unrelated events', () => {
+      expect(resolvePlanTier('order_created', { status: 'paid' }, now)).toBe('pro');
+      for (const status of ['pending', 'failed', 'refunded']) {
+        expect(resolvePlanTier('order_created', { status }, now)).toBeNull();
+      }
+      expect(resolvePlanTier('license_key_created', {}, now)).toBeNull();
+    });
+
+    it('does not mark an event as processed until the handler records it', () => {
+      expect(isEventProcessed('evt_retry')).toBe(false);
+      expect(isEventProcessed('evt_retry')).toBe(false); // a read must not consume the retry
+      expect(checkAndStoreIdempotency('evt_retry')).toBe(false);
+      expect(isEventProcessed('evt_retry')).toBe(true);
     });
   });
 });
