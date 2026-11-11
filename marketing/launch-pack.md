@@ -62,13 +62,13 @@ Read each subreddit's sidebar and rules the day you post. Moderators enforce sel
 
 > Disclosure: I'm the author of GraphFlow.
 >
-> GraphFlow is a browser tool that runs an architecture diagram. You draw services, queues and databases (or import docker-compose.yml), push simulated traffic through them, then slow a node, raise an error rate or throw a surge at the edge, and watch queues back up, breakers trip and messages hit the DLQ.
+> I made it because a diagram can't tell you what happens when the database gets slow. In GraphFlow you draw services, queues and databases (or import a docker-compose.yml) and push simulated traffic through them. Then you slow a node, raise its error rate, or throw a surge at the edge, and watch queues back up, breakers trip and messages land in the DLQ.
 >
-> It is a model with numbers you set per node, so it shows behavior under your assumptions, not your real system. Free to try, no sign-in. Source-available (PolyForm Noncommercial, not OSI open source). Some exports and unlimited saved projects are Pro.
+> The latency and failure numbers are ones you set per node, so treat the output as a what-if, not a prediction for your real system. It's free to try with no sign-in. The source is available under PolyForm Noncommercial (not OSI open source), and some exports plus unlimited saved projects are Pro.
 >
 > https://graph-flow-virid.vercel.app/
 >
-> What failure modes would you want to test that I haven't modeled?
+> Which failure modes would you want to test that I haven't modeled?
 
 - **r/softwarearchitecture:** rules not verified. Read them first.
 - Never post the same text in several subreddits on the same day.
