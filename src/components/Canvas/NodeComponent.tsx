@@ -425,7 +425,7 @@ const NodeComponentBase: React.FC<NodeComponentProps> = ({
         title="Drag to connect output"
         className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-dark-900 border-2 border-slate-600 hover:border-cyan-400 hover:bg-cyan-500/20 hover:scale-125 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center cursor-crosshair z-10 after:absolute after:-inset-3 after:content-['']"
       >
-        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
       </div>
 
       {/* Quick Delete Floating Action (visible on hover when not selected) */}

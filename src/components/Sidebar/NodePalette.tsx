@@ -72,7 +72,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode, onOpenAuth 
     )}
     <div
       data-tour="palette"
-      className={`relative z-20 flex flex-col h-full bg-dark-900/95 border-r border-slate-800 backdrop-blur-xl transition-[width] duration-300 ${
+      className={`relative z-20 flex flex-col h-full bg-dark-900/95 border-r border-slate-800 backdrop-blur-xl ${
         isCollapsed ? 'w-14' : 'w-72'
       } ${isMobile ? '!absolute inset-y-0 left-0 !z-40 shadow-2xl !w-[min(18rem,85vw)]' : ''}`}
     >

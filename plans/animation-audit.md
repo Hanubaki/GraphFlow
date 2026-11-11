@@ -22,7 +22,10 @@ Stack: React + Tailwind v3 (`plugins: []`), no animation library, motion is CSS 
 - #1 fixed: `gf-modal-in` and `gf-fade-in` keyframes plus the `--ease-out` token in `index.css`; the command palette backdrop no longer animates.
 - #2 fixed: all 24 `transition-all` replaced with the properties each element changes (colors, opacity, transform, width, tour position).
 - #3 fixed: the edge dash overlay pauses when the simulation is paused (`data-sim` on the canvas SVG).
-- #4 to #8 open.
+- #4 fixed: the palette collapse now snaps instead of animating its width (no per-frame canvas reflow).
+- #5 fixed: the always-on pulse on every output port is gone; the error badge pulse stays because it carries state.
+- #6 fixed: the in-progress connection path no longer has the 8 px drop-shadow filter.
+- #7 and #8 open.
 
 ## Missed opportunities
 

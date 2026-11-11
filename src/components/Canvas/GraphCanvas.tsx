@@ -509,7 +509,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
               stroke="#00f0ff"
               strokeWidth="2.5"
               strokeDasharray="6 6"
-              className="animate-flow-dash filter drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]"
+              className="animate-flow-dash"
             />
           )}
         </svg>
