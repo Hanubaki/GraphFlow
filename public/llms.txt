@@ -1,0 +1,29 @@
+# GraphFlow
+
+> GraphFlow is a browser-based distributed systems modeler with a live simulation. You draw services, queues, caches and databases, push simulated traffic through them, inject faults, and watch latency, saturation, backpressure, circuit breakers and dead-letter routing happen in real time. It runs in the browser with no install and no sign-in to try.
+
+GraphFlow is for backend and platform engineers who design or own distributed systems: design reviews, incident retrospectives and capacity planning. Static diagram tools (draw.io, Lucidchart, Excalidraw, Miro) draw boxes and lines; GraphFlow simulates packets along every edge with per-node latency, failure probability and capacity.
+
+## Try it
+
+- [Live studio](https://graph-flow-virid.vercel.app/?studio=1): open the simulator.
+- [Stripe-style webhook and double-entry ledger](https://graph-flow-virid.vercel.app/?template=stripe-webhook-ledger): example topology.
+- [Edge streaming under chaos](https://graph-flow-virid.vercel.app/?template=netflix-chaos-streaming): example topology.
+- [CQRS with a Kafka outbox](https://graph-flow-virid.vercel.app/?template=resilient-cqrs-outbox): example topology.
+
+## What it does
+
+- Model an architecture on an infinite canvas and stress it with a load slider and per-node fault injection.
+- Import docker-compose.yml, Terraform, draw.io, Excalidraw and Mermaid diagrams.
+- Export Mermaid, SVG/PNG, Terraform, Kubernetes manifests and k6 load-test scripts. Some exports are Pro.
+- Share by link or iframe embed.
+
+## Pricing
+
+- Free: $0, up to 3 saved projects.
+- Pro: $12 per month, or $99 per year.
+- Team: $39 per month, up to 10 seats, by contact.
+
+## Source and license
+
+- [Source code](https://github.com/Hanubaki/GraphFlow): source-available under PolyForm Noncommercial 1.0.0. It is not OSI open source.
