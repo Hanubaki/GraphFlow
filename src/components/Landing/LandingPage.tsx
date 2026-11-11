@@ -36,6 +36,7 @@ import { buildLemonCheckoutUrl, getFirstTouchAttribution } from '../../services/
 import { telemetry } from '../../utils/telemetry';
 import { saveUserConsentState, loadUserConsentState } from '../../utils/complianceAudit';
 import type { LegalTab } from '../Modals/LegalComplianceModal';
+import { AboutAndUpdates } from './AboutAndUpdates';
 import { BreadcrumbBar, ThankYouBanner, NotFound404Banner, PreLaunchSections20, StickyMobileCtaBar } from './LandingSections20';
 
 interface LandingPageProps {
@@ -1080,6 +1081,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           </div>
         </div>
       </section>
+
+      <AboutAndUpdates onOpenLegal={onOpenLegal} />
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-800/70">

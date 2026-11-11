@@ -152,6 +152,25 @@ create policy "Anyone can insert funnel events"
 create index if not exists idx_funnel_events_created_at on public.funnel_events(created_at desc);
 create index if not exists idx_funnel_events_sid on public.funnel_events(sid);
 
+-- 7. Release-notes email signups (written by src/services/emailSignup.ts, insert-only for the public anon key)
+create table if not exists public.email_signups (
+  id bigint generated always as identity primary key,
+  created_at timestamptz default timezone('utc'::text, now()) not null,
+  email text not null check (char_length(email) between 5 and 254 and email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
+  source text not null default 'landing' check (char_length(source) <= 40)
+);
+
+create unique index if not exists uq_email_signups_email on public.email_signups (lower(email));
+
+alter table public.email_signups enable row level security;
+
+-- Anyone can add an address; nobody can read the list through the public API (use the dashboard / service role).
+drop policy if exists "Anyone can sign up for release notes" on public.email_signups;
+create policy "Anyone can sign up for release notes"
+  on public.email_signups for insert
+  to anon, authenticated
+  with check (true);
+
 -- Funnel summary: unique sessions that reached each step, by device and entry type.
 -- Usage: select * from public.funnel_summary where day > now() - interval '7 days' order by day desc, device;
 create or replace view public.funnel_summary with (security_invoker = true) as
