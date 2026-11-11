@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v1
+**Document version:** v2
 **Last updated:** 2026-11-11
 
 Drafted from PRODUCT.md, README.md and the landing page. Items marked TODO need the owner's input. Nothing here is invented: no testimonials, customers or numbers exist yet.
@@ -10,7 +10,7 @@ Drafted from PRODUCT.md, README.md and the landing page. Items marked TODO need 
 **What it does:** Browser-based distributed systems modeler with a live client-side simulation. You compose services, queues, caches and databases, inject traffic surges and faults, and read latency, saturation, circuit breaker trips and dead-letter routing in real time. Results share as links and embeds, or export as Mermaid, SVG/PNG, Docker Compose, Terraform, Kubernetes and k6.
 **Product category:** System design simulator / architecture diagram tool.
 **Product type:** SaaS, free to try with no sign-in.
-**Business model:** Free tier and Pro (listed at $12/month in the landing page schema, Lemon Squeezy checkout). A Team tier appears in pricing copy. Commercial launch state not confirmed.
+**Business model:** Free ($0, up to 3 saved projects), Pro Developer ($12/month or $9/month billed annually at $99, unlimited projects, AI generation, Terraform export, collaboration), Engineering Team ($39/month or $32/month annual, up to 10 seats, contact by email). Pro checkout is live on Lemon Squeezy (confirmed by the owner 2026-11-11). Paying customers so far: unknown, TODO.
 
 ## Target Audience
 **Target companies:** Teams that run distributed systems. Company size and industry: TODO.
@@ -103,8 +103,8 @@ TODO: no interviews yet. Collect verbatim phrases from the first users.
 | Shareable | Link, embed and export features |
 
 ## Goals
-**Business goal:** TODO (first users, first paying customers).
-**Conversion action:** Open the studio and run a template; later upgrade to Pro.
+**Business goal:** Paying customers (owner, 2026-11-11). The owner can put in a large share of their time each week.
+**Conversion action:** Open the studio and run a template, then hit the 3-project limit or a Pro feature (AI, Terraform export) and upgrade to Pro.
 **Current metrics:** Funnel events exist in the app (Session Started, Studio Engaged); no numbers recorded here yet.
 
 ## Learnings
@@ -114,4 +114,5 @@ TODO: no interviews yet. Collect verbatim phrases from the first users.
 | | | | | |
 
 ## Changelog
+- v2 (2026-11-11) — Goal set to paying customers; recorded real pricing and that Pro checkout is live.
 - v1 (2026-11-11) — Initial context auto-drafted from PRODUCT.md, README and landing page.
