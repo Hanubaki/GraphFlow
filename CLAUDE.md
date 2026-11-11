@@ -17,6 +17,11 @@ Cevabın ilk cümlesinde ponytail'i de kullanılan skill'ler arasında say.
 Dışarıdan bir skill bulursa `npx claude-plugins skills install` ile otomatik kurmadan önce
 kullanıcıya adını, kaynağını ve yıldız sayısını söyleyip onay al. Onaysız indirme yapma.
 
+## Commit ve push
+Bu repoda yapılan her değişikliği commit edip hemen `origin/main`'e push et, her seferinde onay sorma
+(kullanıcı izni, 2026-11-11). Force push yapma, `.env`/gizli bilgi commit etme. HN/Reddit paylaşımı,
+yazılım kurulumu gibi dış dünyaya dönük işler için onay almaya devam et.
+
 ## Skill'ler
 Proje skill'leri `.claude/skills/` altındadır (Antigravity `.agent/skills` klasöründen taşındı).
 İlgili görev geldiğinde ilgili skill'i Skill aracıyla yükle.
