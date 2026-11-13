@@ -221,6 +221,7 @@ export const App: React.FC = () => {
     if (window.location.hash.includes('#embed=')) return 'embed';
     const params = new URLSearchParams(window.location.search);
     if (
+      window.location.pathname === '/studio' ||
       window.location.hash.includes('#share=') ||
       window.location.hash.includes('#studio') ||
       params.has('template') ||
@@ -231,6 +232,24 @@ export const App: React.FC = () => {
     }
     return 'landing';
   });
+
+  // Landing -> studio gets a real /studio URL so Vercel Analytics counts it as a second pageview
+  // (otherwise every visitor looks like a bounce). Back from /studio returns to the landing.
+  const pushedStudioRef = useRef(false);
+  useEffect(() => {
+    if (viewMode !== 'studio' || window.location.pathname !== '/') return;
+    if (window.location.hash.includes('#share=') || window.location.search) return; // deeplinks keep their URL
+    window.history.pushState({}, '', '/studio');
+    pushedStudioRef.current = true;
+  }, [viewMode]);
+  useEffect(() => {
+    const onPop = () => {
+      if (window.location.pathname === '/studio') setViewMode('studio');
+      else if (pushedStudioRef.current && window.location.pathname === '/') setViewMode('landing');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Funnel: studio entry (via = how the visitor got in) and pricing views
   const studioOpenCountRef = useRef(0);
