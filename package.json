@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
@@ -26,6 +28,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "husky": "^9.1.7",
     "isomorphic-git": "^1.43.2",
     "jsdom": "^26.0.0",
     "postcss": "^8.4.49",
