@@ -24,7 +24,8 @@ Drafted from PRODUCT.md, README.md and the landing page. Items marked TODO need 
 - Design review or RFC.
 - Incident retrospective.
 - Capacity planning before a launch.
-Secondary, not confirmed as targets: system design interview candidates, educators.
+- System design interview practice (added as a target 2026-11-13): candidates break the classic questions (URL shortener, news feed, chat, rate limiter, Uber) instead of only drawing them. Runnable presets at `/#interview`; outreach plan in `marketing/interview-outreach.md`.
+Secondary, not confirmed as targets: educators.
 
 ## Personas
 | Persona | Cares about | Challenge | Value we promise |
