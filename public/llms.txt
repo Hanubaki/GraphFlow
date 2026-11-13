@@ -11,6 +11,16 @@ GraphFlow is for backend and platform engineers who design or own distributed sy
 - [Edge streaming under chaos](https://graph-flow-virid.vercel.app/?template=netflix-chaos-streaming): example topology.
 - [CQRS with a Kafka outbox](https://graph-flow-virid.vercel.app/?template=resilient-cqrs-outbox): example topology.
 
+## System design interview practice
+
+Classic interview questions as runnable topologies. Each one names an experiment that exposes its bottleneck.
+
+- [Design a URL shortener](https://graph-flow-virid.vercel.app/?template=interview-url-shortener)
+- [Design a Twitter news feed (fan-out on write)](https://graph-flow-virid.vercel.app/?template=interview-news-feed)
+- [Design WhatsApp (chat)](https://graph-flow-virid.vercel.app/?template=interview-chat)
+- [Design a rate limiter](https://graph-flow-virid.vercel.app/?template=interview-rate-limiter)
+- [Design Uber (ride sharing)](https://graph-flow-virid.vercel.app/?template=interview-ride-sharing)
+
 ## What it does
 
 - Model an architecture on an infinite canvas and stress it with a load slider and per-node fault injection.

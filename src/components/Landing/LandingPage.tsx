@@ -31,6 +31,7 @@ import { DEMO_CANVAS, DEMO_EDGES, DEMO_NODES, demoEdgePath } from './demoGraph';
 import { generateDockerCompose, generateKubernetesManifests, generateMarkdownDoc, generateTerraform } from '../../utils/export';
 import { generateShareUrl } from '../../services/projectStorage';
 import { TEMPLATES } from '../../constants/templates';
+import { INTERVIEW_TAG, INTERVIEW_TEMPLATES } from '../../constants/interviewTemplates';
 import { analyzeTopologyDiagnostics } from '../../utils/simulationPhysics';
 import { ArchitectureTemplate, GraphEdge, GraphNode } from '../../types/graph';
 import { parseInfrastructureToTopology } from '../../utils/importTopology';
@@ -864,6 +865,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
         </div>
       </section>
 
+      {/* System design interview practice: real links so they can be shared and indexed */}
+      <section id="interview" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-16 mb-12 md:mb-16">
+            <h2 className={`${display} text-4xl md:text-5xl leading-[1.05]`}>System design interview practice</h2>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-slate-400 md:pt-2">
+              The classic questions, already drawn and running. Break a node, throw a traffic spike, and find the
+              bottleneck yourself before the interviewer asks about it.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {INTERVIEW_TEMPLATES.map(template => (
+              <article
+                key={template.id}
+                className="rounded-xl border border-slate-800 bg-slate-950/90 hover:border-slate-700 transition-colors p-5 flex flex-col justify-between gap-4"
+              >
+                <div>
+                  <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400">
+                    {template.difficulty}
+                  </span>
+                  <h3 className="text-[16px] font-semibold text-slate-50 leading-snug mt-3 mb-2">{template.name}</h3>
+                  <p className="text-[13px] text-slate-400 leading-relaxed">{template.description}</p>
+                </div>
+                <a
+                  href={`/?template=${template.id}`}
+                  className={`w-full h-9 px-3 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-100 text-[13px] font-medium inline-flex items-center justify-between transition-colors ${ring}`}
+                >
+                  <span>Run it in the simulator</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Feature: Public Production Architecture Blueprints Gallery */}
       <section id="blueprints" className="relative z-10 border-t border-slate-800/70 scroll-mt-14">
         <div aria-hidden="true" className="pointer-events-none max-w-6xl mx-auto relative">
@@ -880,7 +917,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onOpenPric
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {TEMPLATES.map(template => {
+            {TEMPLATES.filter(t => !t.tags.includes(INTERVIEW_TAG)).map(template => {
               const diag = analyzeTopologyDiagnostics(template.nodes, template.edges);
               return (
                 <article

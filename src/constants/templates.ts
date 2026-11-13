@@ -1,4 +1,5 @@
 import { ArchitectureTemplate } from '../types/graph';
+import { INTERVIEW_TEMPLATES } from './interviewTemplates';
 
 export const TEMPLATES: ArchitectureTemplate[] = [
   {
@@ -974,5 +975,6 @@ export const TEMPLATES: ArchitectureTemplate[] = [
       { id: 'erpe12', fromNodeId: 'erp-t-stock', toNodeId: 'erp-t-outbound', protocol: 'SQL Query', latencyMs: 12, errorRate: 0, label: 'FIFO Stok Düşümü' },
       { id: 'erpe13', fromNodeId: 'erp-t-pick', toNodeId: 'erp-t-outbound', protocol: 'Kafka', latencyMs: 7, errorRate: 0, label: 'Pick List Sevk' },
     ],
-  }
+  },
+  ...INTERVIEW_TEMPLATES,
 ];
